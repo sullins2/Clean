@@ -21,7 +21,7 @@ class Grid(object):
         self.cols = 12
 
         self.rows = 2
-        self.cols = 2
+        self.cols = 3
 
         self.livingCost = -1
 
@@ -36,11 +36,11 @@ class Grid(object):
         #            -1, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 126]
 
         self.grid = [
-                     ' ', ' ',
-                     ' ', 10]
+                     ' ', ' ', ' ',
+                     ' ', ' ', 10]
 
-        self.rewards = [-1, -1,
-                        -1, 10]
+        self.rewards = [-1, -1, -1,
+                        -1, -1, 10]
 
     def getMove(self, s, action):
         """
@@ -88,7 +88,7 @@ class Grid(object):
         x = state // self.cols
         y = state % self.cols
 
-        self.noise = 0.0
+        self.noise = 0.2
 
         successors = []
 

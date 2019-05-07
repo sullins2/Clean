@@ -10,7 +10,7 @@ import numpy as np
 
 
 # Set amount to train
-trainingIterations = 2000
+trainingIterations = 12000
 
 newGrid = Grid()
 
@@ -22,10 +22,15 @@ agent.train(iterations=trainingIterations)
 
 #Set start state
 
+# 0 1 2
+# 3 4 5
+
 print(agent.Q[0])
 print(agent.Q[1])
 print(agent.Q[2])
 print(agent.Q[3])
+print(agent.Q[4])
+print(agent.Q[5])
 
 
 
