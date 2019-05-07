@@ -74,23 +74,31 @@ class Agent:
 
             for a in range(self.numberOfActions):
 
-                # Here, just doing every action a
+
+                succs = self.gridWorld.getNextStatesAndProbs(s,a)
+
+                Value = 0
+                #loop through all successors
+                for a_prime, s_prime, prob in succs:
+                    temp = 0
+                    for a_prime_prime in range(self.numberOfActions):
+                        temp += self.Q[s_prime][a_prime_prime] * self.pi[s_prime][a_prime_prime]
+                    Value += prob * (temp + self.gridWorld.rewards[s_prime])
+
 
                 # Take action a and observe s' and reward
-                next_state = self.gridWorld.getMove(s,a)
-
-                reward = self.gridWorld.rewards[next_state]
-
-
-
-                Value = 0.0
-                for action_ in range(self.numberOfActions):
-                    Value += self.Q[next_state][action_] * self.pi[next_state][action_]
+                # next_state = self.gridWorld.getMove(s,a)
+                #
+                # reward = self.gridWorld.rewards[next_state]
+                #
+                # Value = 0.0
+                # for action_ in range(self.numberOfActions):
+                #     Value += self.Q[next_state][action_] * self.pi[next_state][action_]
 
                 # self.alpha = 0.9
-                # self.gamma = 0.99
+                self.gamma = 1.0
                 #self.Q_bu[s][a] = self.Q[s][a] + self.alpha * (reward + self.gamma * Value - self.Q[s][a])
-                self.Q_bu[s][a] = reward + self.gamma * Value
+                self.Q_bu[s][a] = self.gamma * Value
 
 
 
