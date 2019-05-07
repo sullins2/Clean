@@ -89,8 +89,8 @@ class Agent:
 
                 # self.alpha = 0.9
                 # self.gamma = 0.99
-                self.Q_bu[s][a] = self.Q[s][a] + self.alpha * (reward + self.gamma * Value - self.Q[s][a])
-
+                #self.Q_bu[s][a] = self.Q[s][a] + self.alpha * (reward + self.gamma * Value - self.Q[s][a])
+                self.Q_bu[s][a] = reward + self.gamma * Value
 
 
 
