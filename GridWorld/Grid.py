@@ -5,6 +5,17 @@
 class Grid(object):
     """Creates GridWorld
 
+        Grid is referenced by single index, starting from upper left corner.
+
+        Example grid indices:
+
+        -------------------------
+        |  0  |  1  |  2  |  3  |
+        |     |     |     |     |
+        -------------------------
+        |  4  |  5  |  6  |  7  |
+        |     |     |     |     |
+        -------------------------
 
     """
 
@@ -25,6 +36,9 @@ class Grid(object):
 
         self.livingCost = -1
 
+        # Non-determinism - this value is split between sideways moves
+        self.noise = 0.2
+
         # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -35,25 +49,34 @@ class Grid(object):
         #            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         #            -1, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 126]
 
-        self.grid = [
-                     ' ', ' ', ' ',
+        self.grid = [' ', ' ', ' ',
                      ' ', ' ', 10]
 
-        self.rewards = [-1, -1, -1,
-                        -1, -1, 10]
+        self.livingReward = -1.0
 
-    def getMove(self, s, action):
-        """
+    def getReward(self, s):
+        """ Return reward from leaving state s.
 
-        :param action:
-        :return: Next State
+            Not dependent on action or s'
         """
-        appActX, appActY = self.applyAction(s, action)
-        validMove = self._isValidMove(appActX, appActY)
-        if validMove:
-            return self.XYToState(appActX, appActY)
-        else:
-            return s
+        cell = self.grid[s]
+        if type(cell) == int or type(cell) == float:
+            return float(cell)
+        return self.livingReward
+
+
+    # def getMove(self, s, action):
+    #     """ Sanity check for making a move.
+    #
+    #         If moving into a wall, returns original position.
+    #         Else, returns the move.
+    #     """
+    #     appActX, appActY = self.applyAction(s, action)
+    #     validMove = self._isValidMove(appActX, appActY)
+    #     if validMove:
+    #         return self.XYToState(appActX, appActY)
+    #     else:
+    #         return s
 
     def applyAction(self, s, action):
         x = s // self.cols
@@ -69,6 +92,9 @@ class Grid(object):
             return (x, y - 1)
 
     def _isValidMove(self, x, y):
+        """ Check is x,y is valid location.
+
+        """
         if x < 0 or x >= self.rows: return False
         if y < 0 or y >= self.cols: return False
         return True
@@ -78,11 +104,12 @@ class Grid(object):
 
 
     def getNextStatesAndProbs(self, state, action):
+        """
 
-
-        # If terminal, no actions left
-        # if type(self.grid[state]) == int:
-        #     return []
+        :param state: current state
+        :param action: action taken
+        :return: List of successor states and transition probabilities
+        """
 
         #convert to coordinates
         x = state // self.cols
@@ -119,24 +146,24 @@ class Grid(object):
         # Return the correct one
         if action == self.UP or action == self.DOWN:
             if action == self.UP:
-                successors.append([self.UP, upState,1.0-self.noise])
+                successors.append([upState,1.0-self.noise])
             else:
-                successors.append([self.DOWN, downState,1.0-self.noise])
+                successors.append([downState,1.0-self.noise])
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([self.LEFT, leftState,massLeft/2.0])
-                successors.append([self.RIGHT, rightState,massLeft/2.0])
+                successors.append([leftState,massLeft/2.0])
+                successors.append([rightState,massLeft/2.0])
 
         if action == self.LEFT or action == self.RIGHT:
             if action == self.LEFT:
-                successors.append([self.LEFT, leftState,1.0-self.noise])
+                successors.append([leftState,1.0-self.noise])
             else:
-                successors.append([self.RIGHT, rightState,1.0-self.noise])
+                successors.append([rightState,1.0-self.noise])
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([self.UP, upState,massLeft/2.0])
-                successors.append([self.DOWN, downState,massLeft/2.0])
+                successors.append([ upState,massLeft/2.0])
+                successors.append([downState,massLeft/2.0])
 
         return successors

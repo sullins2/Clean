@@ -10,7 +10,7 @@ import numpy as np
 
 
 # Set amount to train
-trainingIterations = 12000
+trainingIterations = 22
 
 newGrid = Grid()
 

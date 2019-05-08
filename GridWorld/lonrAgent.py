@@ -27,6 +27,9 @@ class Agent:
         self.gamma = 1.0
         self.alpha = 1.0
 
+        # living cost
+        self.livingCost = -1.0
+
         # Q-Values
         self.Q = np.zeros((self.numberOfStates, self.numberOfActions))
         self.Q_bu = np.zeros((self.numberOfStates, self.numberOfActions))
@@ -66,41 +69,35 @@ class Agent:
 
         for s in range(self.numberOfStates):
 
+            # Terminal - Set Q as Reward (no actions in terminal states)
             if type(self.gridWorld.grid[s]) != str:
+                for a in range(self.numberOfActions):
+                    self.Q_bu[s][a] = self.gridWorld.getReward(s)
                 continue
 
+            # Eventually, for walls
             # if grid[s] == '#':
             #     continue
 
+            # Loop through all actions
             for a in range(self.numberOfActions):
 
-
+                # Get successor states
                 succs = self.gridWorld.getNextStatesAndProbs(s,a)
 
                 Value = 0
-                #loop through all successors
-                for a_prime, s_prime, prob in succs:
+
+                for s_prime, prob in succs:
                     temp = 0
-                    for a_prime_prime in range(self.numberOfActions):
-                        temp += self.Q[s_prime][a_prime_prime] * self.pi[s_prime][a_prime_prime]
-                    Value += prob * (temp + self.gridWorld.rewards[s_prime])
+                    for a_prime in range(self.numberOfActions):
+                        temp += self.Q[s_prime][a_prime] * self.pi[s_prime][a_prime]
+                    Value += prob * (self.gridWorld.getReward(s) + self.gamma * temp)
 
 
-                # Take action a and observe s' and reward
-                # next_state = self.gridWorld.getMove(s,a)
-                #
-                # reward = self.gridWorld.rewards[next_state]
-                #
-                # Value = 0.0
-                # for action_ in range(self.numberOfActions):
-                #     Value += self.Q[next_state][action_] * self.pi[next_state][action_]
-
-                # self.alpha = 0.9
-                self.gamma = 1.0
-                #self.Q_bu[s][a] = self.Q[s][a] + self.alpha * (reward + self.gamma * Value - self.Q[s][a])
-                self.Q_bu[s][a] = self.gamma * Value
+                self.Q_bu[s][a] = Value
 
 
+        #print(self.Q[4])
 
         for s in range(self.numberOfStates):
             for a in range(self.numberOfActions):
@@ -133,8 +130,8 @@ class Agent:
             # # Regret Match
             for s in range(self.numberOfStates):
 
-                # if type(grid[s]) != str:
-                #     continue
+                if type(self.gridWorld.grid[s]) != str:
+                    continue
 
                 for a in range(self.numberOfActions):
                     rgrt_sum = sum(filter(lambda x: x > 0, self.regret_sums[s]))
