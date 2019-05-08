@@ -91,10 +91,10 @@ class Agent:
                     temp = 0
                     for a_prime in range(self.numberOfActions):
                         temp += self.Q[s_prime][a_prime] * self.pi[s_prime][a_prime]
-                    Value += prob * (self.gridWorld.getReward(s) + self.gamma * temp)
+                    Value += prob * (self.gamma * temp)
 
 
-                self.Q_bu[s][a] = Value
+                self.Q_bu[s][a] = Value + self.gridWorld.getReward(s)
 
 
         #print(self.Q[4])
