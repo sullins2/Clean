@@ -31,26 +31,30 @@ class Grid(object):
         self.rows = 4
         self.cols = 12
 
-        self.rows = 2
-        self.cols = 3
-
-        self.livingCost = -1
+        # self.rows = 2
+        # self.cols = 3
 
         # Non-determinism - this value is split between sideways moves
-        self.noise = 0.2
+        self.noise = 0.0
+
+        self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
         # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 126]
+        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
+
         #
         # self.rewards = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         #            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         #            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         #            -1, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 126]
 
-        self.grid = [' ', ' ', ' ',
-                     ' ', ' ', 10]
+        # self.grid = [' ', ' ', ' ',
+        #              ' ', ' ', 10]
 
         self.livingReward = -1.0
 
@@ -65,18 +69,21 @@ class Grid(object):
         return self.livingReward
 
 
-    # def getMove(self, s, action):
-    #     """ Sanity check for making a move.
-    #
-    #         If moving into a wall, returns original position.
-    #         Else, returns the move.
-    #     """
-    #     appActX, appActY = self.applyAction(s, action)
-    #     validMove = self._isValidMove(appActX, appActY)
-    #     if validMove:
-    #         return self.XYToState(appActX, appActY)
-    #     else:
-    #         return s
+    def getMove(self, s, action):
+        """ Sanity check for making a move.
+
+            If moving into a wall, returns original position.
+            Else, returns the move.
+        """
+        appActX, appActY = self.applyAction(s, action)
+        validMove = self._isValidMove(appActX, appActY)
+        if validMove:
+            return self.XYToState(appActX, appActY)
+        else:
+            return s
+
+    def isTerminal(self, s):
+        return type(self.grid[s]) == int or type(self.grid[s]) == float
 
     def applyAction(self, s, action):
         x = s // self.cols
@@ -115,7 +122,6 @@ class Grid(object):
         x = state // self.cols
         y = state % self.cols
 
-        self.noise = 0.2
 
         successors = []
 
