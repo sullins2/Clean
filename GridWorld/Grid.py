@@ -1,5 +1,5 @@
 
-
+import numpy as np
 
 
 class Grid(object):
@@ -35,23 +35,13 @@ class Grid(object):
         # self.cols = 3
 
         # Non-determinism - this value is split between sideways moves
-        self.noise = 0.0
+        self.noise = 0.20
 
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
-        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
-
-        #
-        # self.rewards = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        #            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        #            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        #            -1, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 126]
 
         # self.grid = [' ', ' ', ' ',
         #              ' ', ' ', 10]
@@ -70,22 +60,46 @@ class Grid(object):
 
 
     def getMove(self, s, action):
-        """ Sanity check for making a move.
-
+        """ Sanity check for making a move
+            As well as returning non-deterministic move.
             If moving into a wall, returns original position.
             Else, returns the move.
         """
+
+        # If non-deterministic
+        if self.noise > 0:
+
+            # Get list of successor states and transition probabilities
+            succs = self.getNextStatesAndProbs(s, action)
+
+            # Get a move based on Transition probs
+            actionChoices = []
+            actionProbs = []
+            for action, state, prob in succs:
+                actionChoices.append(action)
+                actionProbs.append(prob)
+            action = np.random.choice(actionChoices, p=actionProbs)
+
+        # Apply the action
         appActX, appActY = self.applyAction(s, action)
+
+        # Check if valid move
         validMove = self._isValidMove(appActX, appActY)
+
+        # Return based on valid or not
         if validMove:
             return self.XYToState(appActX, appActY)
         else:
             return s
 
     def isTerminal(self, s):
+        """Returns True if s is a terminal state.
+        """
         return type(self.grid[s]) == int or type(self.grid[s]) == float
 
     def applyAction(self, s, action):
+        """Returns x,y of new state when in state s and taking action a
+        """
         x = s // self.cols
         y = s % self.cols
 
@@ -111,11 +125,7 @@ class Grid(object):
 
 
     def getNextStatesAndProbs(self, state, action):
-        """
-
-        :param state: current state
-        :param action: action taken
-        :return: List of successor states and transition probabilities
+        """ Returns a list of [Action, resulting state, transition probability]
         """
 
         #convert to coordinates
@@ -152,24 +162,24 @@ class Grid(object):
         # Return the correct one
         if action == self.UP or action == self.DOWN:
             if action == self.UP:
-                successors.append([upState,1.0-self.noise])
+                successors.append([self.UP, upState,1.0-self.noise])
             else:
-                successors.append([downState,1.0-self.noise])
+                successors.append([self.DOWN, downState,1.0-self.noise])
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([leftState,massLeft/2.0])
-                successors.append([rightState,massLeft/2.0])
+                successors.append([self.LEFT, leftState,massLeft/2.0])
+                successors.append([self.RIGHT, rightState,massLeft/2.0])
 
         if action == self.LEFT or action == self.RIGHT:
             if action == self.LEFT:
-                successors.append([leftState,1.0-self.noise])
+                successors.append([self.LEFT, leftState,1.0-self.noise])
             else:
-                successors.append([rightState,1.0-self.noise])
+                successors.append([self.RIGHT, rightState,1.0-self.noise])
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([ upState,massLeft/2.0])
-                successors.append([downState,massLeft/2.0])
+                successors.append([self.UP, upState,massLeft/2.0])
+                successors.append([self.DOWN, downState,massLeft/2.0])
 
         return successors

@@ -10,7 +10,7 @@ import numpy as np
 
 
 # Set amount to train
-trainingIterations = 4131
+trainingIterations = 3201
 
 newGrid = Grid()
 
@@ -18,9 +18,12 @@ agent = Agent(gridworld=newGrid)
 
 print(newGrid.grid)
 
-agent.train(iterations=trainingIterations)
+# agent.train(iterations=trainingIterations)
 
-# agent.train_olonr(totalIterations=trainingIterations)
+agent.train_olonr(totalIterations=trainingIterations)
+
+#
+#print("Non-Deterministic O-LONR check avg Q also add in a way to run it with actions non deterministic")
 
 #Set start state
 
