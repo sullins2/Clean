@@ -28,14 +28,14 @@ class Grid(object):
         self.LEFT = 3
 
         # Dimensions
+        self.rows = 2
+        self.cols = 3
+
         self.rows = 4
         self.cols = 12
 
-        # self.rows = 2
-        # self.cols = 3
-
         # Non-determinism - this value is split between sideways moves
-        self.noise = 0.20
+        self.noise = 0.0
 
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -81,7 +81,7 @@ class Grid(object):
             action = np.random.choice(actionChoices, p=actionProbs)
 
         # Apply the action
-        appActX, appActY = self.applyAction(s, action)
+        appActX, appActY = self._applyAction(s, action)
 
         # Check if valid move
         validMove = self._isValidMove(appActX, appActY)
@@ -97,7 +97,7 @@ class Grid(object):
         """
         return type(self.grid[s]) == int or type(self.grid[s]) == float
 
-    def applyAction(self, s, action):
+    def _applyAction(self, s, action):
         """Returns x,y of new state when in state s and taking action a
         """
         x = s // self.cols

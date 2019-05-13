@@ -4,23 +4,27 @@ from GridWorld.lonrAgent import *
 import numpy as np
 
 #TODO
-# Set start state
-# Online version with all rewards revealed
-# Last action into goal state doesn't currently have a living cost
+
 
 
 # Set amount to train
-trainingIterations = 3201
+trainingIterations = 66
 
 newGrid = Grid()
 
+# agent = Agent(gridworld=newGrid)
+#
+# print(newGrid.grid)
+#
+# agent.train_lonr_value_iteration(iterations=trainingIterations, log=1000)
+#
+# print("Q35 VI : ", agent.Q[35])
+
 agent = Agent(gridworld=newGrid)
 
-print(newGrid.grid)
+agent.train_lonr_online(iterations=trainingIterations, log=1000)
 
-# agent.train(iterations=trainingIterations)
-
-agent.train_olonr(totalIterations=trainingIterations)
+print("Q35 ONL: ", agent.Q[36])
 
 #
 #print("Non-Deterministic O-LONR check avg Q also add in a way to run it with actions non deterministic")
@@ -90,10 +94,11 @@ agent.train_olonr(totalIterations=trainingIterations)
 # print("Q:")
 # print(agent.Q[36])
 
-print("36: ", agent.pi[36])
-print("35", agent.pi[35])
-print("Q36", agent.Q[36])
-print("Q35", agent.Q[35])
-
+# print("36: ", agent.pi[36])
+# print("35", agent.pi[35])
+# print("Q36", agent.Q[36])
+# print("Q35", agent.Q[35])
+#
+# print("QSUMS36: ", agent.Qsums[36] / float(trainingIterations))
 
 print("Done")
