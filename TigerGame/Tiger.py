@@ -14,7 +14,7 @@ class TigerAgent:
         self.tigergame = tigergame
 
         # Parameters
-        self.gamma = 0.59
+        self.gamma = 1.0
 
         # Q-Values
         self.Q = {}
@@ -29,7 +29,7 @@ class TigerAgent:
         self.regret_sums = {}
 
         # Show prints
-        self.VERBOSE = False
+        self.VERBOSE = True
 
         self.TURN = 0
 
@@ -46,10 +46,11 @@ class TigerAgent:
                     self.Q[s] = {}
                     self.Q_bu[s] = {}
                     self.Qsums[s] = {}
-                self.Q[s][a] = 0.0#self.tigergame.getReward(s,a)
-                self.Q_bu[s][a] = 0.0# self.tigergame.getReward(s,a)
+                self.Q[s][a] = 0.0
+                self.Q_bu[s][a] = 0.0
                 self.Qsums[s][a] = 0.0
 
+                # Add all TLxxx as info sets
                 stateInfoSet = self.tigergame.stateIDtoIS(s)
                 if stateInfoSet == None: continue
                 if stateInfoSet not in self.pi:
@@ -69,9 +70,13 @@ class TigerAgent:
 
             self._train_lonr_value_iteration(t=i)
 
-            if True:
-                if i % 1000 == 0 and i > 0:
-                    print("Iteration:", i)
+
+            if i % 1000 == 0 and i > 0:
+                print("Iteration:", i)
+
+            if self.VERBOSE:
+                self.verbose("")
+
         print("Finished LONR Training.")
 
 
@@ -81,17 +86,13 @@ class TigerAgent:
         """
 
         rand = np.random.randint(0, 100)
-        #if self.TURN == 0:
-        if rand < 61:
-            #print(rand)
+        if self.TURN == 0:
             stateList = self.tigergame.totalStatesLeft
             self.TURN = 1
         else:
-            #print(rand)
             stateList = self.tigergame.totalStatesRight
             self.TURN = 0
 
-        #stateList = self.tigergame.totalStates
 
         for s in stateList: #self.tigergame.totalStates:
 
@@ -118,11 +119,6 @@ class TigerAgent:
 
                 self.verbose(" - succs: ", succs)
 
-                # if s == "rootTLLGL" and a == self.tigergame.OPENLEFT:
-                #     print("HERE")
-                #     print(self.tigergame.getReward(s, a=a))
-                #     print(s, a)
-
                 Value = 0.0
                 for _, s_prime, prob in succs:
                     tempValue = 0.0
@@ -130,7 +126,6 @@ class TigerAgent:
                     for a_prime in self.tigergame.getActions(s_prime):
                         tempValue += self.Q[s_prime][a_prime] * self.pi[self.tigergame.stateIDtoIS(s_prime)][a_prime]
                     self.verbose("  - afterLoop reward s: ", s, "  reward: ", self.tigergame.getReward(s, a=a))
-                    #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                     Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                 self.Q_bu[s][a] = self.gamma * Value
 
@@ -215,6 +210,172 @@ class TigerAgent:
                 self.pi_sums[self.tigergame.stateIDtoIS(s)][a] += self.pi[self.tigergame.stateIDtoIS(s)][a] * gammaWeight
 
 
+    ###############################################################################
+    # Episodic/online LONR
+    ###############################################################################
+    def train_lonr_online(self, iterations=100, log=-1):
+        """Train LONR online
+
+                """
+        for t in range(1, iterations + 1):
+
+            self._train_lonr_online(iters=t)
+
+            if (t + 1) % log == 0:
+                print("Iteration: ", (t + 1))
+
+            if self.VERBOSE:
+                self.verbose("")
+
+    def _train_lonr_online(self, startState="root", iters=0):
+        """ One episode of O-LONR (online learning)
+
+        """
+
+
+        # Goes to TL or TR based on prior?
+        startStates = self.tigergame.getNextStatesAndProbs("root", None)
+        totalStartStates = []
+        totalStartStateProbs = []
+        for _, nextState, nextStateProb in startStates:
+            totalStartStates.append(nextState)
+            totalStartStateProbs.append(nextStateProb)
+        currentState = np.random.choice(totalStartStates, p=totalStartStateProbs)
+
+        statesVisited = []
+        statesVisited.append(currentState)
+
+        done = False
+
+        # Loop until terminal state is reached
+        while done == False:
+
+            self.verbose("Just entered overall state loop s: ", currentState)
+            # Terminal - Set Q as Reward (ALL terminals have one action - "exit" which receives reward)
+            if self.tigergame.isTerminal(currentState) == True:
+                for a in self.tigergame.getActions(currentState):
+                    self.verbose(" - Terminal setting: s: ", currentState, " a: ", a, "  rew: ", self.tigergame.getReward(currentState))
+                    self.Q_bu[currentState][a] = self.tigergame.getReward(currentState)
+                done = True
+                continue
+
+            # Loop through all actions
+            for a in self.tigergame.getActions(currentState):
+
+                self.verbose(" - action: ", a)
+
+                # Get successor states
+                succs = self.tigergame.getNextStatesAndProbs(currentState, a)
+
+                self.verbose(" - succs: ", succs)
+
+                # if s == "rootTLLGL" and a == self.tigergame.OPENLEFT:
+                #     print("HERE")
+                #     print(self.tigergame.getReward(s, a=a))
+                #     print(s, a)
+
+                Value = 0.0
+                for _, s_prime, prob in succs:
+                    tempValue = 0.0
+                    self.verbose("   - loop: s_prime: ", s_prime, "  prob:", prob)
+                    for a_prime in self.tigergame.getActions(s_prime):
+                        tempValue += self.Q[s_prime][a_prime] * self.pi[self.tigergame.stateIDtoIS(s_prime)][a_prime]
+                    self.verbose("  - afterLoop reward s: ", currentState, "  reward: ", self.tigergame.getReward(currentState, a=a))
+                    #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
+                    Value += prob * (self.tigergame.getReward(currentState, a=a) + self.gamma * tempValue)
+                self.Q_bu[currentState][a] = self.gamma * Value
+
+            # Epsilon greedy action selection
+
+            self.epsilon = 10
+            if np.random.randint(0, 100) < self.epsilon:
+                    randomAction = np.random.randint(0, 3)
+                    randomAction = self.tigergame.totalActions[randomAction]
+                    self.verbose("ACTION: RANDOM: ", randomAction)
+            else:
+
+                totalActions = []
+                totalActionsProbs = []
+                ta = self.tigergame.getActions(currentState)
+                for action in ta:
+                    totalActions.append(action)
+                    totalActionsProbs.append(self.pi[self.tigergame.stateIDtoIS(currentState)][action])
+                randomAction = np.random.choice(totalActions,p=totalActionsProbs)
+                self.verbose("ACTION: PI: ", randomAction)
+
+
+            # Gets an actual noisy move if noise > 0
+            # Else it will take the specified move.
+            # In both cases, bumps into walls are checked
+            #currentState = self.gridWorld.getMove(currentState, randomAction)
+            nextPossStates = self.tigergame.getNextStatesAndProbs(currentState, randomAction)
+            if len(nextPossStates) == 1:
+                currentState = nextPossStates[0][1]
+            else:
+                nst = []
+                nspt = []
+                for _ , ns, nsp in nextPossStates:
+                    nst.append(ns)
+                    nspt.append(nsp)
+                currentState = np.random.choice(nst, p=nspt)
+
+            statesVisited.append(currentState)
+
+        # Copy Q Values over for states visited
+        for s in statesVisited:
+            for a in self.tigergame.getActions(s):
+                self.Q[s][a] = self.Q_bu[s][a]
+                self.Qsums[s][a] += self.Q_bu[s][a]
+
+
+        # Update regret sums
+        for s in statesVisited:
+
+            # Don't update terminal states
+            if self.tigergame.isTerminal(s) == True:
+                continue
+
+            # Calculate regret - this variable name needs a better name
+            target = 0.0
+
+            for a in self.tigergame.getActions(s):
+                target += self.Q[s][a] * self.pi[self.tigergame.stateIDtoIS(s)][a]
+
+            for a in self.tigergame.getActions(s):
+                action_regret = self.Q[s][a] - target
+
+
+                RMPLUS = False
+                if RMPLUS:
+                    self.regret_sums[self.tigergame.stateIDtoIS(s)][a] = max(0.0, self.regret_sums[self.tigergame.stateIDtoIS(s)][a] + action_regret)
+                else:
+                    self.regret_sums[self.tigergame.stateIDtoIS(s)][a] += action_regret
+
+        # # Regret Match
+        for s in statesVisited:
+
+            # Skip terminal states
+            if self.tigergame.isTerminal(s) == True:
+                continue
+
+            for a in self.tigergame.getActions(s):
+                #rgrt_sum = sum(filter(lambda x: x > 0, self.regret_sums[s]))
+                rgrt_sum = 0.0
+                for k in self.regret_sums[self.tigergame.stateIDtoIS(s)].keys():
+                    rgrt_sum += self.regret_sums[self.tigergame.stateIDtoIS(s)][k] if self.regret_sums[self.tigergame.stateIDtoIS(s)][k] > 0 else 0.0
+
+
+                # Check if this is a "trick"
+                # Check if this can go here or not
+                if rgrt_sum > 0:
+                    self.pi[self.tigergame.stateIDtoIS(s)][a] = (max(self.regret_sums[self.tigergame.stateIDtoIS(s)][a], 0.) / rgrt_sum)
+                else:
+                    self.pi[s][a] = 1.0 / len(self.regret_sums[self.tigergame.stateIDtoIS(s)])
+
+                # Add to policy sum
+                self.pi_sums[self.tigergame.stateIDtoIS(s)][a] += self.pi[self.tigergame.stateIDtoIS(s)][a]
+
+
     def verbose(self, *args):
         if self.VERBOSE:
             for arg in args:
@@ -232,6 +393,8 @@ class TigerGame(object):
 
         self.TL = "TL"
         self.TR = "TR"
+
+        self.TLProb = 0.5 # Probability that tiger is on left
 
         #total action list
         self.totalActions = [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
@@ -381,7 +544,10 @@ class TigerGame(object):
 
         # Top most root
         if state == self.root:
-            if action == "TL":
+            if action == None:
+                return [[None, self.rootTL, self.TLProb], [None, self.rootTR, 1.0 - self.TLProb]]
+
+            elif action == "TL":
                 return [[None, self.rootTL, 0.5]]
             else:
                 return [[None, self.rootTR, 0.5]]

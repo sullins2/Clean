@@ -19,13 +19,15 @@ rewardSums = []
 if __name__ == '__main__':
 
 
-    trainingIterations = 14444
+    trainingIterations = 10000
 
     newTigerGame = TigerGame()
 
     agent = TigerAgent(tigergame=newTigerGame)
 
-    agent.train_lonr_value_iteration(iterations=trainingIterations)
+    #agent.train_lonr_value_iteration(iterations=trainingIterations)
+
+    agent.train_lonr_online(iterations=trainingIterations, log=1000)
 
     print("")
     print("")
