@@ -232,8 +232,7 @@ class TigerAgent:
 
         """
 
-
-        # Goes to TL or TR based on prior?
+        # Goes to TL or TR based on probability tiger is on that side
         startStates = self.tigergame.getNextStatesAndProbs("root", None)
         totalStartStates = []
         totalStartStateProbs = []
@@ -269,11 +268,6 @@ class TigerAgent:
 
                 self.verbose(" - succs: ", succs)
 
-                # if s == "rootTLLGL" and a == self.tigergame.OPENLEFT:
-                #     print("HERE")
-                #     print(self.tigergame.getReward(s, a=a))
-                #     print(s, a)
-
                 Value = 0.0
                 for _, s_prime, prob in succs:
                     tempValue = 0.0
@@ -283,7 +277,7 @@ class TigerAgent:
                     self.verbose("  - afterLoop reward s: ", currentState, "  reward: ", self.tigergame.getReward(currentState, a=a))
                     #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                     Value += prob * (self.tigergame.getReward(currentState, a=a) + self.gamma * tempValue)
-                self.Q_bu[currentState][a] = self.gamma * Value
+                self.Q_bu[currentState][a] = Value
 
             # Epsilon greedy action selection
 
@@ -303,11 +297,6 @@ class TigerAgent:
                 randomAction = np.random.choice(totalActions,p=totalActionsProbs)
                 self.verbose("ACTION: PI: ", randomAction)
 
-
-            # Gets an actual noisy move if noise > 0
-            # Else it will take the specified move.
-            # In both cases, bumps into walls are checked
-            #currentState = self.gridWorld.getMove(currentState, randomAction)
             nextPossStates = self.tigergame.getNextStatesAndProbs(currentState, randomAction)
             if len(nextPossStates) == 1:
                 currentState = nextPossStates[0][1]
@@ -344,14 +333,13 @@ class TigerAgent:
             for a in self.tigergame.getActions(s):
                 action_regret = self.Q[s][a] - target
 
-
                 RMPLUS = False
                 if RMPLUS:
                     self.regret_sums[self.tigergame.stateIDtoIS(s)][a] = max(0.0, self.regret_sums[self.tigergame.stateIDtoIS(s)][a] + action_regret)
                 else:
                     self.regret_sums[self.tigergame.stateIDtoIS(s)][a] += action_regret
 
-        # # Regret Match
+        # Regret Match
         for s in statesVisited:
 
             # Skip terminal states
@@ -359,7 +347,8 @@ class TigerAgent:
                 continue
 
             for a in self.tigergame.getActions(s):
-                #rgrt_sum = sum(filter(lambda x: x > 0, self.regret_sums[s]))
+
+                # Sum up total regret
                 rgrt_sum = 0.0
                 for k in self.regret_sums[self.tigergame.stateIDtoIS(s)].keys():
                     rgrt_sum += self.regret_sums[self.tigergame.stateIDtoIS(s)][k] if self.regret_sums[self.tigergame.stateIDtoIS(s)][k] > 0 else 0.0
@@ -394,7 +383,7 @@ class TigerGame(object):
         self.TL = "TL"
         self.TR = "TR"
 
-        self.TLProb = 0.5 # Probability that tiger is on left
+        self.TLProb = 0.5  # Probability that tiger is on left
 
         #total action list
         self.totalActions = [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
@@ -454,8 +443,12 @@ class TigerGame(object):
 
 
     def stateIDtoIS(self, state):
+        """Returns the information set of state
 
-        # use pi, regret, etc for LEFT
+        """
+
+        # uses rootTLxxx for pi, regret, etc
+        # Ex:  rootTL is infoset for both first action nodes on left and right
         if state == self.rootTL or state == self.rootTR:
             return self.rootTL
         elif state == self.rootTLLGL or state == self.rootTRLGL:
@@ -471,7 +464,6 @@ class TigerGame(object):
         elif state == self.rootTLLGRLGR or state == self.rootTRLGRLGR:
             return self.rootTLLGRLGR
 
-        #TODO - add depth 4 ones
 
         elif state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
             return state
@@ -508,7 +500,7 @@ class TigerGame(object):
         # Tiger right, open RIGHT
         elif state == self.rootTROR:
             return -100.0
-        # Everywhere else is a listen
+
         elif state == self.rootTLLGL or state == self.rootTLLGR or state == self.rootTRLGL or state == self.rootTRLGR:
             if a == self.LISTEN:
                 return -1.0
@@ -529,7 +521,6 @@ class TigerGame(object):
         else:
             print("Not caught: ", state)
             return 0.0
-            # return self.getReward(state, a)
 
     def isTerminal(self, state):
         if state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
@@ -684,196 +675,7 @@ class TigerGame(object):
         # No other states have actions
         else:
 
-            return []#[[None, "exit", 1.0]]
-
-
-
-
-
-
-# CHANCE = "CHANCE"
-#
-#
-# # Base class for a game state
-# class TigerGameBase:
-#
-#     def __init__(self, parent, next_player, actions):
-#         self.parent = parent            # parent node
-#         self.next_player = next_player  # which player (0 or 1) has next action
-#         self.actions = actions          # available actions at this node
-#         self.reach_prob = 1.0
-#         #self.reach_prob =
-#         self.stateID = None
-#         self.payoff = 0
-#
-#     # Simulate playing an action
-#     # Returns the child node of the given action
-#     def play(self, action):
-#         return self.children[action]
-#
-#     def is_chance(self):
-#         return self.next_player == CHANCE   # Check if chance node
-#
-#     #@property
-#     def inf_set(self):
-#         raise NotImplementedError("Please implement information_set method")
-#
-#     def real_inf_set(self):
-#         raise NotImplementedError("Please implement information_set method")
-#
-#     def stateID(self):
-#         return self.stateID
-#
-#     #def getNextStatesAndProbs(self, state, action):
-#
-#
-#
-#
-#
-#
-#
-# class TigerGameRoot(TigerGameBase):
-#
-#     def __init__(self, actions):
-#         super().__init__(parent = None, next_player = CHANCE, actions = actions)
-#
-#         self.actions_history = "."
-#         # totState.append(self)
-#         # totInfoStates.append(self)
-#
-#         self.children = {}
-#
-#         self.childrenProb = {}
-#
-#         self._chance_prob = 0.5
-#
-#         self.rewardVector = []
-#
-#     # Always false, only chance node is at root
-#     def is_terminal(self):
-#         return False
-#
-#     def inf_set(self):
-#         return "."   #history string (infoset), empty at root
-#
-#     def real_inf_set(self):
-#         return None   #history string (infoset), empty at root
-#
-#     def chance_prob(self):
-#         return self._chance_prob
-#
-#
-#
-#
-# # These make up entire tree, except for root which is CHANCE
-# class TigerGameActionState(TigerGameBase):
-#
-#     def __init__(self, parent, next_player, actions_history, actions):
-#         super().__init__(parent = parent, next_player = next_player, actions = actions)
-#
-#         self.actions_history = actions_history  # string of history up to this node
-#         #self.cards = cards                      # cards players have
-#
-#
-#
-#         #public_card = self.cards[0] if self.next_player == player0 else self.cards[1]
-#         self._information_set = ".{0}.".format(".".join(self.actions_history))
-#         #print(self._information_set)
-#         # if self._information_set not in infosets and self.is_terminal() == False:
-#         #     infosets.append(self._information_set)
-#         #     totInfoStates.append(self)
-#
-#         self.children = {}
-#         self.payoff = 0.0
-#
-#     # legal actions depending on what actions have been taken
-#     def __get_actions_in_next_round(self, a):
-#
-#         return []
-#
-#     def inf_set(self):
-#         return self._information_set
-#
-#     def is_terminal(self):
-#         return self.actions == []
-#
-#     def evaluation(self):
-#         return self.payoff
-#
-#
-# class TigerGameTerminalState(TigerGameBase):
-#
-#     def __init__(self, parent, next_player, actions_history, actions):
-#         super().__init__(parent = parent, next_player = next_player, actions = actions)
-#
-#         self.actions_history = actions_history  # string of history up to this node
-#
-#         self.payoff = 0.0
-#
-#         #public_card = self.cards[0] if self.next_player == player0 else self.cards[1]
-#         self._information_set = ".{0}.".format(".".join(self.actions_history))
-#
-#         # if self._information_set not in infosets and self.is_terminal() == False:
-#         #     infosets.append(self._information_set)
-#         #     totInfoStates.append(self)
-#
-#         self.children = {}
-#
-#     # legal actions depending on what actions have been taken
-#     def __get_actions_in_next_round(self, a):
-#
-#         return []
-#
-#     def inf_set(self):
-#         return self._information_set
-#
-#     def is_terminal(self):
-#         return self.actions == []
-#
-#     def evaluation(self):
-#         return self.payoff
-#
-#
-#
-#
-# # Observation chance node
-# # These make up entire tree, except for root which is CHANCE
-# class TigerGameObsState(TigerGameBase):
-#
-#     def __init__(self, parent, next_player, actions_history, actions):
-#         super().__init__(parent = parent, next_player = CHANCE, actions = actions)
-#
-#         self.actions_history = actions_history  # string of history up to this node
-#         #self.cards = cards                      # cards players have
-#
-#         self.childrenProb = {}
-#
-#         #public_card = self.cards[0] if self.next_player == player0 else self.cards[1]
-#         self._information_set = ".{0}.".format(".".join(self.actions_history))
-#         #print(self._information_set)
-#         # if self._information_set not in infosets and self.is_terminal() == False:
-#         #     infosets.append(self._information_set)
-#         #     totInfoStates.append(self)
-#
-#         self.children = {}
-#         self.payoff = 0.0
-#
-#     # legal actions depending on what actions have been taken
-#     def __get_actions_in_next_round(self, a):
-#
-#         return []
-#
-#     def inf_set(self):
-#         return self._information_set
-#
-#     def is_terminal(self):
-#         return False#self.actions == []
-#
-#     def evaluation(self):
-#         return self.payoff
-
-
-
+            return []
 
 
 
