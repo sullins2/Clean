@@ -19,7 +19,7 @@ rewardSums = []
 if __name__ == '__main__':
 
 
-    trainingIterations = 10000
+    trainingIterations = 14444
 
     newTigerGame = TigerGame()
 
@@ -43,3 +43,8 @@ if __name__ == '__main__':
     for k in sorted(agent.Q.keys()):
         if len(list(agent.Q[k].keys())) > 1:
             print(k, ":  ", agent.Q[k])
+    print("")
+    print("Agent regret sums:")
+    for k in sorted(agent.regret_sums.keys()):
+        if len(list(agent.regret_sums[k].keys())) > 1:
+            print(k, ":  ", agent.regret_sums[k])

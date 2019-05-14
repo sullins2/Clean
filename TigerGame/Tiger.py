@@ -14,7 +14,7 @@ class TigerAgent:
         self.tigergame = tigergame
 
         # Parameters
-        self.gamma = 0.99
+        self.gamma = 0.59
 
         # Q-Values
         self.Q = {}
@@ -31,6 +31,8 @@ class TigerAgent:
         # Show prints
         self.VERBOSE = False
 
+        self.TURN = 0
+
         # Initialize the states and info sets
         # Initialize policy to be uniform over total actions
         self.tot = self.tigergame.totalStatesRight + self.tigergame.totalStatesLeft
@@ -44,8 +46,8 @@ class TigerAgent:
                     self.Q[s] = {}
                     self.Q_bu[s] = {}
                     self.Qsums[s] = {}
-                self.Q[s][a] = 0.0
-                self.Q_bu[s][a] = 0.0
+                self.Q[s][a] = 0.0#self.tigergame.getReward(s,a)
+                self.Q_bu[s][a] = 0.0# self.tigergame.getReward(s,a)
                 self.Qsums[s][a] = 0.0
 
                 stateInfoSet = self.tigergame.stateIDtoIS(s)
@@ -78,15 +80,18 @@ class TigerAgent:
 
         """
 
-        rand = np.random.randint(0, 20)
-        if rand < 10:
+        rand = np.random.randint(0, 100)
+        #if self.TURN == 0:
+        if rand < 61:
             #print(rand)
             stateList = self.tigergame.totalStatesLeft
+            self.TURN = 1
         else:
             #print(rand)
             stateList = self.tigergame.totalStatesRight
+            self.TURN = 0
 
-        stateList = self.tigergame.totalStates
+        #stateList = self.tigergame.totalStates
 
         for s in stateList: #self.tigergame.totalStates:
 
@@ -113,6 +118,11 @@ class TigerAgent:
 
                 self.verbose(" - succs: ", succs)
 
+                # if s == "rootTLLGL" and a == self.tigergame.OPENLEFT:
+                #     print("HERE")
+                #     print(self.tigergame.getReward(s, a=a))
+                #     print(s, a)
+
                 Value = 0.0
                 for _, s_prime, prob in succs:
                     tempValue = 0.0
@@ -120,11 +130,13 @@ class TigerAgent:
                     for a_prime in self.tigergame.getActions(s_prime):
                         tempValue += self.Q[s_prime][a_prime] * self.pi[self.tigergame.stateIDtoIS(s_prime)][a_prime]
                     self.verbose("  - afterLoop reward s: ", s, "  reward: ", self.tigergame.getReward(s, a=a))
+                    #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                     Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
-                self.Q_bu[s][a] = Value
+                self.Q_bu[s][a] = self.gamma * Value
+
 
         # Copy over Q Values
-        for s in stateList:#self.tot: #self.tigergame.totalStates:
+        for s in self.tigergame.totalStates:
             for a in self.tigergame.getActions(s):
                 self.Q[s][a] = self.Q_bu[s][a]
                 self.Qsums[s][a] += self.Q[s][a]
@@ -134,7 +146,7 @@ class TigerAgent:
 
 
         # Update regret sums
-        for s in stateList:# #self.tigergame.totalStates:
+        for s in stateList: #self.tigergame.totalStates:
 
             # Skip terminals
             if self.tigergame.isTerminal(s):
@@ -151,16 +163,39 @@ class TigerAgent:
 
             for a in self.tigergame.getActions(s):
                 action_regret = self.Q[s][a] - target
-                self.regret_sums[self.tigergame.stateIDtoIS(s)][a] += action_regret # max(0.0, self.regret_sums[self.tigergame.stateIDtoIS(s)][a] + action_regret)
+
+                iters = t
+                alphaR = 3.0 / 2.0  # accum pos regrets
+                betaR = 0.0  # accum neg regrets
+
+
+                alphaW = pow(iters, alphaR)
+                alphaWeight = (alphaW / (alphaW + 1))
+
+                betaW = pow(iters, betaR)
+                betaWeight = (betaW / (betaW + 1))
+
+
+
+                if action_regret > 0:
+                    action_regret *= alphaWeight
+                else:
+                    action_regret *= betaWeight
+
+                RMP = True
+                if RMP:
+                    self.regret_sums[self.tigergame.stateIDtoIS(s)][a] = max(0.0, self.regret_sums[self.tigergame.stateIDtoIS(s)][a] + action_regret)
+                else:
+                    self.regret_sums[self.tigergame.stateIDtoIS(s)][a] += action_regret # max(0.0, self.regret_sums[self.tigergame.stateIDtoIS(s)][a] + action_regret)
 
         # Regret Match
-        for s in stateList:# #self.tigergame.totalStates:
+        for s in stateList: # self.tigergame.totalStates:
 
             if self.tigergame.isTerminal(s):
                 continue
 
-            # if s == "root":
-            #     continue
+            if s == "root":
+                continue
 
             for a in self.tigergame.getActions(s):
                 rgrt_sum = 0.0
@@ -175,7 +210,9 @@ class TigerAgent:
                     self.pi[self.tigergame.stateIDtoIS(s)][a] = 1.0 / len(self.regret_sums[self.tigergame.stateIDtoIS(s)])
 
                 # Does this go above or below
-                self.pi_sums[self.tigergame.stateIDtoIS(s)][a] += self.pi[self.tigergame.stateIDtoIS(s)][a]
+                gammaR = 2.0  # contribution to avg strategy
+                gammaWeight = pow((t / (t + 1)), gammaR)
+                self.pi_sums[self.tigergame.stateIDtoIS(s)][a] += self.pi[self.tigergame.stateIDtoIS(s)][a] * gammaWeight
 
 
     def verbose(self, *args):
@@ -327,7 +364,9 @@ class TigerGame(object):
 
 
         else:
+            print("Not caught: ", state)
             return 0.0
+            # return self.getReward(state, a)
 
     def isTerminal(self, state):
         if state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
@@ -349,7 +388,9 @@ class TigerGame(object):
 
         # Top root of Tiger on left
         elif state == self.rootTL:
+
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
@@ -368,6 +409,7 @@ class TigerGame(object):
         # Tiger on left, Listen, GL
         elif state == self.rootTLLGL:
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
@@ -377,6 +419,7 @@ class TigerGame(object):
         # Tiger on left, LISTEN, GR
         elif state == self.rootTLLGR:
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
@@ -405,6 +448,7 @@ class TigerGame(object):
         # Tiger on left
         elif state == self.rootTLLGLLGL:
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
@@ -413,6 +457,7 @@ class TigerGame(object):
 
         elif state == self.rootTLLGLLGR:
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
@@ -421,6 +466,7 @@ class TigerGame(object):
 
         elif state == self.rootTLLGRLGL:
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
@@ -429,6 +475,7 @@ class TigerGame(object):
 
         elif state == self.rootTLLGRLGR:
             if action == self.OPENLEFT:
+                #print("state: ", state, " action: ", action)
                 return [[None, self.rootTLOL, 1.0]]
             elif action == self.OPENRIGHT:
                 return [[None, self.rootTLOR, 1.0]]
