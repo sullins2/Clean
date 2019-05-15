@@ -122,6 +122,9 @@ class Agent:
 
     def _train_lonr(self, t):
 
+        #self.alpha = abs(float(t) - 100000.0 ) / 100000.0
+
+
         # PLAYER 1 UPDATES
         for s in range(self.state_size + 1):
 
@@ -141,7 +144,7 @@ class Agent:
 
                         Value = 0.0
                         for action_ in range(1):
-                            Value += self.Qvalues12[0][action_] * self.pi21[0][action_] #pi2 should be 1.0 always, Q[NOOP] updated in state = 2
+                            Value += self.Qvalues12[0][action_]# * self.pi21[0][action_] #pi2 should be 1.0 always, Q[NOOP] updated in state = 2
                         self.QValue_backup11[s][a] = self.Qvalues11[s][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues11[s][a])
 
 
@@ -180,7 +183,7 @@ class Agent:
 
                         Value = 0.0
                         for action_ in range(1):
-                            Value += self.Qvalues21[0][action_] * self.pi12[0][action_] #pi2 should be 1.0 always, Q[NOOP] updated in state = 2
+                            Value += self.Qvalues21[0][action_]# * self.pi12[0][action_] #pi2 should be 1.0 always, Q[NOOP] updated in state = 2
                         self.QValue_backup22[0][a] = self.Qvalues22[0][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues22[0][a])
 
 
@@ -203,13 +206,13 @@ class Agent:
         betaR = 0.0         # accum neg regrets
         gammaR = 2.0        # contribution to avg strategy
 
-        alphaW = pow(t, alphaR)
+        alphaW = pow(t+1, alphaR)
         alphaWeight = (alphaW / (alphaW + 1))
 
-        betaW = pow(t, betaR)
+        betaW = pow(t+1, betaR)
         betaWeight = (betaW / (betaW + 1))
 
-        gammaWeight = pow((t / (t + 1)), gammaR)
+        gammaWeight = pow((t+1 / ((t+1) + 1)), gammaR)
 
         #if alt == 1:
         for s in range(self.state_size):
@@ -245,13 +248,14 @@ class Agent:
                     action_regret *= betaWeight
 
                 self.regret_sums11[s][a] += action_regret
+                # self.regret_sums11[s][a] = max(0.0, self.regret_sums11[s][a] + action_regret)
 
 
-        rgrt_sum2 = sum(filter(lambda x: x > 0, self.regret_sums11[0]))
+        regretSum = sum(filter(lambda x: x > 0, self.regret_sums11[0]))
 
         for a in range(self.two_actions):
-            self.pi11[0][a] = max(self.regret_sums11[0][a], 0.) / rgrt_sum2 if rgrt_sum2 > 0 else 1. / 2.0
-            self.pi_sums11[0][a] += self.pi11[0][a] * gammaWeight
+            self.pi11[0][a] = max(self.regret_sums11[0][a], 0.) / regretSum if regretSum > 0 else 1. / 2.0
+            self.pi_sums11[0][a] += self.pi11[0][a]# * gammaWeight
 
 
 
@@ -272,38 +276,13 @@ class Agent:
                     action_regret *= betaWeight
 
                 self.regret_sums22[s][a] += action_regret
+                # self.regret_sums22[s][a] = max(0.0, self.regret_sums22[s][a] + action_regret)
 
-        self.rgrt_sum2 = sum(filter(lambda x: x > 0, self.regret_sums22[0]))
+        regretSum2 = sum(filter(lambda x: x > 0, self.regret_sums22[0]))
 
         for a in range(self.two_actions):
-            self.pi22[0][a] = max(self.regret_sums22[0][a], 0.) / rgrt_sum2 if rgrt_sum2 > 0 else 1.0 / 2.0
+            self.pi22[0][a] = max(self.regret_sums22[0][a], 0.) / regretSum2 if regretSum2 > 0 else 1.0 / 2.0
             self.pi_sums22[0][a] += self.pi22[0][a] * gammaWeight
-
-
-        # cc += 1
-        # if cc > 2:
-        #     cc = 0
-        # if alt == 1:
-        #     alt = 2
-        # elif alt == 2:
-        #     alt = 1
-
-
-        # if cc < -211:
-        #     cc = 0
-        #     ns = 0.0
-        #     for x in range(pi_sums11.shape[1]):
-        #         ns += pi_sums11[0][x]
-        #     for x in range(pi_sums11.shape[1]):
-        #         pi11[0][x] = pi_sums11[0][x] / ns
-        #         #pi_sums11[0][x] = 0.0
-        #
-        #     ns = 0.0
-        #     for x in range(pi_sums22.shape[1]):
-        #         ns += pi_sums22[0][x]
-        #     for x in range(pi_sums22.shape[1]):
-        #         pi22[0][x] = pi_sums22[0][x] / ns
-                #pi_sums22[0][x] = 0.0
 
 
 

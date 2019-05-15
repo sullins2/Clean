@@ -23,7 +23,7 @@ newGrid.printGrid(q=agent.Q)
 # print("")
 # print("Q35 VI : ", agent.Q[36])
 #
-trainingIterations = 1000
+trainingIterations = 10000
 
 agent = Agent(gridworld=newGrid)
 
