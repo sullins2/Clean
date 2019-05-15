@@ -8,23 +8,30 @@ import numpy as np
 
 
 # Set amount to train
-trainingIterations = 66
+trainingIterations = 1000
 
 newGrid = Grid()
 
-# agent = Agent(gridworld=newGrid)
+agent = Agent(gridworld=newGrid)
+
+newGrid.printGrid()
+
+agent.train_lonr_value_iteration(iterations=trainingIterations, log=1000)
+
+newGrid.printGrid(q=agent.Q)
+
+# print("")
+# print("Q35 VI : ", agent.Q[36])
 #
-# print(newGrid.grid)
-#
-# agent.train_lonr_value_iteration(iterations=trainingIterations, log=1000)
-#
-# print("Q35 VI : ", agent.Q[35])
+trainingIterations = 1000
 
 agent = Agent(gridworld=newGrid)
 
 agent.train_lonr_online(iterations=trainingIterations, log=1000)
 
-print("Q35 ONL: ", agent.Q[36])
+newGrid.printGrid(q=agent.Q)
+
+# print("Q35 ONL: ", agent.Q[36])
 
 
 #print("Non-Deterministic O-LONR check avg Q also add in a way to run it with actions non deterministic")

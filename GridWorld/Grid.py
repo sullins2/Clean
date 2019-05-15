@@ -35,7 +35,7 @@ class Grid(object):
         self.cols = 12
 
         # Non-determinism - this value is split between sideways moves
-        self.noise = 0.0
+        self.noise = 0.20
 
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -47,6 +47,27 @@ class Grid(object):
         #              ' ', ' ', 10]
 
         self.livingReward = -1.0
+
+
+    def printGrid(self, q=None):
+        print("GridWorld - current grid")
+        for r in range(self.rows):
+            for c in range(self.cols):
+                char = self.grid[r * self.cols + c]
+                if type(char) == str:
+                    if q is None:
+                        char = char.ljust(8, '-')
+                    else:
+                        asd = 2
+                        char = round(max(q[r * self.cols + c]), 1)
+                        char = str(char)
+                        char = char.ljust(8, ' ')
+                else:
+                    char = ' ' + str(char)
+                    char = char.ljust(8, ' ')
+                print(char, end='')
+            print("")
+        print("")
 
     def getReward(self, s):
         """ Return reward from leaving state s.

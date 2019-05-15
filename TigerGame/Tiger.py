@@ -29,7 +29,7 @@ class TigerAgent:
         self.regret_sums = {}
 
         # Show prints
-        self.VERBOSE = True
+        self.VERBOSE = False
 
         self.TURN = 0
 
@@ -277,6 +277,8 @@ class TigerAgent:
                     self.verbose("  - afterLoop reward s: ", currentState, "  reward: ", self.tigergame.getReward(currentState, a=a))
                     #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                     Value += prob * (self.tigergame.getReward(currentState, a=a) + self.gamma * tempValue)
+                    #self.alpha = max(0.0, (150000.0 - iters) / 150000.0)
+                # self.Q_bu[currentState][a] = (1.0 - self.alpha)*self.Q[currentState][a] + self.alpha*Value
                 self.Q_bu[currentState][a] = Value
 
             # Epsilon greedy action selection

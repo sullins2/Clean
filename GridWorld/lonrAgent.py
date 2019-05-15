@@ -123,7 +123,7 @@ class Agent:
 
             for a in range(self.numberOfActions):
                 action_regret = self.Q[s][a] - target
-                self.regret_sums[s][a] += action_regret# max(0.0, self.regret_sums[s][a] + action_regret)
+                self.regret_sums[s][a] = max(0.0, self.regret_sums[s][a] + action_regret) #action_regret
 
         # Regret Match
         for s in range(self.numberOfStates):
@@ -156,7 +156,7 @@ class Agent:
         for t in range(1, iterations + 1):
 
             #print("Qt: ", max(self.Q[3]), end='')
-            self._train_lonr_online(iters=t)
+            self._train_lonr_online(iters=t, totalIterations=iterations)
 
             #print("MaxQ: ", max(self.Q[36]), "  Q*pi: ", np.dot(self.Q[36], self.pi[36]))
             #print("  Qt+1: ", max(self.Q[3]))
@@ -165,7 +165,7 @@ class Agent:
                 print("Iteration: ", (t + 1))
 
 
-    def _train_lonr_online(self, startState=36, iters=0):
+    def _train_lonr_online(self, startState=36, iters=0, totalIterations=-1):
         """ One episode of O-LONR (online learning)
 
         """
@@ -202,7 +202,13 @@ class Agent:
                         tempValue += self.Q[s_prime][a_prime] * self.pi[s_prime][a_prime]
                     Value += prob * (self.gridWorld.getReward(currentState) + self.gamma*tempValue)
 
-                self.Q_bu[currentState][a] = Value  # + self.gridWorld.getReward(s)
+
+                DECAY_ALPHA = True  #For Q Value convergence
+                if DECAY_ALPHA:
+                    self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
+                    self.Q_bu[currentState][a] = (1.0 - self.alpha) * self.Q[currentState][a] + self.alpha*Value
+                else:
+                    self.Q_bu[currentState][a] = Value
 
             # Epsilon greedy action selection
 
