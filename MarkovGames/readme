@@ -5,5 +5,9 @@ Source code for soccer game taken from:
 https://github.com/pdvelez/ml_soccer
 
 
+Cyclic equilibria paper:
+
+    https://papers.nips.cc/paper/2834-cyclic-equilibria-in-markov-games.pdf
+
 Notes:
     Redundant actions removed (ex: up and NoOp when a wall is above is just up)
