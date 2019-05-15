@@ -231,17 +231,17 @@ class Agent:
         # update regret / policy
 
         # DCFR STUFF
-        # alphaR = 3.0 / 2.0  # accum pos regrets
-        # betaR = 0.0  # accum neg regrets
-        # gammaR = 2.0  # contribution to avg strategy
-        #
-        # alphaW = pow(t, alphaR)
-        # alphaWeight = (alphaW / (alphaW + 1))
-        #
-        # betaW = pow(t, betaR)
-        # betaWeight = (betaW / (betaW + 1))
-        #
-        # gammaWeight = pow((t / (t + 1)), gammaR)
+        alphaR = 3.0 / 2.0  # accum pos regrets
+        betaR = 0.0  # accum neg regrets
+        gammaR = 2.0  # contribution to avg strategy
+
+        alphaW = pow(t, alphaR)
+        alphaWeight = (alphaW / (alphaW + 1))
+
+        betaW = pow(t, betaR)
+        betaWeight = (betaW / (betaW + 1))
+
+        gammaWeight = pow((t / (t + 1)), gammaR)
 
         # Update regret sums PLAYER 1
         for s in self.QvaluesA.keys():
@@ -254,10 +254,10 @@ class Agent:
 
             for a in self.total_actions:
                 action_regret = self.QvaluesA[s][a] - target
-                # if action_regret > 0:
-                #     action_regret *= alphaWeight
-                # else:
-                #     action_regret *= betaWeight
+                if action_regret > 0:
+                    action_regret *= alphaWeight
+                else:
+                    action_regret *= betaWeight
 
                 self.regret_sumsA[s][a] += action_regret
 
@@ -275,7 +275,7 @@ class Agent:
                 else:
                     self.piA[s][a] = 1. / len(self.regret_sumsA[s].keys())
 
-                self.pi_sumsA[s][a] += self.piA[s][a]# * gammaWeight
+                self.pi_sumsA[s][a] += self.piA[s][a] * gammaWeight
 
         # Update regret sums PLAYER 2
         for s in self.QvaluesB.keys():
@@ -288,10 +288,10 @@ class Agent:
 
             for a in self.total_actions:
                 action_regret = self.QvaluesB[s][a] - target
-                # if action_regret > 0:
-                #     action_regret *= alphaWeight
-                # else:
-                #     action_regret *= betaWeight
+                if action_regret > 0:
+                    action_regret *= alphaWeight
+                else:
+                    action_regret *= betaWeight
 
                 self.regret_sumsB[s][a] += action_regret
 
@@ -305,11 +305,11 @@ class Agent:
 
             for a in self.total_actions:
                 if rgrt_sum > 0:
-                    self.piB[s][a] = (max(self.regret_sumsB[s][a], 0.) / rgrt_sum)  # math.pow(t/(t+1), 2.0)
+                    self.piB[s][a] = (max(self.regret_sumsB[s][a], 0.) / rgrt_sum)
                 else:
-                    self.piB[s][a] = 1.0 / len(self.regret_sumsB[s].keys())  # * math.pow(t/(t+1), 2.0)
+                    self.piB[s][a] = 1.0 / len(self.regret_sumsB[s].keys())
 
-                self.pi_sumsB[s][a] += self.piB[s][a]# * gammaWeight  # * math.pow(t/(t+1), 2.0) # Save the policy sums
+                self.pi_sumsB[s][a] += self.piB[s][a] * gammaWeight
 
         # Normailize pi_sums
         for s in self.total_states:
