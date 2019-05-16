@@ -23,13 +23,17 @@ newGrid.printGrid(q=agent.Q)
 # print("")
 # print("Q35 VI : ", agent.Q[36])
 #
-trainingIterations = 10000
+trainingIterations = 6000
 
 agent = Agent(gridworld=newGrid)
 
 agent.train_lonr_online(iterations=trainingIterations, log=1000)
 
 newGrid.printGrid(q=agent.Q)
+
+print(agent.Qsums[36] / float(trainingIterations))
+print(agent.pi[36])
+#print(agent.pi_sums[36])
 
 # print("Q35 ONL: ", agent.Q[36])
 

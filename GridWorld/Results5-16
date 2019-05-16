@@ -1,0 +1,61 @@
+
+
+Value Iteration:
+    working
+
+Online/q-learning
+
+    statesVisited list kept during episode
+        - state only added to list once (in case state is revisited)
+
+    Results without decaying alpha:
+
+        Bottom left optimal: 170.23
+
+        GridWorld - current grid
+            181.8   183.1   184.4   185.7   186.9   188.2   189.5   190.7   191.9   193.1   194.3   195.4
+            181.3   182.7   184.0   185.4   186.8   188.1   189.5   190.9   192.4   193.8   195.3   196.8
+            180.2   181.4   182.8   184.1   185.5   186.9   188.3   189.7   191.1   192.6   194.3   198.3
+            170.2    -100    -100    -100    -100    -100    -100    -100    -100    -100    -100    200
+
+            Average Q
+            # last one is action LEFT (optimal)
+            Qavg[bottomLeft] = [147.64170164 -46.5280064  139.44117489 167.17970461]
+
+    Results with decaying alpha:
+
+        Decay from 1 -> 0 for now, should use a smarter way
+        self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
+
+        QAvg:
+
+            Bottom left optimal: 170.23
+
+            Iterations:  6000
+            GridWorld - current grid
+                181.8   183.1   184.4   185.7   186.9   188.2   189.5   190.7   191.9   193.1   194.3   195.4
+                181.3   182.7   184.0   185.4   186.8   188.1   189.5   190.9   192.4   193.8   195.3   196.8
+                180.2   181.4   182.8   184.1   185.5   186.9   188.3   189.7   191.1   192.6   194.3   198.3
+                170.2    -100    -100    -100    -100    -100    -100    -100    -100    -100    -100    200
+
+            QAvg = [148.08086764 -46.42925984 139.78550071 167.57266178]
+            pi = [0. 0. 0. 1.]
+
+
+    Results with decaying epsilon:
+
+        Variations of:
+
+            Decay epsilon for first half/quarter from 20->0, then just follow pi
+
+            self.epsilon = (((float(totalIterations) / 2.0) - float(iters)) / (float(totalIterations) / 2.0)) * 20.0
+            self.epsilon = max(0.0, self.epsilon)
+
+        GridWorld - current grid with Q
+            181.8   183.1   184.4   185.7   186.9   188.2   189.5   190.7   191.9   193.1   194.3   195.4
+            181.3   182.7   184.0   185.4   186.8   188.1   189.5   190.9   192.4   193.8   195.3   196.8
+            180.2   181.4   182.8   184.1   185.5   186.9   188.3   189.7   191.1   192.6   194.3   198.3
+            170.2    -100    -100    -100    -100    -100    -100    -100    -100    -100    -100    200
+
+            QAvg = [148.23292983 -46.39795506 140.04536198 167.84977411]
+            pi = [0. 0. 0. 1.]

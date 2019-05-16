@@ -19,9 +19,9 @@ class Agent:
         self.numberOfActions = 4
 
         # Parameters
-        self.epsilon = 10   # epsilon greedy: percent it will take random
+        self.epsilon = 10.0   # epsilon greedy: percent it will take random
         self.gamma = 1.0    # discount factor
-        # self.alpha = 1.0  # No learning rate
+        self.alpha = 1.0  # No learning rate
 
         # living cost
         self.livingCost = -1.0
@@ -205,30 +205,54 @@ class Agent:
 
                 DECAY_ALPHA = True  #For Q Value convergence
                 if DECAY_ALPHA:
-                    self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
+                    # self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
                     self.Q_bu[currentState][a] = (1.0 - self.alpha) * self.Q[currentState][a] + self.alpha*Value
                 else:
                     self.Q_bu[currentState][a] = Value
 
             # Epsilon greedy action selection
+            EPS_GREEDY = True
+            if EPS_GREEDY:
+                if np.random.randint(0, 100) < self.epsilon:
+                    randomAction = np.random.randint(0, 4)
+                else:
+                    # UP, RIGHT, DOWN, LEFT
+                    randomAction = np.random.choice([0,1,2,3], p=self.pi[currentState])
 
-            if np.random.randint(0, 100) < self.epsilon:
-                randomAction = np.random.randint(0, 4)
             else:
-                randomAction = np.random.choice([0,1,2,3], p=self.pi[currentState])
+                #self.epsilon = (((float(totalIterations) / 4.0) - float(iters)) / float(totalIterations)) * 20.0
+                # self.epsilon = (((float(totalIterations) / 2.0) - float(iters)) / (float(totalIterations) / 2.0)) * 20.0
+                # self.epsilon = max(0.0, self.epsilon)
+                # eppRand = float(np.random.randint(0, 100))
+                # print("Iteration: ", iters,"Rand:", eppRand, "  Epsilon: ", self.epsilon)
+                if float(np.random.randint(0, 100)) < self.epsilon:
+                    randomAction = np.random.randint(0, 4)
+                else:
+                    # UP, RIGHT, DOWN, LEFT
+                    randomAction = np.random.choice([0,1,2,3], p=self.pi[currentState])
 
 
             # Gets an actual noisy move if noise > 0
             # Else it will take the specified move.
             # In both cases, bumps into walls are checked
             currentState = self.gridWorld.getMove(currentState, randomAction)
-            statesVisited.append(currentState)
 
+            if currentState not in statesVisited:
+                #print("Repeat: ", currentState)
+                statesVisited.append(currentState)
+
+        self.epsilon = (((float(totalIterations) / 10.0) - float(iters)) / (float(totalIterations) / 10.0)) * 20.0
+        self.epsilon = max(0.0, self.epsilon)
+        eppRand = float(np.random.randint(0, 100))
+        #print("Iteration: ", iters, "Rand:", eppRand, "  Epsilon: ", self.epsilon)
+
+        self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
         # Copy Q Values over for states visited
         for s in statesVisited:
             for a in range(self.numberOfActions):
-                self.Q[s][a] = self.Q_bu[s][a]
                 self.Qsums[s][a] += self.Q_bu[s][a]
+                self.Q[s][a] = self.Q_bu[s][a]
+
 
         # for s in range(self.numberOfStates):
         #     for a in range(self.numberOfActions):
