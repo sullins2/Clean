@@ -19,7 +19,7 @@ rewardSums = []
 if __name__ == '__main__':
 
 
-    trainingIterations = 1000
+    trainingIterations = 10000
 
     newTigerGame = TigerGame()
 
