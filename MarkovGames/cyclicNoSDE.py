@@ -93,7 +93,7 @@ class Agent:
         self.SEND = 1
         self.NOOP = 2
 
-        self.alpha = 0.9999
+        self.alpha = 1.0#0.9999
         self.gamma = 0.75
 
         LEPS = 50000
@@ -137,7 +137,8 @@ class Agent:
                         Value = 0.0
                         for action_ in range(self.two_actions):
                             Value += self.Qvalues11[0][action_] * self.pi11[0][action_]
-                        self.QValue_backup11[s][a] = self.Qvalues11[s][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues11[s][a])
+                        #self.QValue_backup11[s][a] = self.Qvalues11[s][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues11[s][a])
+                        self.QValue_backup11[s][a] = reward + self.gamma * Value
 
                     elif a == self.SEND:
                         reward = 0.0
@@ -145,7 +146,8 @@ class Agent:
                         Value = 0.0
                         for action_ in range(1):
                             Value += self.Qvalues12[0][action_]# * self.pi21[0][action_] #pi2 should be 1.0 always, Q[NOOP] updated in state = 2
-                        self.QValue_backup11[s][a] = self.Qvalues11[s][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues11[s][a])
+                        #self.QValue_backup11[s][a] = self.Qvalues11[s][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues11[s][a])
+                        self.QValue_backup11[s][a] = reward + self.gamma * Value
 
 
 
@@ -160,7 +162,8 @@ class Agent:
                 for action_ in range(self.two_actions):
                     Value += self.Qvalues11[0][action_] * self.pi11[0][action_]
                 #QValue_backup12[0][a] = ((7.0 / 12.0) * (3.0 + gamma * Qvalues12[0][a])) + ((5.0 / 12.0)*(gamma * Value))
-                self.QValue_backup12[0][a] = ((self.pi22[0][self.KEEP]) * (3.0 + self.gamma * self.Qvalues12[0][a])) + ((self.pi22[0][self.SEND]) *(self.gamma * Value))
+                #self.QValue_backup12[0][a] = ((self.pi22[0][self.KEEP]) * (3.0 + self.gamma * self.Qvalues12[0][a])) + ((self.pi22[0][self.SEND]) *(self.gamma * Value))
+                self.QValue_backup12[0][a] = ((self.pi22[0][self.KEEP]) * (3.0 + self.gamma * self.Qvalues12[0][a])) + ((self.pi22[0][self.SEND]) * (self.gamma * Value))
 
         #else:
         # PLAYER 2 UPDATES
@@ -175,7 +178,8 @@ class Agent:
                         Value = 0.0
                         for action_ in range(self.two_actions):
                             Value += self.Qvalues22[0][action_] * self.pi22[0][action_]
-                        self.QValue_backup22[0][a] = self.Qvalues22[0][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues22[0][a])
+                        #self.QValue_backup22[0][a] = self.Qvalues22[0][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues22[0][a])
+                        self.QValue_backup22[0][a] = reward + self.gamma * Value
 
                     elif a == self.SEND:
 
@@ -184,7 +188,8 @@ class Agent:
                         Value = 0.0
                         for action_ in range(1):
                             Value += self.Qvalues21[0][action_]# * self.pi12[0][action_] #pi2 should be 1.0 always, Q[NOOP] updated in state = 2
-                        self.QValue_backup22[0][a] = self.Qvalues22[0][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues22[0][a])
+                        #self.QValue_backup22[0][a] = self.Qvalues22[0][a] + self.alpha * (reward + self.gamma * Value - self.Qvalues22[0][a])
+                        self.QValue_backup22[0][a] = reward + self.gamma * Value
 
 
 
@@ -242,13 +247,13 @@ class Agent:
 
             for a in range(self.two_actions):
                 action_regret = self.Qvalues11[s][a] - target
-                if action_regret > 0:
-                    action_regret *= alphaWeight
-                else:
-                    action_regret *= betaWeight
+                # if action_regret > 0:
+                #     action_regret *= alphaWeight
+                # else:
+                #     action_regret *= betaWeight
 
                 self.regret_sums11[s][a] += action_regret
-                # self.regret_sums11[s][a] = max(0.0, self.regret_sums11[s][a] + action_regret)
+                #self.regret_sums11[s][a] = max(0.0, self.regret_sums11[s][a] + action_regret)
 
 
         regretSum = sum(filter(lambda x: x > 0, self.regret_sums11[0]))
@@ -270,19 +275,19 @@ class Agent:
                 action_regret = self.Qvalues22[s][a] - target
 
                 # WORKING
-                if action_regret > 0:
-                    action_regret *= alphaWeight
-                else:
-                    action_regret *= betaWeight
+                # if action_regret > 0:
+                #     action_regret *= alphaWeight
+                # else:
+                #     action_regret *= betaWeight
 
                 self.regret_sums22[s][a] += action_regret
-                # self.regret_sums22[s][a] = max(0.0, self.regret_sums22[s][a] + action_regret)
+                #self.regret_sums22[s][a] = max(0.0, self.regret_sums22[s][a] + action_regret)
 
         regretSum2 = sum(filter(lambda x: x > 0, self.regret_sums22[0]))
 
         for a in range(self.two_actions):
             self.pi22[0][a] = max(self.regret_sums22[0][a], 0.) / regretSum2 if regretSum2 > 0 else 1.0 / 2.0
-            self.pi_sums22[0][a] += self.pi22[0][a] * gammaWeight
+            self.pi_sums22[0][a] += self.pi22[0][a]# * gammaWeight
 
 
 

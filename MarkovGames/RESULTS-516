@@ -1,0 +1,36 @@
+
+
+
+Cyclic NoSDE example:
+
+    RM+
+        Pi_sums lagging, especially for 100,000 iterations but will converge
+        alpha = 0.1 though
+
+        PLAYER 1
+            QValues11:
+                [[3.99999989 3.99999981]]
+            QValues12:
+                    [[5.33333306]]
+                 PI11
+                    [[0.33333332 0.66666668]]
+                 PI SUMS11
+                    [[32609.14017155 67390.85982845]]
+
+            PLAYER 2
+                QValues21:
+                    [[5.33333338]]
+            QValues22:
+                    [[4.00000003 4.00000005]]
+                 PI22
+                    [[0.58333331 0.41666669]]
+                 PI SUMS22
+                    [[58046.27672596 41953.72327404]]
+            FINAL:
+            PI11SUMS:  [[0.3260914 0.6739086]]
+            PI22SUMS:  [[0.58046277 0.41953723]]
+
+
+    This is not set up the same as the soccer game.
+
+    Still not sure how this game is played (it's called turn taking, soccer game is joint-actions)
