@@ -81,9 +81,6 @@ class SoccerGame(MDP):
 
         actions_A = a_current
 
-        p1 = 'A' if n_current == 0 else 'B'
-        p2 = 'B' if n_current == 0 else 'A'
-
         otherN = 1 if n_current == 0 else 0
 
         for actions_B in self.getActions(s, n_current):
@@ -102,8 +99,8 @@ class SoccerGame(MDP):
             else:
                 actions = {'A': actions_B, 'B': actions_A}
             new_state, rewards, goal = world.move(actions)
-            rA = rewards['A'] if n_current == 0 else rewards['B']
-            successors.append([new_state, self.pi[otherN][s][actions_B], rA])
+            reward = rewards['A'] if n_current == 0 else rewards['B']
+            successors.append([new_state, self.pi[otherN][s][actions_B], reward])
 
         return successors
 

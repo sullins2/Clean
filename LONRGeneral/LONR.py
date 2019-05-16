@@ -47,13 +47,13 @@ class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None):
+    def __init__(self, M=None, alpha=0.99, gamma=0.99):
         self.M = M
         #self.N = M.totalPlayers
         #self.S = M.totalStates
 
-        self.gamma = 0.29
-        self.alpha = 0.95
+        self.gamma = gamma
+        self.alpha = alpha
 
 
     def lonr_value_iteration(self, iterations=-1, log=-1):

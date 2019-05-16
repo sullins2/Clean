@@ -3,35 +3,38 @@ from LONRGeneral.GridWorld import *
 from LONRGeneral.Soccer import *
 
 ####################################################
-# # GridWorld MDP
-# #########
-# # create GridWorld
-# gridMDP = Grid()
-#
-# # Create LONR Agent and feed in gridMDP
-# lonrAgent = LONR(M=gridMDP)
-#
-# # Train via VI
-# lonrAgent.lonr_value_iteration(iterations=1122, log=100)
-#
-# print("Bottom left (start state)")
-# print(gridMDP.Q[0][36])
-#
-# print("State above bottom right terminal")
-# print(gridMDP.Q[0][35])
+# GridWorld MDP
+#########
+# create GridWorld
+gridMDP = Grid()
+
+# Create LONR Agent and feed in gridMDP
+lonrAgent = LONR(M=gridMDP, alpha=1.0, gamma=1.0)
+
+# Train via VI
+lonrAgent.lonr_value_iteration(iterations=1000, log=100)
+
+print("Bottom left (start state)")
+print(gridMDP.Q[0][36])
+
+print("State above bottom right terminal")
+print(gridMDP.Q[0][35])
+print("")
 ###################################################
 
 
 
 soccer = SoccerGame()
 
-lonrAgent = LONR(M=soccer)
+# set alpha, gamma
 
-lonrAgent.lonr_value_iteration(iterations=2500, log=40)
+lonrAgent = LONR(M=soccer, alpha=0.3, gamma=0.95)
+
+lonrAgent.lonr_value_iteration(iterations=100, log=40)
 
 soccer.normalize_pisums()
 
-soccer.play(iterations=50000, log=10000)
+soccer.play(iterations=5000, log=1000)
 
 print("")
 
