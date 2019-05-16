@@ -37,6 +37,7 @@ class Agent:
         self.regret_sumsB = {}
         self.pi_sumsB = {}
 
+        self.counter = 0
 
 
         for s in self.total_states.keys():
@@ -111,6 +112,7 @@ class Agent:
                 oppValue = 0.0
                 for actions_B in self.total_actions:
 
+                    self.counter += 1
 
                     player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
                     player_b = Player(x=pBx, y=pBy, has_ball=pBball, p_id='B')
@@ -161,7 +163,11 @@ class Agent:
         ###############################################################
         for s in self.total_states.keys():
 
-            if self.isTerminal(s): continue
+            if self.isTerminal(s):
+                #print("Terminal: ", s)
+                continue
+
+
 
             player_with_ball = s[0]
 

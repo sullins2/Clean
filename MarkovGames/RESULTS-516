@@ -1,7 +1,16 @@
 
 
+Either:
+    Unite these two if they are the same markov game setup
+Or:
+    Have specific algorithm for each
+
 
 Cyclic NoSDE example:
+
+    No alpha (VI)
+        - Decaying alpha did help previously, I believe
+
 
     RM+
         Pi_sums lagging, especially for 100,000 iterations but will converge
@@ -34,3 +43,38 @@ Cyclic NoSDE example:
     This is not set up the same as the soccer game.
 
     Still not sure how this game is played (it's called turn taking, soccer game is joint-actions)
+
+
+
+
+
+    Soccer game:
+
+        No alpha in soccer game (VI)
+
+        Did some opt of the code, it's slightly faster. Not sure if re-creating classes is the overhead
+
+        counter in inner loop of one of the player updates:
+            Iterations: 1500
+            counter   : 1,344,000  (this was much higher, still high though)
+
+        Results don't get "good" until iterations > +1500 (for perspective, not a big deal)
+
+        Iterations 2500:
+
+            Player A starts, they are face to face
+                Player A Wins:  30445 ( 60.89 %)
+                Player B Wins:  19555 ( 39.11 %)
+
+            50,000 random start position, who has ball, games:
+
+                Player A Wins:  24904 ( 49.808 %)
+                Player B Wins:  25096 ( 50.192 %)
+
+            Policy at (only) interesting situation (diagonal)
+                A goes down to block with p=1.0
+                B goes right towards goal with 1.0
+
+                PiB25 A:  {0: 5e-324, 1: 1.0, 2: 5e-324, 3: 5e-324}
+                PiB25 B:  {0: 5e-324, 1: 5e-324, 2: 1.0, 3: 0.0}
+

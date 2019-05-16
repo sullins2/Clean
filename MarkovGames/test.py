@@ -18,7 +18,7 @@ def main():
 
     lonrAgent = Agent()
 
-    lonrAgent.train_lonr(iterations=500, log=50)
+    lonrAgent.train_lonr(iterations=2500, log=50)
 
     lonrAgent.test_lonr(iterations=50000, log=5000)
 
@@ -31,7 +31,8 @@ def main():
     print("")
     print("PiB25 A: ", lonrAgent.pi_sumsA["B25"])
     print("PiB25 B: ", lonrAgent.pi_sumsB["B25"])
-    # print("")
+    print("")
+    print("Counter: ", lonrAgent.counter)
     # print(lonrAgent.pi_sumsA)
     # print(lonrAgent.pi_sumsB)
 
