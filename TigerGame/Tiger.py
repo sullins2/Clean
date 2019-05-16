@@ -255,7 +255,7 @@ class TigerAgent:
             if self.tigergame.isTerminal(currentState) == True:
                 for a in self.tigergame.getActions(currentState):
                     self.verbose(" - Terminal setting: s: ", currentState, " a: ", a, "  rew: ", self.tigergame.getReward(currentState))
-                    self.Q_bu[currentState][a] = self.tigergame.getReward(currentState)
+                    self.Q_bu[self.tigergame.stateIDtoIS(currentState)][a] = self.tigergame.getReward(currentState)
                 done = True
                 continue
 
@@ -274,12 +274,12 @@ class TigerAgent:
                     tempValue = 0.0
                     self.verbose("   - loop: s_prime: ", s_prime, "  prob:", prob)
                     for a_prime in self.tigergame.getActions(s_prime):
-                        tempValue += self.Q[s_prime][a_prime] * self.pi[self.tigergame.stateIDtoIS(s_prime)][a_prime]
+                        tempValue += self.Q[self.tigergame.stateIDtoIS(s_prime)][a_prime] * self.pi[self.tigergame.stateIDtoIS(s_prime)][a_prime]
                     self.verbose("  - afterLoop reward s: ", currentState, "  reward: ", self.tigergame.getReward(currentState, a=a))
                     #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                     Value += prob * (self.tigergame.getReward(currentState, a=a) + self.gamma * tempValue)
                 # self.Q_bu[currentState][a] = (1.0 - self.alpha)*self.Q[currentState][a] + self.alpha*Value
-                self.Q_bu[currentState][a] = Value
+                self.Q_bu[self.tigergame.stateIDtoIS(currentState)][a] = Value
 
             # Epsilon greedy action selection
 
@@ -318,8 +318,8 @@ class TigerAgent:
             # Copy Q Values over for states visited
             for s in statesVisited:
                 for a in self.tigergame.getActions(s):
-                    self.Q[s][a] = self.Q_bu[s][a]
-                    self.Qsums[s][a] += self.Q_bu[s][a]
+                    self.Q[self.tigergame.stateIDtoIS(s)][a] = self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
+                    self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
 
 
             # Update regret sums
@@ -333,10 +333,10 @@ class TigerAgent:
                 target = 0.0
 
                 for a in self.tigergame.getActions(s):
-                    target += self.Q[s][a] * self.pi[self.tigergame.stateIDtoIS(s)][a]
+                    target += self.Q[self.tigergame.stateIDtoIS(s)][a] * self.pi[self.tigergame.stateIDtoIS(s)][a]
 
                 for a in self.tigergame.getActions(s):
-                    action_regret = self.Q[s][a] - target
+                    action_regret = self.Q[self.tigergame.stateIDtoIS(s)][a] - target
 
                     RMPLUS = False
                     if RMPLUS:
@@ -695,3 +695,157 @@ class TigerGame(object):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ # # Goes to TL or TR based on probability tiger is on that side
+ #        startStates = self.tigergame.getNextStatesAndProbs("root", None)
+ #        totalStartStates = []
+ #        totalStartStateProbs = []
+ #        for _, nextState, nextStateProb in startStates:
+ #            totalStartStates.append(nextState)
+ #            totalStartStateProbs.append(nextStateProb)
+ #        currentState = np.random.choice(totalStartStates, p=totalStartStateProbs)
+ #
+ #        statesVisited = []
+ #        statesVisited.append(currentState)
+ #
+ #        done = False
+ #        #print("")
+ #        # Loop until terminal state is reached
+ #        while done == False:
+ #
+ #
+ #            self.verbose("Just entered overall state loop s: ", currentState)
+ #            # Terminal - Set Q as Reward (ALL terminals have one action - "exit" which receives reward)
+ #            if self.tigergame.isTerminal(currentState) == True:
+ #                for a in self.tigergame.getActions(currentState):
+ #                    self.verbose(" - Terminal setting: s: ", currentState, " a: ", a, "  rew: ", self.tigergame.getReward(currentState))
+ #                    self.Q_bu[currentState][a] = self.tigergame.getReward(currentState)
+ #                done = True
+ #                continue
+ #
+ #            # Loop through all actions
+ #            for a in self.tigergame.getActions(currentState):
+ #
+ #                self.verbose(" - action: ", a)
+ #
+ #                # Get successor states
+ #                succs = self.tigergame.getNextStatesAndProbs(currentState, a)
+ #
+ #                self.verbose(" - succs: ", succs)
+ #
+ #                Value = 0.0
+ #                for _, s_prime, prob in succs:
+ #                    tempValue = 0.0
+ #                    self.verbose("   - loop: s_prime: ", s_prime, "  prob:", prob)
+ #                    for a_prime in self.tigergame.getActions(s_prime):
+ #                        tempValue += self.Q[s_prime][a_prime] * self.pi[self.tigergame.stateIDtoIS(s_prime)][a_prime]
+ #                    self.verbose("  - afterLoop reward s: ", currentState, "  reward: ", self.tigergame.getReward(currentState, a=a))
+ #                    #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
+ #                    Value += prob * (self.tigergame.getReward(currentState, a=a) + self.gamma * tempValue)
+ #                # self.Q_bu[currentState][a] = (1.0 - self.alpha)*self.Q[currentState][a] + self.alpha*Value
+ #                self.Q_bu[currentState][a] = Value
+ #
+ #            # Epsilon greedy action selection
+ #
+ #            self.epsilon = 10
+ #            if np.random.randint(0, 100) < self.epsilon:
+ #                    randomAction = np.random.randint(0, 3)
+ #                    randomAction = self.tigergame.totalActions[randomAction]
+ #                    self.verbose("ACTION: RANDOM: ", randomAction)
+ #            else:
+ #
+ #                totalActions = []
+ #                totalActionsProbs = []
+ #                ta = self.tigergame.getActions(currentState)
+ #                for action in ta:
+ #                    totalActions.append(action)
+ #                    totalActionsProbs.append(self.pi[self.tigergame.stateIDtoIS(currentState)][action])
+ #                randomAction = np.random.choice(totalActions,p=totalActionsProbs)
+ #                self.verbose("ACTION: PI: ", randomAction)
+ #
+ #            nextPossStates = self.tigergame.getNextStatesAndProbs(currentState, randomAction)
+ #            if len(nextPossStates) == 1:
+ #                currentState = nextPossStates[0][1]
+ #            else:
+ #                nst = []
+ #                nspt = []
+ #                for _ , ns, nsp in nextPossStates:
+ #                    nst.append(ns)
+ #                    nspt.append(nsp)
+ #                currentState = np.random.choice(nst, p=nspt)
+ #
+ #            if currentState not in statesVisited:
+ #                #print("Repeat: ", currentState)
+ #                statesVisited.append(currentState)
+ #
+ #            #print(statesVisited)
+ #            # Copy Q Values over for states visited
+ #            for s in statesVisited:
+ #                for a in self.tigergame.getActions(s):
+ #                    self.Q[s][a] = self.Q_bu[s][a]
+ #                    self.Qsums[s][a] += self.Q_bu[s][a]
+ #
+ #
+ #            # Update regret sums
+ #            for s in statesVisited:
+ #
+ #                # Don't update terminal states
+ #                if self.tigergame.isTerminal(s) == True:
+ #                    continue
+ #
+ #                # Calculate regret - this variable name needs a better name
+ #                target = 0.0
+ #
+ #                for a in self.tigergame.getActions(s):
+ #                    target += self.Q[s][a] * self.pi[self.tigergame.stateIDtoIS(s)][a]
+ #
+ #                for a in self.tigergame.getActions(s):
+ #                    action_regret = self.Q[s][a] - target
+ #
+ #                    RMPLUS = False
+ #                    if RMPLUS:
+ #                        self.regret_sums[self.tigergame.stateIDtoIS(s)][a] = max(0.0, self.regret_sums[self.tigergame.stateIDtoIS(s)][a] + action_regret)
+ #                    else:
+ #                        self.regret_sums[self.tigergame.stateIDtoIS(s)][a] += action_regret
+ #
+ #            # Regret Match
+ #            for s in statesVisited:
+ #
+ #                # Skip terminal states
+ #                if self.tigergame.isTerminal(s) == True:
+ #                    continue
+ #
+ #                for a in self.tigergame.getActions(s):
+ #
+ #                    # Sum up total regret
+ #                    rgrt_sum = 0.0
+ #                    for k in self.regret_sums[self.tigergame.stateIDtoIS(s)].keys():
+ #                        rgrt_sum += self.regret_sums[self.tigergame.stateIDtoIS(s)][k] if self.regret_sums[self.tigergame.stateIDtoIS(s)][k] > 0 else 0.0
+ #
+ #
+ #                    # Check if this is a "trick"
+ #                    # Check if this can go here or not
+ #                    if rgrt_sum > 0:
+ #                        self.pi[self.tigergame.stateIDtoIS(s)][a] = (max(self.regret_sums[self.tigergame.stateIDtoIS(s)][a], 0.) / rgrt_sum)
+ #                    else:
+ #                        self.pi[self.tigergame.stateIDtoIS(s)][a] = 1.0 / len(self.regret_sums[self.tigergame.stateIDtoIS(s)])
+ #
+ #                    # Add to policy sum
+ #                    self.pi_sums[self.tigergame.stateIDtoIS(s)][a] += self.pi[self.tigergame.stateIDtoIS(s)][a]
+ #
+ #            statesVisited = []

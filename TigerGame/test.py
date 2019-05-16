@@ -50,3 +50,15 @@ if __name__ == '__main__':
     for k in sorted(agent.regret_sums.keys()):
         if len(list(agent.regret_sums[k].keys())) > 1:
             print(k, ":  ", agent.regret_sums[k])
+
+    print("")
+    ###################################
+    # check this is correct
+    # print("Agent Q sums:")
+    # for k in sorted(agent.Qsums.keys()):
+    #     if len(list(agent.Qsums[k].keys())) > 1:
+    #         print(k, " ", end='')
+    #         for kk in agent.Qsums[k].keys():
+    #             print(kk, ":  ", agent.Qsums[k][kk] / float(trainingIterations), " ", end="")
+    #
+    #         print("")
