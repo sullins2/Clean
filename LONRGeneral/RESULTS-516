@@ -1,0 +1,78 @@
+
+Comments by me included
+
+Here is the output of running what is in test.py currently:
+
+
+# GridWorld MDP (noise=0.2)
+Starting training..
+Iteration:  100
+Iteration:  1000
+Finish Training
+
+# actions are [N, E, S, W]
+# max Q is 170.23
+Bottom left (start state)
+[150.21037763 -45.95324942 142.21037763 170.23375292]
+
+# Terminal is +200, so I assume this is correct. I don't have the berkley project open to check for sure
+State above bottom right terminal
+[195.71956979 197.2909962  198.26081479 194.16021083]
+
+
+# Soccer game
+Starting training..
+Iteration:  500
+Iteration:  4000
+Finish Training
+
+# Plays this game repeatedly
+    0 B A 3
+    4 5 6 7
+
+#Face to face start, A has the ball (A is trying to score in 0 or 4)
+Test iterations:  50000
+Player A Wins:  33189 ( 66.378 %)
+Player B Wins:  16811 ( 33.622 %)
+
+
+# Total random games: random valid start states, random who has ball
+Random game iteration:  50000
+Player A Wins:  24762 ( 49.524 %)
+Player B Wins:  25238 ( 50.476 %)
+
+
+# Below show some of the game states interest
+Print out of game states of interest
+ 0  1  2  3
+ 4  5  6  7
+
+NOTE THAT THESE NUMBERS ARE: [N, S, E, W]
+This is hidden from the LONR algorithm, I am just bringing it up because it's different than above..
+
+Reminder: B wants to score on the right, A wants to score on the LEFT
+
+B has ball in 6, A in 2
+    # A: random, cant do anything
+    # B: Goes East into goal
+PiB26 A:  {0: 0.3333333333333333, 1: 0.3333333333333333, 2: 0.0, 3: 0.3333333333333333}
+PiB26 B:  {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0}
+
+B has ball in 5, A in 2
+    # A: goes south to block
+    # B: Goes east towards goal
+PiB25 A:  {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0}
+PiB25 B:  {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0}
+
+A has ball in 2, B in 5
+    # A: goes west towards goal
+    # B: goes north to block
+PiA25 A:  {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0}
+PiA25 B:  {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0}
+
+A has ball in 1, B in 5
+    # A: goes west into goal
+    # B: random, can't do anything
+PiA15 A:  {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0}
+PiA15 B:  {0: 0.3333333333333333, 1: 0.3333333333333333, 2: 0.3333333333333333, 3: 0.0}
+Done

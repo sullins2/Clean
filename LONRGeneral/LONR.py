@@ -47,13 +47,13 @@ class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None, alpha=0.99, gamma=0.99):
+    def __init__(self, M=None,gamma=0.99):
         self.M = M
         #self.N = M.totalPlayers
         #self.S = M.totalStates
 
         self.gamma = gamma
-        self.alpha = alpha
+        #self.alpha = alpha
 
 
     def lonr_value_iteration(self, iterations=-1, log=-1):
@@ -106,7 +106,8 @@ class LONR(object):
 
                         Value += prob * (reward + self.gamma * tempValue)
 
-                    self.M.Q_bu[n][s][a_current] = Value# self.alpha*self.M.Q[n][s][a_current] + (1.0 - self.alpha)*Value
+                    self.M.Q_bu[n][s][a_current] = Value
+                    # self.alpha*self.M.Q[n][s][a_current] + (1.0 - self.alpha)*Value
 
 
         ####################################################################################################
@@ -118,6 +119,7 @@ class LONR(object):
                     self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
                     self.M.QSums[n][s][a] += self.M.Q[n][s][a]
 
+        # Regrets / policy updates, etc
         # For each player
         for n in range(self.M.N):
 

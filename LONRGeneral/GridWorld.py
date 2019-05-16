@@ -20,7 +20,7 @@ class Grid(MDP):
 
     """
 
-    def __init__(self):
+    def __init__(self, noise=0.0):
         super().__init__()
 
         # One player MDP
@@ -44,7 +44,7 @@ class Grid(MDP):
         self.N = 1
 
         # Non-determinism - this value is split between sideways moves
-        self.noise = 0.20
+        self.noise = noise
 
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',

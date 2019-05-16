@@ -5,11 +5,11 @@ from LONRGeneral.Soccer import *
 ####################################################
 # GridWorld MDP
 #########
-# create GridWorld
-gridMDP = Grid()
+# create GridWorld (inherits from MDP class)
+gridMDP = Grid(noise=0.2)
 
 # Create LONR Agent and feed in gridMDP
-lonrAgent = LONR(M=gridMDP, alpha=1.0, gamma=1.0)
+lonrAgent = LONR(M=gridMDP, gamma=1.0)
 
 # Train via VI
 lonrAgent.lonr_value_iteration(iterations=1000, log=100)
@@ -24,43 +24,53 @@ print("")
 
 
 
+# Create soccer game MG (inherits from MDP class)
 soccer = SoccerGame()
 
-# set alpha, gamma
+# Create LONR agent, feed in soccer
+lonrAgent = LONR(M=soccer, gamma=0.95)
 
-lonrAgent = LONR(M=soccer, alpha=0.3, gamma=0.95)
+# Train via VI
+lonrAgent.lonr_value_iteration(iterations=4000, log=500)
 
-lonrAgent.lonr_value_iteration(iterations=100, log=40)
+# Test of the learned policy:
 
+# Normalize pi sums here for now
 soccer.normalize_pisums()
 
-soccer.play(iterations=5000, log=1000)
+# This plays face-to-face start state, player A has the ball
+# This is 66/33 win/lose for playerA. Should double check that is correct
+#
+soccer.play(iterations=50000, log=10000)
 
 print("")
 
+# Play random games, mix who has ball at start, positions, etc
 soccer.play_random(iterations=50000,log=10000)
 
-# print("Print out of game states of interest")
-#
-# print(" 0  1  2  3")
-# print(" 4  5  6  7")
-# print("")
-# print("B has ball in 6, A in 2")
-# print("PiB26 A: ", soccer.pi[0]["B26"])
-# print("PiB26 B: ", soccer.pi[1]["B26"])
-# print("")
-# print("B has ball in 5, A in 2")
-# print("PiB25 A: ", soccer.pi[0]["B25"])
-# print("PiB25 B: ", soccer.pi[1]["B25"])
-#
-# print("")
-# print("A has ball in 2, B in 5")
-# print("PiA25 A: ", soccer.pi[0]["A25"])
-# print("PiA25 B: ", soccer.pi[1]["A25"])
-# print("")
-# print("A has ball in 1, B in 5")
-# print("PiA15 A: ", soccer.pi[0]["A15"])
-# print("PiA15 B: ", soccer.pi[1]["A15"])
+print("")
+
+print("Print out of game states of interest")
+
+print(" 0  1  2  3")
+print(" 4  5  6  7")
+print("")
+print("B has ball in 6, A in 2")
+print("PiB26 A: ", soccer.pi[0]["B26"])
+print("PiB26 B: ", soccer.pi[1]["B26"])
+print("")
+print("B has ball in 5, A in 2")
+print("PiB25 A: ", soccer.pi[0]["B25"])
+print("PiB25 B: ", soccer.pi[1]["B25"])
+
+print("")
+print("A has ball in 2, B in 5")
+print("PiA25 A: ", soccer.pi[0]["A25"])
+print("PiA25 B: ", soccer.pi[1]["A25"])
+print("")
+print("A has ball in 1, B in 5")
+print("PiA15 A: ", soccer.pi[0]["A15"])
+print("PiA15 B: ", soccer.pi[1]["A15"])
 
 print("Done")
 
