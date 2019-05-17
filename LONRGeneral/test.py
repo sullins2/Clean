@@ -85,7 +85,7 @@ noSDE = NoSDE()
 lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.5)
 
 
-lonrAgent.lonr_value_iteration(iterations=450000, log=1000)
+lonrAgent.lonr_value_iteration(iterations=50000, log=1000)
 
 
 print("")

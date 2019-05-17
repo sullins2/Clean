@@ -131,7 +131,7 @@ class LONR(object):
                         #print("  Value += prob:", prob, " * (reward + tv): ", reward, "  tempValue: ", tempValue)
                         Value += prob * (reward + self.gamma * tempValue)
 
-                    self.M.Q_bu[n][s][a_current] = self.alpha*self.M.Q[n][s][a_current] + (1.0 - self.alpha)*Value
+                    self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + (self.alpha)*Value
 
 
         ####################################################################################################
