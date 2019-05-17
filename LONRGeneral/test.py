@@ -75,42 +75,80 @@ from LONRGeneral.NoSDE import *
 
 ######################################################################
 
+
+######################################################################
+# NoSDE
+#
 # SET GAMMA = 0.75 (THIS IS REQUIRED)
 # ALPHA works with 0.5, iterations 400k +
 # Better results when alpha is decayed
+#
+# noSDE = NoSDE()
+#
+# # Create LONR agent, feed in soccer
+# lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=1.0)
+#
+#
+# lonrAgent.lonr_value_iteration(iterations=50000, log=1000)
+#
+#
+# print("")
+# print("Normalized Pi Sums:")
+# for n in range(2):
+#     for k in sorted(noSDE.pi_sums[n].keys()):
+#         #print(k, ": ", noSDE.pi_sums[k])
+#         tot = 0.0
+#         for kk in noSDE.pi_sums[n][k].keys():
+#             tot += noSDE.pi_sums[n][k][kk]
+#         print(k, ": ", end='')
+#         for kk in noSDE.pi_sums[n][k].keys():
+#             print(kk, ": ", noSDE.pi_sums[n][k][kk] / float(tot), " ", end='')
+#         print("")
+# print("")
+# print("QValues:")
+# for n in range(2):
+#     for k in sorted(noSDE.Q[n].keys()):
+#         #print(k, ": ", noSDE.pi_sums[k])
+#         print(k, ": ", end='')
+#         for kk in noSDE.Q[n][k].keys():
+#             print(kk, ": ", noSDE.Q[n][k][kk], " ", end='')
+#         print("")
 
-noSDE = NoSDE()
-
-# Create LONR agent, feed in soccer
-lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.5)
+#######################################################################
 
 
-lonrAgent.lonr_value_iteration(iterations=50000, log=1000)
+gridMDP = Grid(noise=0.20)
 
+# Create LONR Agent and feed in gridMDP
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=15)
 
-print("")
-print("Normalized Pi Sums:")
-for n in range(2):
-    for k in sorted(noSDE.pi_sums[n].keys()):
-        #print(k, ": ", noSDE.pi_sums[k])
-        tot = 0.0
-        for kk in noSDE.pi_sums[n][k].keys():
-            tot += noSDE.pi_sums[n][k][kk]
-        print(k, ": ", end='')
-        for kk in noSDE.pi_sums[n][k].keys():
-            print(kk, ": ", noSDE.pi_sums[n][k][kk] / float(tot), " ", end='')
-        print("")
-print("")
-print("QValues:")
-for n in range(2):
-    for k in sorted(noSDE.Q[n].keys()):
-        #print(k, ": ", noSDE.pi_sums[k])
-        print(k, ": ", end='')
-        for kk in noSDE.Q[n][k].keys():
-            print(kk, ": ", noSDE.Q[n][k][kk], " ", end='')
-        print("")
+# Train via VI
+lonrAgent.lonr_online(iterations=1100, log=100)
+
+print("Bottom left (start state)")
+print(gridMDP.Q[0][36])
+
+print("State above bottom right terminal")
+print(gridMDP.Q[0][35])
 
 print("Done")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

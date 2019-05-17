@@ -90,38 +90,21 @@ class Grid(MDP):
 
 
     # Only needed for O-LONR
-    # def getMove(self, s, action):
-    #     """ Sanity check for making a move
-    #         As well as returning non-deterministic move.
-    #         If moving into a wall, returns original position.
-    #         Else, returns the move.
-    #     """
-    #
-    #     # If non-deterministic
-    #     if self.noise > 0:
-    #
-    #         # Get list of successor states and transition probabilities
-    #         succs = self.getNextStatesAndProbs(s, action)
-    #
-    #         # Get a move based on Transition probs
-    #         actionChoices = []
-    #         actionProbs = []
-    #         for action, state, prob in succs:
-    #             actionChoices.append(action)
-    #             actionProbs.append(prob)
-    #         action = np.random.choice(actionChoices, p=actionProbs)
-    #
-    #     # Apply the action
-    #     appActX, appActY = self._applyAction(s, action)
-    #
-    #     # Check if valid move
-    #     validMove = self._isValidMove(appActX, appActY)
-    #
-    #     # Return based on valid or not
-    #     if validMove:
-    #         return self.XYToState(appActX, appActY)
-    #     else:
-    #         return s
+    def getMove(self, s, action):
+        """  Get s_prime given s, action
+        """
+
+        succs = self.getNextStatesAndProbs(s, action, 0)
+
+        # Get a move based on Transition probs
+        actionChoices = []
+        actionProbs = []
+        for state, prob, reward in succs:
+            actionChoices.append(state)
+            actionProbs.append(prob)
+
+        next_state = np.random.choice(actionChoices, p=actionProbs)
+        return next_state
 
     def isTerminal(self, s):
         """Returns True if s is a terminal state.

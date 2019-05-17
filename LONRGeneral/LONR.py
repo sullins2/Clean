@@ -1,5 +1,5 @@
 
-
+import numpy as np
 
 
 class MDP(object):
@@ -47,17 +47,24 @@ class MDP(object):
     def isTerminal(self, s):
         raise NotImplementedError("Please implement information_set method")
 
+
+    def getMove(self, s, a):
+        """Used to get actual move in the environment for O-LONR
+        """
+        raise NotImplementedError("Please implement information_set method")
+
 class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None, gamma=0.99, alpha=0.99):
+    def __init__(self, M=None, gamma=0.99, alpha=0.99, epsilon=10):
         self.M = M
         #self.N = M.totalPlayers
         #self.S = M.totalStates
 
         self.gamma = gamma
         self.alpha = alpha
+        self.epsilon = epsilon
 
 
     def lonr_value_iteration(self, iterations=-1, log=-1):
@@ -125,10 +132,8 @@ class LONR(object):
 
                         # Loop thru actions in s_prime for player n
                         for a_current_prime in self.M.getActions(s_prime, n):
-                            #print("   - sum over: s_prime: ", s_prime, "  a_current_prime: ", a_current_prime)
                             tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][s_prime][a_current_prime]
 
-                        #print("  Value += prob:", prob, " * (reward + tv): ", reward, "  tempValue: ", tempValue)
                         Value += prob * (reward + self.gamma * tempValue)
 
                     self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + (self.alpha)*Value
@@ -213,5 +218,126 @@ class LONR(object):
         print("Finish Training")
 
 
-    def _lonr_online(self, t):
-        pass
+    def _lonr_online(self, startState=36, t=0, totalIterations=-1):
+        # Start episode at the prescribed start state
+        currentState = startState
+
+        # Will only update states actually visited
+        statesVisited = []
+        #statesVisited.append(currentState)
+
+        done = False
+
+        n = 0
+        #print("")
+        # Loop until terminal state is reached
+        while done == False:
+
+            if currentState not in statesVisited:
+                statesVisited.append(currentState)
+            #print(currentState)
+            # Terminal - Set Q as Reward (ALL terminals have one action - "exit" which receives reward)
+            if self.M.isTerminal(currentState):
+                for a in self.M.getActions(currentState, 0):
+                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, 0, 0 ,0)
+                done = True
+                continue
+
+            # Loop through all actions
+            for a in self.M.getActions(currentState,0):
+
+                # Get successor states
+                succs = self.M.getNextStatesAndProbs(currentState, a, 0)
+
+                Value = 0.0
+                for s_prime, prob, rew in succs:
+                    if s_prime not in statesVisited:
+                        statesVisited.append(s_prime)
+                    tempValue = 0.0
+                    for a_prime in self.M.getActions(s_prime, 0):
+
+                        tempValue += self.M.Q[n][s_prime][a_prime] * self.M.pi[n][s_prime][a_prime]
+                    Value += prob * (self.M.getReward(currentState,0,0,0) + self.gamma * tempValue)
+
+                DECAY_ALPHA = False  # For Q Value convergence
+                if DECAY_ALPHA:
+                    # self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
+                    self.M.Q_bu[n][currentState][a] = (1.0 - self.alpha) * self.M.Q[n][currentState][a] + self.alpha * Value
+                else:
+                    self.M.Q_bu[n][currentState][a] = Value
+
+
+
+
+
+            # self.epsilon = (((float(totalIterations) / 10.0) - float(iters)) / (float(totalIterations) / 10.0)) * 20.0
+            # self.epsilon = max(0.0, self.epsilon)
+            # eppRand = float(np.random.randint(0, 100))
+            # self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
+
+            #print(statesVisited)
+            # Copy Q Values over for states visited
+            # States visited are current state and all s_primes
+            for s in statesVisited: #self.M.getStates():
+                for a in self.M.getActions(currentState, 0):
+                    self.M.QSums[n][s][a] += self.M.Q_bu[n][s][a]
+                    self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
+
+
+
+            # Update regret sums
+            for s in statesVisited: # THIS IS ONLY ONE STATE
+
+                # Don't update terminal states
+                if self.M.isTerminal(s): # THIS IS ONLY ONE STATE
+                    continue
+
+                # Calculate regret - this variable name needs a better name
+                target = 0.0
+
+                for a in self.M.getActions(s, 0):
+                    target += self.M.Q[n][s][a] * self.M.pi[n][s][a]
+
+                for a in self.M.getActions(s, 0):
+                    action_regret = self.M.Q[n][s][a] - target
+
+                    # RM+ works, reg dont know
+                    #self.M.regret_sums[n][s][a] += action_regret
+                    self.M.regret_sums[n][s][a] = max(0.0, self.M.regret_sums[n][s][a] + action_regret)
+
+            # # Regret Match
+            for s in statesVisited:
+
+                # Skip terminal states
+                if self.M.isTerminal(s):  # THIS IS ONLY ONE STATE
+                    continue
+
+                for a in self.M.getActions(s, 0):
+                    rgrt_sum = sum(filter(lambda x: x > 0, self.M.regret_sums[n][s]))
+
+                    # Check if this is a "trick"
+                    # Check if this can go here or not
+                    if rgrt_sum > 0:
+                        self.M.pi[n][s][a] = (max(self.M.regret_sums[n][s][a], 0.) / rgrt_sum)
+                    else:
+                        self.M.pi[n][s][a] = 1.0 / len(self.M.regret_sums[n][s])
+
+                    # Add to policy sum
+                    self.M.pi_sums[n][s][a] += self.M.pi[n][s][a]
+
+
+            # Epsilon greedy action selection
+            # EPS_GREEDY = True
+            # randomAction = None
+            # if EPS_GREEDY:
+            if np.random.randint(0, 100) < self.epsilon:
+                randomAction = np.random.randint(0, 4)
+            else:
+                # UP, RIGHT, DOWN, LEFT
+                randomAction = np.random.choice([0, 1, 2, 3], p=self.M.pi[n][currentState])
+
+            #else:
+               #previously experiment with epsilon decay
+
+            statesVisited = []
+            currentState = self.M.getMove(currentState, randomAction)
