@@ -47,13 +47,13 @@ class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None,gamma=0.99):
+    def __init__(self, M=None, gamma=0.99, alpha=0.99):
         self.M = M
         #self.N = M.totalPlayers
         #self.S = M.totalStates
 
         self.gamma = gamma
-        #self.alpha = alpha
+        self.alpha = alpha
 
 
     def lonr_value_iteration(self, iterations=-1, log=-1):
@@ -156,4 +156,17 @@ class LONR(object):
                     self.M.pi_sums[n][s][a] += self.M.pi[n][s][a]
 
 
-    #def lonr_play(self, iterations=0, log=-1):
+    def lonr_online(self, iterations=-1, log=-1):
+
+        print("Starting training..")
+        for t in range(1, iterations+1):
+
+            if (t+1) % log == 0:
+                print("Iteration: ", t+1)
+
+            self._lonr_online(t=t)
+
+        print("Finish Training")
+
+
+    def _lonr_online(self, t):
