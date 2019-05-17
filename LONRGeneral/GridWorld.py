@@ -78,7 +78,7 @@ class Grid(MDP):
     def getStates(self):
         return list(range(self.rows * self.cols))
 
-    def getReward(self, s, a_current):
+    def getReward(self, s, a_current, n, a_notN):
         """ Return reward from leaving state s.
 
             Not dependent on action or s'
@@ -193,24 +193,24 @@ class Grid(MDP):
         # Return the correct one
         if action == self.UP or action == self.DOWN:
             if action == self.UP:
-                successors.append([upState,1.0-self.noise, self.getReward(state,action)])
+                successors.append([upState,1.0-self.noise, self.getReward(state,action,0,0)])
             else:
-                successors.append([downState,1.0-self.noise, self.getReward(state,action)])
+                successors.append([downState,1.0-self.noise, self.getReward(state,action,0,0)])
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([leftState,massLeft/2.0, self.getReward(state,action)])
-                successors.append([rightState,massLeft/2.0, self.getReward(state,action)])
+                successors.append([leftState,massLeft/2.0, self.getReward(state,action,0,0)])
+                successors.append([rightState,massLeft/2.0, self.getReward(state,action,0,0)])
 
         if action == self.LEFT or action == self.RIGHT:
             if action == self.LEFT:
-                successors.append([leftState,1.0-self.noise, self.getReward(state,action)])
+                successors.append([leftState,1.0-self.noise, self.getReward(state,action,0,0)])
             else:
-                successors.append([rightState,1.0-self.noise, self.getReward(state,action)])
+                successors.append([rightState,1.0-self.noise, self.getReward(state,action,0,0)])
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([upState,massLeft/2.0, self.getReward(state,action)])
-                successors.append([downState,massLeft/2.0, self.getReward(state,action)])
+                successors.append([upState,massLeft/2.0, self.getReward(state,action,0,0)])
+                successors.append([downState,massLeft/2.0, self.getReward(state,action,0,0)])
 
         return successors

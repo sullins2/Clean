@@ -108,8 +108,8 @@ class SoccerGame(MDP):
 
         # So instead of a loop, each next_state, reward, and piB is returned
         ################################
-        
-        for actions_B in self.getActions(s, n_current):
+
+        for actions_B in self.getActions(s, n_current): #should be other player's actions
             player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
             player_b = Player(x=pBx, y=pBy, has_ball=pBball, p_id='B')
 
@@ -131,7 +131,7 @@ class SoccerGame(MDP):
         return successors
 
     
-    def getReward(self, s, a_current):
+    def getReward(self, s, a_current, n, a_notN):
         """Returns reward(s, a, a_other)
 
         """

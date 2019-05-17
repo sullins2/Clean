@@ -28,7 +28,7 @@ class MDP(object):
         raise NotImplementedError("Please implement information_set method")
 
 
-    def getReward(self, s, a_current):
+    def getReward(self, s, a_current, n, a_notN):
         """Returns reward(s, a, a_other)
 
         """
@@ -62,9 +62,12 @@ class LONR(object):
         for t in range(1, iterations+1):
 
             if (t+1) % log == 0:
-                print("Iteration: ", t+1)
+                print("Iteration: ", t+1, " alpha: ", self.alpha)
 
             self._lonr_value_iteration(t=t)
+            #print("")
+            # self.alpha *= 0.9999
+            # self.alpha = max(0.0, self.alpha)
 
         print("Finish Training")
 
@@ -106,24 +109,25 @@ class LONR(object):
                     # Get next states and transition probs for MDP
                     # Get next states and other players policy for MG
                     succs = self.M.getNextStatesAndProbs(s, a_current, n)
-                    #print("   succs: ", succs)
+                    #print("s: ", s, " a:", a_current, "   succs: ", succs)
 
 
                     Value = 0.0
 
                     #Loop thru each next state and prob
                     for s_prime, prob, reward in succs:
-
+                        #print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
                         tempValue = 0.0
 
                         # Loop thru actions in s_prime for player n
                         for a_current_prime in self.M.getActions(s_prime, n):
+                            #print("   - sum over: s_prime: ", s_prime, "  a_current_prime: ", a_current_prime)
                             tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][s_prime][a_current_prime]
 
+                        #print("  Value += prob:", prob, " * (reward + tv): ", reward, "  tempValue: ", tempValue)
                         Value += prob * (reward + self.gamma * tempValue)
 
-                    self.M.Q_bu[n][s][a_current] = Value
-                    # self.alpha*self.M.Q[n][s][a_current] + (1.0 - self.alpha)*Value
+                    self.M.Q_bu[n][s][a_current] = self.alpha*self.M.Q[n][s][a_current] + (1.0 - self.alpha)*Value
 
 
         ####################################################################################################
@@ -137,6 +141,20 @@ class LONR(object):
 
         # Regrets / policy updates, etc
         # For each player
+
+        iters = t + 1
+        alphaR = 3.0 / 2.0  # accum pos regrets
+        betaR = 0.0         # accum neg regrets
+        gammaR = 2.0        # contribution to avg strategy
+
+        alphaW = pow(iters, alphaR)
+        alphaWeight = (alphaW / (alphaW + 1))
+
+        betaW = pow(iters, betaR)
+        betaWeight = (betaW / (betaW + 1))
+
+        gammaWeight = pow((iters / (iters + 1)), gammaR)
+
         for n in range(self.M.N):
 
             # For each state
@@ -152,7 +170,13 @@ class LONR(object):
                 for a in self.M.getActions(s, n):
                     action_regret = self.M.Q[n][s][a] - target
 
+                    if action_regret > 0:
+                        action_regret *= alphaWeight
+                    else:
+                        action_regret *= betaWeight
+
                     self.M.regret_sums[n][s][a] += action_regret
+                    #self.M.regret_sums[n][s][a] = max(0.0, self.M.regret_sums[n][s][a] + action_regret)
 
             for s in self.M.getStates():
 
@@ -169,7 +193,7 @@ class LONR(object):
                     else:
                         self.M.pi[n][s][a] = 1. / len(self.M.getActions(s, n))
 
-                    self.M.pi_sums[n][s][a] += self.M.pi[n][s][a]
+                    self.M.pi_sums[n][s][a] += self.M.pi[n][s][a] * gammaWeight
 
 
     def lonr_online(self, iterations=-1, log=-1):

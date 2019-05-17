@@ -1,6 +1,7 @@
 from LONRGeneral.LONR import *
 from LONRGeneral.GridWorld import *
 from LONRGeneral.Soccer import *
+from LONRGeneral.NoSDE import *
 
 ####################################################
 # GridWorld MDP
@@ -23,57 +24,90 @@ from LONRGeneral.Soccer import *
 ###################################################
 
 
-
+####################################################################
 # Create soccer game MG (inherits from MDP class)
-soccer = SoccerGame()
+# soccer = SoccerGame()
+#
+# # Create LONR agent, feed in soccer
+# lonrAgent = LONR(M=soccer, gamma=0.95)
+#
+# # Train via VI
+# lonrAgent.lonr_value_iteration(iterations=1, log=500)
+#
+# # Test of the learned policy:
+#
+# # Normalize pi sums here for now
+# soccer.normalize_pisums()
+#
+# # This plays face-to-face start state, player A has the ball
+# # This is 66/33 win/lose for playerA. Should double check that is correct
+# #
+# #soccer.play(iterations=1, log=10000)
+#
+# print("")
+#
+# # Play random games, mix who has ball at start, positions, etc
+# #soccer.play_random(iterations=1,log=10000)
+#
+# print("")
+#
+# print("Print out of game states of interest")
+#
+# print(" 0  1  2  3")
+# print(" 4  5  6  7")
+# print("")
+# print("B has ball in 6, A in 2")
+# print("PiB26 A: ", soccer.pi[0]["B26"])
+# print("PiB26 B: ", soccer.pi[1]["B26"])
+# print("")
+# print("B has ball in 5, A in 2")
+# print("PiB25 A: ", soccer.pi[0]["B25"])
+# print("PiB25 B: ", soccer.pi[1]["B25"])
+#
+# print("")
+# print("A has ball in 2, B in 5")
+# print("PiA25 A: ", soccer.pi[0]["A25"])
+# print("PiA25 B: ", soccer.pi[1]["A25"])
+# print("")
+# print("A has ball in 1, B in 5")
+# print("PiA15 A: ", soccer.pi[0]["A15"])
+# print("PiA15 B: ", soccer.pi[1]["A15"])
+
+######################################################################
+
+# SET GAMMA = 0.75
+
+noSDE = NoSDE()
 
 # Create LONR agent, feed in soccer
-lonrAgent = LONR(M=soccer, gamma=0.95)
+lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.99)
 
-# Train via VI
-lonrAgent.lonr_value_iteration(iterations=1, log=500)
 
-# Test of the learned policy:
+lonrAgent.lonr_value_iteration(iterations=450000, log=1000)
 
-# Normalize pi sums here for now
-soccer.normalize_pisums()
 
-# This plays face-to-face start state, player A has the ball
-# This is 66/33 win/lose for playerA. Should double check that is correct
-#
-#soccer.play(iterations=1, log=10000)
 
 print("")
-
-# Play random games, mix who has ball at start, positions, etc
-#soccer.play_random(iterations=1,log=10000)
-
+print("Normalized Pi Sums:")
+for n in range(2):
+    for k in sorted(noSDE.pi_sums[n].keys()):
+        #print(k, ": ", noSDE.pi_sums[k])
+        tot = 0.0
+        for kk in noSDE.pi_sums[n][k].keys():
+            tot += noSDE.pi_sums[n][k][kk]
+        print(k, ": ", end='')
+        for kk in noSDE.pi_sums[n][k].keys():
+            print(kk, ": ", noSDE.pi_sums[n][k][kk] / float(tot), " ", end='')
+        print("")
 print("")
-
-print("Print out of game states of interest")
-
-print(" 0  1  2  3")
-print(" 4  5  6  7")
-print("")
-print("B has ball in 6, A in 2")
-print("PiB26 A: ", soccer.pi[0]["B26"])
-print("PiB26 B: ", soccer.pi[1]["B26"])
-print("")
-print("B has ball in 5, A in 2")
-print("PiB25 A: ", soccer.pi[0]["B25"])
-print("PiB25 B: ", soccer.pi[1]["B25"])
-
-print("")
-print("A has ball in 2, B in 5")
-print("PiA25 A: ", soccer.pi[0]["A25"])
-print("PiA25 B: ", soccer.pi[1]["A25"])
-print("")
-print("A has ball in 1, B in 5")
-print("PiA15 A: ", soccer.pi[0]["A15"])
-print("PiA15 B: ", soccer.pi[1]["A15"])
-
-
-
+print("QValues:")
+for n in range(2):
+    for k in sorted(noSDE.Q[n].keys()):
+        #print(k, ": ", noSDE.pi_sums[k])
+        print(k, ": ", end='')
+        for kk in noSDE.Q[n][k].keys():
+            print(kk, ": ", noSDE.Q[n][k][kk], " ", end='')
+        print("")
 
 print("Done")
 
