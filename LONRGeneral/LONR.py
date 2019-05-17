@@ -29,7 +29,11 @@ class MDP(object):
 
 
     def getReward(self, s, a_current, n, a_notN):
-        """Returns reward(s, a, a_other)
+        """ s=state, a_current=actionOfPlayer n, n is current player, a_notN is action of other player
+            Joint Actions required for Markov Games
+            a_notN can be set to 0 for MDPs and ignored
+
+        Returns reward(s, a, a_other)
 
         """
         raise NotImplementedError("Please implement information_set method")

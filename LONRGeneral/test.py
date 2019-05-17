@@ -75,16 +75,17 @@ from LONRGeneral.NoSDE import *
 
 ######################################################################
 
-# SET GAMMA = 0.75
+# SET GAMMA = 0.75 (THIS IS REQUIRED)
+# ALPHA works with 0.5, iterations 400k +
+# Better results when alpha is decayed
 
 noSDE = NoSDE()
 
 # Create LONR agent, feed in soccer
-lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.99)
+lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.5)
 
 
 lonrAgent.lonr_value_iteration(iterations=450000, log=1000)
-
 
 
 print("")
