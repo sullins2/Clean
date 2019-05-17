@@ -56,9 +56,8 @@ class SoccerGame(MDP):
     def getNextStatesAndProbs(self, s, a_current, n_current):
         """
 
-        [[nextState, prob, reward]]
+        Returns list of lists: [[nextState, prob, reward]]
 
-        successors.append([upState,1.0-self.noise, self.getReward(state,action)])
 
         """
         successors = []
@@ -83,6 +82,33 @@ class SoccerGame(MDP):
 
         otherN = 1 if n_current == 0 else 0
 
+        # Returns list of all s_primes, other player's pi[s][a], and r(s, aA, aB)
+
+        ################################
+        # This is original for updating player A:
+        #
+        # for actions_A in self.total_actions:
+        #     QV = 0.0
+        #     oppValue = 0.0
+        #     for actions_B in self.total_actions:
+        #
+        #         actions = {'A': actions_A, 'B': actions_B}
+        #         new_state, rewards, goal = world.move(actions)
+        #
+        #
+        #         rA = rewards['A']
+        #
+        #         Value = 0.0
+        #
+        #         for action_ in self.total_actions:
+        #             Value += self.QvaluesA[new_state][action_] * self.piA[new_state][action_]
+        #         QV += self.piB[s][actions_B] * (rA + self.gamma * Value)
+        #
+        #     self.QValue_backupA[s][actions_A] = (0.1 * self.QvaluesA[s][actions_A]) + (0.9 * QV)
+
+        # So instead of a loop, each next_state, reward, and piB is returned
+        ################################
+        
         for actions_B in self.getActions(s, n_current):
             player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
             player_b = Player(x=pBx, y=pBy, has_ball=pBball, p_id='B')

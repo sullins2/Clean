@@ -19,7 +19,7 @@ rewardSums = []
 if __name__ == '__main__':
 
 
-    trainingIterations = 5000
+    trainingIterations = 20000
 
     newTigerGame = TigerGame()
 
@@ -50,6 +50,19 @@ if __name__ == '__main__':
     for k in sorted(agent.regret_sums.keys()):
         if len(list(agent.regret_sums[k].keys())) > 1:
             print(k, ":  ", agent.regret_sums[k])
+
+    print("")
+    print("Q Avg")
+    for k in sorted(agent.Qsums.keys()):
+        tot = 0.0
+        # for kk in agent.Qsums[k].keys():
+        #     tot += agent.Qsums[k][kk]
+        # if tot == 0:
+        #     tot = 1.0
+        print(k, ": ", end='')
+        for kk in agent.Qsums[k].keys():
+            print(kk, ": ", agent.Qsums[k][kk] / float(trainingIterations), " ", end='')
+        print("")
 
     print("")
     ###################################

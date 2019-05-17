@@ -83,6 +83,22 @@ class LONR(object):
                     #print("  a_current: ", a_current)
 
                     if self.M.isTerminal(s):
+                        # This is here because terminals have actions like "exit"
+                        # to collect the reward. To make the code easier, the terminals
+                        # have the same actions as everywhere else, but each action is an "exit"
+                        #
+                        # This was a remnant of when I was using numpy arrays and couldn't set the size
+                        # for one index different than the rest easily (Q[totalStates][totalActions] for
+                        # instance, but Q[terminals][oneExitAction]
+                        #
+                        # But now the MDP class handles that, and if I change them all to dicts/maps
+                        # and not numpy arrays, I wont need this special case here.
+                        #
+                        # This works out below if/when an expectation is taken because the initial
+                        # uniform policy never changes so the expected value = reward
+                        #
+                        # I might possibly change it so that instead of setting it here,
+                        # M.getActions(terminal) returns one exit action
                         self.M.Q_bu[n][s][a_current] = self.M.getReward(s, a_current)
                         #print("Terminal: ", s)
                         continue
@@ -170,3 +186,4 @@ class LONR(object):
 
 
     def _lonr_online(self, t):
+        pass

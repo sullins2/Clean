@@ -14,7 +14,8 @@ class TigerAgent:
         self.tigergame = tigergame
 
         # Parameters
-        self.gamma = 0.99 #1.0#0.99 #1.0
+        self.gamma = 1.0#0.99 #1.0
+        self.alpha = 0.5
 
         # Q-Values
         self.Q = {}
@@ -221,8 +222,15 @@ class TigerAgent:
 
             self._train_lonr_online(iters=t)
 
+            for s in self.tigergame.totalStates:
+                for a in self.tigergame.getActions(s):
+                    self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
+
+            # self.alpha *= 0.999
+            # self.alpha = max(0.0, self.alpha)
+
             if (t + 1) % log == 0:
-                print("Iteration: ", (t + 1))
+                print("Iteration: ", (t + 1), " alpha: ", self.alpha)
 
             if self.VERBOSE:
                 self.verbose("")
@@ -246,7 +254,7 @@ class TigerAgent:
         # statesVisited.append(currentState)
 
         done = False
-        #print("")
+
         # Loop until terminal state is reached
         while done == False:
 
@@ -256,7 +264,7 @@ class TigerAgent:
             if self.tigergame.isTerminal(currentState) == True:
                 for a in self.tigergame.getActions(currentState):
                     self.verbose(" - Terminal setting: s: ", currentState, " a: ", a, "  rew: ", self.tigergame.getReward(currentState))
-                    self.Q_bu[self.tigergame.stateIDtoIS(currentState)][a] = self.tigergame.getReward(currentState)
+                    self.Q_bu[self.tigergame.stateIDtoIS(currentState)][a] = (1.0 - self.alpha)*self.Q[self.tigergame.stateIDtoIS(currentState)][a] + self.alpha*self.tigergame.getReward(currentState)
                 done = True
                 continue
 
@@ -282,7 +290,7 @@ class TigerAgent:
                     self.verbose("  - afterLoop reward s: ", currentState, "  reward: ", self.tigergame.getReward(currentState, a=a))
                     #Value += prob * (self.tigergame.getReward(s, a=a) + self.gamma * tempValue)
                     Value += prob * (self.tigergame.getReward(currentState, a=a) + self.gamma * tempValue)
-                self.alpha = 0.5
+
                 self.Q_bu[self.tigergame.stateIDtoIS(currentState)][a] = (1.0 - self.alpha)*self.Q[self.tigergame.stateIDtoIS(currentState)][a] + self.alpha*Value
                 #self.Q_bu[self.tigergame.stateIDtoIS(currentState)][a] = Value
 
@@ -297,7 +305,7 @@ class TigerAgent:
             for s in totStates: #self.tigergame.totalStates:
                 for a in self.tigergame.getActions(s):
                     self.Q[self.tigergame.stateIDtoIS(s)][a] = self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
-                    self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
+                    #self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
 
             totStates = []
 
@@ -401,7 +409,7 @@ class TigerGame(object):
         self.TL = "TL"
         self.TR = "TR"
 
-        self.TLProb = 0.5  # Probability that tiger is on left
+        self.TLProb = 0.75  # Probability that tiger is on left
 
         #total action list
         self.totalActions = [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]

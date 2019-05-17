@@ -6,20 +6,20 @@ from LONRGeneral.Soccer import *
 # GridWorld MDP
 #########
 # create GridWorld (inherits from MDP class)
-gridMDP = Grid(noise=0.2)
-
-# Create LONR Agent and feed in gridMDP
-lonrAgent = LONR(M=gridMDP, gamma=1.0)
-
-# Train via VI
-lonrAgent.lonr_value_iteration(iterations=1000, log=100)
-
-print("Bottom left (start state)")
-print(gridMDP.Q[0][36])
-
-print("State above bottom right terminal")
-print(gridMDP.Q[0][35])
-print("")
+# gridMDP = Grid(noise=0.2)
+#
+# # Create LONR Agent and feed in gridMDP
+# lonrAgent = LONR(M=gridMDP, gamma=1.0)
+#
+# # Train via VI
+# lonrAgent.lonr_value_iteration(iterations=1000, log=100)
+#
+# print("Bottom left (start state)")
+# print(gridMDP.Q[0][36])
+#
+# print("State above bottom right terminal")
+# print(gridMDP.Q[0][35])
+# print("")
 ###################################################
 
 
@@ -31,7 +31,7 @@ soccer = SoccerGame()
 lonrAgent = LONR(M=soccer, gamma=0.95)
 
 # Train via VI
-lonrAgent.lonr_value_iteration(iterations=4000, log=500)
+lonrAgent.lonr_value_iteration(iterations=1, log=500)
 
 # Test of the learned policy:
 
@@ -41,12 +41,12 @@ soccer.normalize_pisums()
 # This plays face-to-face start state, player A has the ball
 # This is 66/33 win/lose for playerA. Should double check that is correct
 #
-soccer.play(iterations=50000, log=10000)
+#soccer.play(iterations=1, log=10000)
 
 print("")
 
 # Play random games, mix who has ball at start, positions, etc
-soccer.play_random(iterations=50000,log=10000)
+#soccer.play_random(iterations=1,log=10000)
 
 print("")
 
@@ -71,6 +71,9 @@ print("")
 print("A has ball in 1, B in 5")
 print("PiA15 A: ", soccer.pi[0]["A15"])
 print("PiA15 B: ", soccer.pi[1]["A15"])
+
+
+
 
 print("Done")
 
