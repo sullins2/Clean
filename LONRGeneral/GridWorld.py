@@ -20,8 +20,8 @@ class Grid(MDP):
 
     """
 
-    def __init__(self, noise=0.0):
-        super().__init__()
+    def __init__(self, noise=0.0, startState=None):
+        super().__init__(startState=startState)
 
         # One player MDP
         self.N = 1
@@ -51,21 +51,49 @@ class Grid(MDP):
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
-        self.Q = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-        self.Q_bu = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-        self.QSums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
+        # self.Q = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
+        # self.Q_bu = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
+        # self.QSums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
+        #
+        # # Policies
+        # self.pi = np.zeros((self.N, self.numberOfStates, self.numberOfActions))  # policy (if needed)
+        # self.pi_sums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
+        #
+        # # Regret Sums
+        # self.regret_sums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))  # regret_sum (if needed)
+        #
+        # for n in range(self.N):
+        #     for s in range(self.numberOfStates):
+        #         for a in range(self.numberOfActions):
+        #             self.pi[n][s][a] = 1.0 / self.numberOfActions
 
-        # Policies
-        self.pi = np.zeros((self.N, self.numberOfStates, self.numberOfActions))  # policy (if needed)
-        self.pi_sums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-
-        # Regret Sums
-        self.regret_sums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))  # regret_sum (if needed)
-
+        self.Q = {}
+        self.Q_bu = {}
+        self.QSums = {}
+        self.pi = {}
+        self.pi_sums = {}
+        self.regret_sums = {}
         for n in range(self.N):
-            for s in range(self.numberOfStates):
-                for a in range(self.numberOfActions):
-                    self.pi[n][s][a] = 1.0 / self.numberOfActions
+            self.Q[n] = {}
+            self.Q_bu[n] = {}
+            self.QSums[n] = {}
+            self.pi[n] = {}
+            self.pi_sums[n] = {}
+            self.regret_sums[n] = {}
+            for s in self.getStates():
+                self.Q[n][s] = {}
+                self.Q_bu[n][s] = {}
+                self.QSums[n][s] = {}
+                self.pi[n][s] = {}
+                self.regret_sums[n][s] = {}
+                self.pi_sums[n][s] = {}
+                for a in self.getActions(s,0):
+                    self.Q[n][s][a] = 0.0
+                    self.Q_bu[n][s][a] = 0.0
+                    self.QSums[n][s][a] = 0.0
+                    self.pi[n][s][a] = 1.0 / 4.0  # len(list(total_actions.keys())
+                    self.regret_sums[n][s][a] = 0.0
+                    self.pi_sums[n][s][a] = 0.0
 
         # self.grid = [' ', ' ', ' ',
         #              ' ', ' ', 10]
@@ -77,6 +105,9 @@ class Grid(MDP):
 
     def getStates(self):
         return list(range(self.rows * self.cols))
+
+    def getStateRep(self, s):
+        return s
 
     def getReward(self, s, a_current, n, a_notN):
         """ Return reward from leaving state s.

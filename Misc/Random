@@ -1,0 +1,141 @@
+# # Start episode at the prescribed start state
+        # currentState = startState
+        #
+        # # Will only update states actually visited
+        # statesVisited = []
+        # #statesVisited.append(currentState)
+        #
+        # startStates = self.M.getNextStatesAndProbs("root", None, 0)
+        # totalStartStates = []
+        # totalStartStateProbs = []
+        # for nextState, nextStateProb, rr in startStates:
+        #     totalStartStates.append(nextState)
+        #     totalStartStateProbs.append(nextStateProb)
+        # currentState = np.random.choice(totalStartStates, p=totalStartStateProbs)
+        #
+        # print("")
+        #
+        #
+        # done = False
+        #
+        # n = 0
+        # #print("")
+        # # Loop until terminal state is reached
+        # while done == False:
+        #
+        #     print("CS: ", currentState)
+        #
+        #     if currentState not in statesVisited:
+        #         statesVisited.append(currentState)
+        #     #print(currentState)
+        #     # Terminal - Set Q as Reward (ALL terminals have one action - "exit" which receives reward)
+        #     if self.M.isTerminal(currentState):
+        #         print("TERM: ", currentState)
+        #         # for a in self.M.getActions(currentState, 0):
+        #         #     self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, 0, 0 ,0)
+        #         done = True
+        #         continue
+        #
+        #     # Loop through all actions
+        #     for a in self.M.getActions(currentState,0):
+        #
+        #         # Get successor states
+        #         succs = self.M.getNextStatesAndProbs(currentState, a, 0)
+        #
+        #         Value = 0.0
+        #         for s_prime, prob, rew in succs:
+        #             if s_prime not in statesVisited:
+        #                 statesVisited.append(s_prime)
+        #             tempValue = 0.0
+        #             for a_prime in self.M.getActions(s_prime, 0):
+        #                 #print("sprime: ", s_prime)
+        #                 tempValue += self.M.Q[n][self.M.stateIDtoIS(s_prime)][a_prime] * self.M.pi[n][self.M.stateIDtoIS(s_prime)][a_prime]
+        #             Value += prob * (self.M.getReward(currentState,0,0,0) + self.gamma * tempValue)
+        #
+        #         DECAY_ALPHA = False  # For Q Value convergence
+        #         if DECAY_ALPHA:
+        #             # self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
+        #             self.M.Q_bu[n][currentState][a] = (1.0 - self.alpha) * self.M.Q[n][currentState][a] + self.alpha * Value
+        #         else:
+        #             #print(n, "  ", currentState, " ", a)
+        #             self.M.Q_bu[n][currentState][a] = Value
+        #
+        #
+        #     # Copy Q Values over for states visited
+        #     # States visited are current state and all s_primes
+        #     for s in statesVisited: #self.M.getStates():
+        #         for a in self.M.getActions(s, 0):
+        #             self.M.QSums[n][self.M.stateIDtoIS(s)][a] += self.M.Q_bu[n][self.M.stateIDtoIS(s)][a]
+        #             self.M.Q[n][self.M.stateIDtoIS(s)][a] = self.M.Q_bu[n][self.M.stateIDtoIS(s)][a]
+        #
+        #     print("STATES VISITED:")
+        #     print(statesVisited)
+        #     # done = True
+        #     # continue
+        #     # Update regret sums
+        #     for s in statesVisited:
+        #
+        #         # Don't update terminal states
+        #         if self.M.isTerminal(s): # THIS IS ONLY ONE STATE
+        #             continue
+        #
+        #         # Calculate regret - this variable name needs a better name
+        #         target = 0.0
+        #
+        #         for a in self.M.getActions(s, 0):
+        #             target += self.M.Q[n][self.M.stateIDtoIS(s)][a] * self.M.pi[n][self.M.stateIDtoIS(s)][a]
+        #
+        #         for a in self.M.getActions(s, 0):
+        #             action_regret = self.M.Q[n][self.M.stateIDtoIS(s)][a] - target
+        #
+        #             # RM+ works, reg dont know
+        #             self.M.regret_sums[n][self.M.stateIDtoIS(s)][a] += action_regret
+        #             #self.M.regret_sums[n][self.M.stateIDtoIS(s)][a] = max(0.0, self.M.regret_sums[n][self.M.stateIDtoIS(s)][a] + action_regret)
+        #
+        #     # # Regret Match
+        #     for s in statesVisited:
+        #
+        #         # Skip terminal states
+        #         if self.M.isTerminal(s):  # THIS IS ONLY ONE STATE
+        #             continue
+        #
+        #         for a in self.M.getActions(s, 0):
+        #             #rgrt_sum = sum(filter(lambda x: x > 0, self.M.regret_sums[n][s]))
+        #
+        #             rgrt_sum = 0.0
+        #             for a in self.M.getActions(s, n):
+        #                 rgrt_sum += max(0.0, self.M.regret_sums[n][self.M.stateIDtoIS(s)][a])
+        #
+        #             #print("REGEET SUM: ", rgrt_sum, " state: ", s)
+        #             # Check if this is a "trick"
+        #             # Check if this can go here or not
+        #             if rgrt_sum > 0:
+        #                 self.M.pi[n][self.M.stateIDtoIS(s)][a] = (max(self.M.regret_sums[n][self.M.stateIDtoIS(s)][a], 0.) / rgrt_sum)
+        #             else:
+        #                 self.M.pi[n][self.M.stateIDtoIS(s)][a] = 1.0 / 3.0 #len(list(self.M.regret_sums[n][self.M.stateIDtoIS(s)].keys()))
+        #
+        #             # Add to policy sum
+        #             self.M.pi_sums[n][self.M.stateIDtoIS(s)][a] += self.M.pi[n][self.M.stateIDtoIS(s)][a]
+        #
+        #         # print("Pi: ", self.M.stateIDtoIS(s))
+        #         # print(self.M.pi[n][self.M.stateIDtoIS(s)])
+        #     # Epsilon greedy action selection
+        #     # EPS_GREEDY = True
+        #     # randomAction = None
+        #     # if EPS_GREEDY:
+        #     if np.random.randint(0, 100) < self.epsilon:
+        #         randomAction = np.random.randint(0, 4)
+        #     else:
+        #         # UP, RIGHT, DOWN, LEFT
+        #        # randomAction = np.random.choice([0, 1, 2, 3], p=self.M.pi[n][currentState])
+        #         #print(currentState, self.M.getActions(currentState, 0), "  ", list(self.M.pi[n][self.M.stateIDtoIS(currentState)].values()))
+        #         randomAction = np.random.choice(self.M.getActions(currentState, 0), p=list(self.M.pi[n][self.M.stateIDtoIS(currentState)].values()))
+        #
+        #     #else:
+        #        #previously experiment with epsilon decay
+        #
+        #     statesVisited = []
+        #     currentState = self.M.getMove(currentState, randomAction)
+        #     #print("CS: ", currentState)
+        #     if currentState == None:
+        #         done = True

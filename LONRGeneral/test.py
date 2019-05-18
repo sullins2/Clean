@@ -2,6 +2,7 @@ from LONRGeneral.LONR import *
 from LONRGeneral.GridWorld import *
 from LONRGeneral.Soccer import *
 from LONRGeneral.NoSDE import *
+from LONRGeneral.TigerGame import *
 
 ####################################################
 # GridWorld MDP
@@ -117,19 +118,40 @@ from LONRGeneral.NoSDE import *
 #######################################################################
 
 
-gridMDP = Grid(noise=0.20)
+#######################################################################
+# O-LONR GridWorld
+gridMDP = Grid(noise=0.0, startState=36)
 
 # Create LONR Agent and feed in gridMDP
-lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=15)
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=0.5, epsilon=15)
 
 # Train via VI
-lonrAgent.lonr_online(iterations=1100, log=100)
+lonrAgent.lonr_online(iterations=1000, log=400)
 
 print("Bottom left (start state)")
 print(gridMDP.Q[0][36])
 
 print("State above bottom right terminal")
 print(gridMDP.Q[0][35])
+
+print("")
+######################################################################
+
+
+tigerGame = TigerGame(startState="root")
+
+# # Create LONR Agent and feed in the Tiger game
+lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=0.95, epsilon=15)
+
+lonrAgent.lonr_online(iterations=1000, log=100, randomized=True)
+
+for k in sorted(tigerGame.pi_sums[0].keys()):
+    print(k, ": ", end='')
+    for kk in sorted(tigerGame.pi_sums[0][k].keys()):
+        print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
+    print("")
+# print(tigerGame.pi_sums[0]["rootTL"])
+# print(tigerGame.pi_sums[0]["rootTL"])
 
 print("Done")
 

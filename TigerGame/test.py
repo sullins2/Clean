@@ -27,8 +27,9 @@ if __name__ == '__main__':
 
     #agent.train_lonr_value_iteration(iterations=trainingIterations)
 
-    agent.train_lonr_online(iterations=trainingIterations, log=1000)
+    cl, cr = agent.train_lonr_online(iterations=trainingIterations, log=1000)
 
+    print(cl, "  ", cr)
     print("")
     print("")
     print("Agent pi:")
@@ -61,7 +62,7 @@ if __name__ == '__main__':
         #     tot = 1.0
         print(k, ": ", end='')
         for kk in agent.Qsums[k].keys():
-            print(kk, ": ", agent.Qsums[k][kk] / float(trainingIterations), " ", end='')
+            print(kk, ": ", agent.Qsums[k][kk] / (float(trainingIterations) / 2.0), " ", end='')
         print("")
 
     print("")

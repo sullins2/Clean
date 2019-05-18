@@ -4,7 +4,7 @@ import numpy as np
 
 class MDP(object):
 
-    def __init__(self):
+    def __init__(self, startState=None):
         self.totalPlayers = 1
         self.totalStates = 1
 
@@ -14,6 +14,8 @@ class MDP(object):
         self.pi = None
         self.pi_sums = None
         self.regret_sums = None
+
+        self.startState = startState
 
     def getActions(self, s, n):
         """ Returns list of actions
@@ -50,6 +52,14 @@ class MDP(object):
 
     def getMove(self, s, a):
         """Used to get actual move in the environment for O-LONR
+        """
+        raise NotImplementedError("Please implement information_set method")
+
+    def getStateRep(self, s):
+        """ O-LONR use only
+
+            For MDPs: simply returns state
+            For TigerGame: Maps both to one (EX: TLL & TRL -> TLL) aka one set of Q Values
         """
         raise NotImplementedError("Please implement information_set method")
 
@@ -205,7 +215,7 @@ class LONR(object):
                     self.M.pi_sums[n][s][a] += self.M.pi[n][s][a] * gammaWeight
 
 
-    def lonr_online(self, iterations=-1, log=-1):
+    def lonr_online(self, iterations=-1, log=-1, randomized=False):
 
         print("Starting training..")
         for t in range(1, iterations+1):
@@ -213,131 +223,174 @@ class LONR(object):
             if (t+1) % log == 0:
                 print("Iteration: ", t+1)
 
-            self._lonr_online(t=t)
+            self._lonr_online(t=t, totalIterations=iterations, randomized=randomized)
 
         print("Finish Training")
 
 
-    def _lonr_online(self, startState=36, t=0, totalIterations=-1):
-        # Start episode at the prescribed start state
-        currentState = startState
+    def _lonr_online(self, t=0, totalIterations=-1, randomized=False):
+        """
 
-        # Will only update states actually visited
-        statesVisited = []
-        #statesVisited.append(currentState)
+        :param t: current iteration
+        :param totalIterations: total iterations
+        :param randomized: Randomizes the start state.
+                        True: For Tiger Game, to switch between TigerOnLeft, TigerOnRight
+                        False: For GridWorld, only one start state.
+        :return:
+        """
+
+
+        # For Tiger Game, randomize the MDP it sees
+        if randomized:
+
+            # Get the top root
+            startStates = self.M.getNextStatesAndProbs(self.M.startState, None, 0)
+
+            totalStartStates = []
+            totalStartStateProbs = []
+
+            # Pick Tiger on Left/Right based on probability set in M
+            for nextState, nextStateProb, _ in startStates:
+                totalStartStates.append(nextState)
+                totalStartStateProbs.append(nextStateProb)
+
+            # Randomly pick TigerOnLeft/Right based on M.TLProb (1-M.TLProb = TRProb)
+            currentState = np.random.choice(totalStartStates, p=totalStartStateProbs)
+
+        # For GridWorld, set currentState to the startState
+        else:
+            currentState = self.M.startState
+
 
         done = False
+        n = 0  # One player
 
-        n = 0
-        #print("")
-        # Loop until terminal state is reached
+        # Episode loop - until terminal state is reached
         while done == False:
 
-            if currentState not in statesVisited:
-                statesVisited.append(currentState)
-            #print(currentState)
             # Terminal - Set Q as Reward (ALL terminals have one action - "exit" which receives reward)
-            if self.M.isTerminal(currentState):
+            # Note:
+            #       GridWorld Terminals have the same 4 actions.
+            #           All get set here to the full reward
+            #           pi for each action remains 1 / totalActions
+            #       I intend to remove this part and include terminal rewards below in successors
+            #       But for now, in the expectation taken below, the value is correct:
+            #           For example:
+            #               Q[term] = (1/4)Reward + (1/4)Reward + (1/4)Reward + (1/4)Reward = Reward
+            #
+            #       Also, this backup is split via self.alpha.
+            #           For GridWorld, this does nothing (self.alpha = 1.0, removes the first part)
+            #           For Tiger Game, this allows shared Q's to converge and not be overwritten
+            if self.M.isTerminal(currentState) == True:
                 for a in self.M.getActions(currentState, 0):
-                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, 0, 0 ,0)
+                    self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * self.M.getReward(currentState,a,a,a)
                 done = True
                 continue
 
+
+            # totStates keeps track of which states need Qvalue copying
+            #   as not all states need to be backed up, only the ones visited
+            totStates = []
+            totStates.append(currentState)
+
             # Loop through all actions
-            for a in self.M.getActions(currentState,0):
+            for a in self.M.getActions(currentState, 0):
 
                 # Get successor states
                 succs = self.M.getNextStatesAndProbs(currentState, a, 0)
 
                 Value = 0.0
-                for s_prime, prob, rew in succs:
-                    if s_prime not in statesVisited:
-                        statesVisited.append(s_prime)
+                # Loop through each s', T(s' | s, a)
+                #   - Last parameter in loop is reward, which eventually will be included
+                #       -
+                for s_prime, prob, _ in succs:
+
                     tempValue = 0.0
                     for a_prime in self.M.getActions(s_prime, 0):
+                        tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_prime]
+                    Value += prob * (self.M.getReward(currentState, a, 0,0) + self.gamma * tempValue)
 
-                        tempValue += self.M.Q[n][s_prime][a_prime] * self.M.pi[n][s_prime][a_prime]
-                    Value += prob * (self.M.getReward(currentState,0,0,0) + self.gamma * tempValue)
+                    if s_prime not in totStates:
+                        totStates.append(s_prime)
 
-                DECAY_ALPHA = False  # For Q Value convergence
-                if DECAY_ALPHA:
-                    # self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
-                    self.M.Q_bu[n][currentState][a] = (1.0 - self.alpha) * self.M.Q[n][currentState][a] + self.alpha * Value
-                else:
-                    self.M.Q_bu[n][currentState][a] = Value
+                self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * Value
 
 
-
-
-
-            # self.epsilon = (((float(totalIterations) / 10.0) - float(iters)) / (float(totalIterations) / 10.0)) * 20.0
-            # self.epsilon = max(0.0, self.epsilon)
-            # eppRand = float(np.random.randint(0, 100))
-            # self.alpha = (float(totalIterations) - float(iters)) / float(totalIterations)
-
-            #print(statesVisited)
             # Copy Q Values over for states visited
-            # States visited are current state and all s_primes
-            for s in statesVisited: #self.M.getStates():
-                for a in self.M.getActions(currentState, 0):
-                    self.M.QSums[n][s][a] += self.M.Q_bu[n][s][a]
-                    self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
-
-
-
-            # Update regret sums
-            for s in statesVisited: # THIS IS ONLY ONE STATE
-
-                # Don't update terminal states
-                if self.M.isTerminal(s): # THIS IS ONLY ONE STATE
-                    continue
-
-                # Calculate regret - this variable name needs a better name
-                target = 0.0
-
+            for s in totStates:
                 for a in self.M.getActions(s, 0):
-                    target += self.M.Q[n][s][a] * self.M.pi[n][s][a]
-
-                for a in self.M.getActions(s, 0):
-                    action_regret = self.M.Q[n][s][a] - target
-
-                    # RM+ works, reg dont know
-                    #self.M.regret_sums[n][s][a] += action_regret
-                    self.M.regret_sums[n][s][a] = max(0.0, self.M.regret_sums[n][s][a] + action_regret)
-
-            # # Regret Match
-            for s in statesVisited:
-
-                # Skip terminal states
-                if self.M.isTerminal(s):  # THIS IS ONLY ONE STATE
-                    continue
-
-                for a in self.M.getActions(s, 0):
-                    rgrt_sum = sum(filter(lambda x: x > 0, self.M.regret_sums[n][s]))
-
-                    # Check if this is a "trick"
-                    # Check if this can go here or not
-                    if rgrt_sum > 0:
-                        self.M.pi[n][s][a] = (max(self.M.regret_sums[n][s][a], 0.) / rgrt_sum)
-                    else:
-                        self.M.pi[n][s][a] = 1.0 / len(self.M.regret_sums[n][s])
-
-                    # Add to policy sum
-                    self.M.pi_sums[n][s][a] += self.M.pi[n][s][a]
+                    self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
+                    # self.Qsums[self.tigergame.getStateRep(s)][a] += self.Q_bu[self.tigergame.getStateRep(s)][a]
 
 
-            # Epsilon greedy action selection
-            # EPS_GREEDY = True
-            # randomAction = None
-            # if EPS_GREEDY:
-            if np.random.randint(0, 100) < self.epsilon:
-                randomAction = np.random.randint(0, 4)
+            # Don't update terminal states
+            # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+            #     continue
+
+            # Calculate regret - this variable name needs a better name
+            target = 0.0
+
+            for a in self.M.getActions(currentState, 0):
+                target += self.M.Q[n][self.M.getStateRep(currentState)][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+            for a in self.M.getActions(currentState, 0):
+                action_regret = self.M.Q[n][self.M.getStateRep(currentState)][a] - target
+
+                RMPLUS = False
+                if RMPLUS:
+                    self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+                else:
+                    self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+
+
+            # Skip terminal states
+            # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+            #     continue
+
+            for a in self.M.getActions(self.M.getStateRep(currentState), 0):
+
+                # Sum up total regret
+                rgrt_sum = 0.0
+                for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+                    rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+
+                # Check if this is a "trick"
+                # Check if this can go here or not
+                if rgrt_sum > 0:
+                    self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+                else:
+                    self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(self.M.getStateRep(currentState),0))
+
+                # Add to policy sum
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+            # Epsilon Greedy action selection
+            if np.random.randint(0, 100) < int(self.epsilon):
+                totalActions = self.M.getActions(currentState, 0)
+                randomAction = np.random.randint(0, len(totalActions))
+                randomAction = totalActions[randomAction]
+
             else:
-                # UP, RIGHT, DOWN, LEFT
-                randomAction = np.random.choice([0, 1, 2, 3], p=self.M.pi[n][currentState])
 
-            #else:
-               #previously experiment with epsilon decay
+                totalActions = []
+                totalActionsProbs = []
+                ta = self.M.getActions(currentState, 0)
+                for action in ta:
+                    totalActions.append(action)
+                    totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
+                #print(totalActionsProbs)
+                randomAction = np.random.choice(totalActions, p=totalActionsProbs)
 
-            statesVisited = []
-            currentState = self.M.getMove(currentState, randomAction)
+            # randomAction picked, now simulate taking action
+            #       GridWorld: This will handle non-determinism, if there is non-determinism
+            nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
+            if len(nextPossStates) == 1:
+                currentState = nextPossStates[0][0]
+            else:
+                nst = []
+                nspt = []
+                for ns, nsp,_ in nextPossStates:
+                    nst.append(ns)
+                    nspt.append(nsp)
+                currentState = np.random.choice(nst, p=nspt)
+

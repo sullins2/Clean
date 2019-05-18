@@ -14,8 +14,9 @@ class TigerAgent:
         self.tigergame = tigergame
 
         # Parameters
-        self.gamma = 1.0#0.99 #1.0
-        self.alpha = 0.5
+        self.gamma = 1.0 #1.0
+        self.alpha = 1.0
+        self.epsilon = 10.0
 
         # Q-Values
         self.Q = {}
@@ -218,22 +219,36 @@ class TigerAgent:
         """Train LONR online
 
                 """
+        countLEFT = 0
+        countRIGHT = 0
         for t in range(1, iterations + 1):
 
-            self._train_lonr_online(iters=t)
+            whichSide = self._train_lonr_online(iters=t)
 
-            for s in self.tigergame.totalStates:
-                for a in self.tigergame.getActions(s):
-                    self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
+            if whichSide == 1:
+                countLEFT += 1
+                for s in self.tigergame.totalStatesLeft:
+                    for a in self.tigergame.getActions(s):
+                        self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
+            else:
+                countRIGHT += 1
+                for s in self.tigergame.totalStatesLeft:
+                    for a in self.tigergame.getActions(s):
+                        self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
+            # for s in self.tigergame.totalStates:
+            #     for a in self.tigergame.getActions(s):
+            #         self.Qsums[self.tigergame.stateIDtoIS(s)][a] += self.Q_bu[self.tigergame.stateIDtoIS(s)][a]
 
-            # self.alpha *= 0.999
-            # self.alpha = max(0.0, self.alpha)
+            self.alpha *= 0.999
+            self.alpha = max(0.0, self.alpha)
 
+            self.epsilon = float(self.epsilon) * 0.9999
             if (t + 1) % log == 0:
-                print("Iteration: ", (t + 1), " alpha: ", self.alpha)
+                print("Iteration: ", (t + 1), " alpha: ", self.alpha, " epsilon: ", self.epsilon)
 
             if self.VERBOSE:
                 self.verbose("")
+        return countLEFT,countRIGHT
 
     def _train_lonr_online(self, startState="root", iters=0):
         """ One episode of O-LONR (online learning)
@@ -249,6 +264,11 @@ class TigerAgent:
             totalStartStateProbs.append(nextStateProb)
         currentState = np.random.choice(totalStartStates, p=totalStartStateProbs)
 
+        SS = None
+        if currentState == "rootTL":
+            SS = 1
+        else:
+            SS = 2
         #print("Current state: ", currentState)
         # statesVisited = []
         # statesVisited.append(currentState)
@@ -356,8 +376,8 @@ class TigerAgent:
                 # Add to policy sum
                 self.pi_sums[self.tigergame.stateIDtoIS(currentState)][a] += self.pi[self.tigergame.stateIDtoIS(currentState)][a]
 
-            self.epsilon = 20
-            if np.random.randint(0, 100) < self.epsilon:
+            # self.epsilon = 10
+            if np.random.randint(0, 100) < int(self.epsilon):
                 randomAction = np.random.randint(0, 3)
                 randomAction = self.tigergame.totalActions[randomAction]
                 self.verbose("ACTION: RANDOM: ", randomAction)
@@ -390,6 +410,8 @@ class TigerAgent:
 
             #statesVisited = []
 
+        return SS
+
 
     def verbose(self, *args):
         if self.VERBOSE:
@@ -409,7 +431,7 @@ class TigerGame(object):
         self.TL = "TL"
         self.TR = "TR"
 
-        self.TLProb = 0.75  # Probability that tiger is on left
+        self.TLProb = 0.5  # Probability that tiger is on left
 
         #total action list
         self.totalActions = [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
