@@ -7,73 +7,105 @@ from LONRGeneral.TigerGame import *
 ####################################################
 # GridWorld MDP
 #########
-# create GridWorld (inherits from MDP class)
-# gridMDP = Grid(noise=0.2)
-#
-# # Create LONR Agent and feed in gridMDP
-# lonrAgent = LONR(M=gridMDP, gamma=1.0)
-#
-# # Train via VI
-# lonrAgent.lonr_value_iteration(iterations=1000, log=100)
-#
-# print("Bottom left (start state)")
-# print(gridMDP.Q[0][36])
-#
-# print("State above bottom right terminal")
-# print(gridMDP.Q[0][35])
-# print("")
+
+# Create GridWorld (inherits from MDP class)
+print("Begin GridWorld VI with determinism")
+gridMDP = Grid(noise=0.0)
+
+# Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0)
+
+# Train via VI
+lonrAgent.lonr_value_iteration(iterations=1000, log=1000)
+print("[North, East, South, West]")
+print("Note: these are Q, not QAvg")
+print("Q for: Bottom left (start state)")
+print(gridMDP.Q[0][36])
+
+print("Q for: State above bottom right terminal")
+print(gridMDP.Q[0][35])
+print("End GridWorld VI with non-determism")
+print("")
+
+# Create GridWorld (inherits from MDP class)
+print("Begin GridWorld VI with non-determinism")
+gridMDP = Grid(noise=0.2)
+
+# Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0)
+
+# Train via VI
+lonrAgent.lonr_value_iteration(iterations=1000, log=1000)
+
+print("[North, East, South, West]")
+print("Note: these are Q, not QAvg")
+print("Q for: Bottom left (start state) (West opt = 170.23]")
+print(gridMDP.Q[0][36])
+
+print("Q for: State above bottom right terminal")
+print(gridMDP.Q[0][35])
+print("End GridWorld VI with non-determism")
+print("")
 ###################################################
 
 
 ####################################################################
 # Create soccer game MG (inherits from MDP class)
-# soccer = SoccerGame()
-#
-# # Create LONR agent, feed in soccer
-# lonrAgent = LONR(M=soccer, gamma=0.95)
-#
-# # Train via VI
-# lonrAgent.lonr_value_iteration(iterations=1, log=500)
-#
-# # Test of the learned policy:
-#
-# # Normalize pi sums here for now
-# soccer.normalize_pisums()
-#
-# # This plays face-to-face start state, player A has the ball
-# # This is 66/33 win/lose for playerA. Should double check that is correct
-# #
-# #soccer.play(iterations=1, log=10000)
-#
-# print("")
-#
-# # Play random games, mix who has ball at start, positions, etc
-# #soccer.play_random(iterations=1,log=10000)
-#
-# print("")
-#
-# print("Print out of game states of interest")
-#
-# print(" 0  1  2  3")
-# print(" 4  5  6  7")
-# print("")
-# print("B has ball in 6, A in 2")
-# print("PiB26 A: ", soccer.pi[0]["B26"])
-# print("PiB26 B: ", soccer.pi[1]["B26"])
-# print("")
-# print("B has ball in 5, A in 2")
-# print("PiB25 A: ", soccer.pi[0]["B25"])
-# print("PiB25 B: ", soccer.pi[1]["B25"])
-#
-# print("")
-# print("A has ball in 2, B in 5")
-# print("PiA25 A: ", soccer.pi[0]["A25"])
-# print("PiA25 B: ", soccer.pi[1]["A25"])
-# print("")
-# print("A has ball in 1, B in 5")
-# print("PiA15 A: ", soccer.pi[0]["A15"])
-# print("PiA15 B: ", soccer.pi[1]["A15"])
+print("Begin Soccer VI")
+soccer = SoccerGame()
 
+# Create LONR agent, feed in soccer
+lonrAgent = LONR(M=soccer, alpha=0.99, gamma=0.95)
+
+# Train via VI
+lonrAgent.lonr_value_iteration(iterations=4500, log=250)
+
+# Test of the learned policy:
+
+# Normalize pi sums here for now
+soccer.normalize_pisums()
+
+# This plays face-to-face start state, player A has the ball
+# This is 66/33 win/lose for playerA. Should double check that is correct
+#
+print("Playing 50,000 games where:")
+print(" - Players are facing each other")
+print(" - Player A always starts with ball")
+soccer.play(iterations=50000, log=10000)
+
+print("")
+
+# Play random games, mix who has ball at start, positions, etc
+print("Playing 50,000 games where: all initial conditions are randomized")
+soccer.play_random(iterations=50000,log=10000)
+
+print("")
+
+print("Print out of game states of interest, here is board for reminder")
+
+print(" 0  1  2  3")
+print(" 4  5  6  7")
+print("")
+print("Note: [North, South, East, West]")
+print("B has ball in 6, A in 2")
+print("PiB26 A: ", soccer.pi[0]["B26"])
+print("PiB26 B: ", soccer.pi[1]["B26"])
+print("")
+print("B has ball in 5, A in 2")
+print("PiB25 A: ", soccer.pi[0]["B25"])
+print("PiB25 B: ", soccer.pi[1]["B25"])
+
+print("")
+print("A has ball in 2, B in 5")
+print("PiA25 A: ", soccer.pi[0]["A25"])
+print("PiA25 B: ", soccer.pi[1]["A25"])
+print("")
+print("A has ball in 1, B in 5")
+print("PiA15 A: ", soccer.pi[0]["A15"])
+print("PiA15 B: ", soccer.pi[1]["A15"])
+print("")
+print("End Soccer VI")
+print("")
 ######################################################################
 
 
@@ -84,74 +116,153 @@ from LONRGeneral.TigerGame import *
 # ALPHA works with 0.5, iterations 400k +
 # Better results when alpha is decayed
 #
-# noSDE = NoSDE()
-#
-# # Create LONR agent, feed in soccer
-# lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=1.0)
-#
-#
-# lonrAgent.lonr_value_iteration(iterations=50000, log=1000)
-#
-#
-# print("")
-# print("Normalized Pi Sums:")
-# for n in range(2):
-#     for k in sorted(noSDE.pi_sums[n].keys()):
-#         #print(k, ": ", noSDE.pi_sums[k])
-#         tot = 0.0
-#         for kk in noSDE.pi_sums[n][k].keys():
-#             tot += noSDE.pi_sums[n][k][kk]
-#         print(k, ": ", end='')
-#         for kk in noSDE.pi_sums[n][k].keys():
-#             print(kk, ": ", noSDE.pi_sums[n][k][kk] / float(tot), " ", end='')
-#         print("")
-# print("")
-# print("QValues:")
-# for n in range(2):
-#     for k in sorted(noSDE.Q[n].keys()):
-#         #print(k, ": ", noSDE.pi_sums[k])
-#         print(k, ": ", end='')
-#         for kk in noSDE.Q[n][k].keys():
-#             print(kk, ": ", noSDE.Q[n][k][kk], " ", end='')
-#         print("")
 
+print("Begin NoSDE VI")
+noSDE = NoSDE()
+
+# Create LONR agent, feed in soccer (gamma should be 0.75 here)
+# DCFR had to be added here, as it is the only one that converges!
+lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=1.0, alphaDecay=1.0, DCFR=True)
+
+print(" - Training with 50000 iterations")
+lonrAgent.lonr_value_iteration(iterations=50000, log=5000)
+
+
+print("")
+print("Normalized Pi Sums:")
+print(" - Player 1 Send with: 2/3 (0.666)")
+print(" - Player 2 Send with 5/12 (0.416")
+for n in range(2):
+    for k in sorted(noSDE.pi_sums[n].keys()):
+        #print(k, ": ", noSDE.pi_sums[k])
+        tot = 0.0
+        for kk in noSDE.pi_sums[n][k].keys():
+            tot += noSDE.pi_sums[n][k][kk]
+        print(k, ": ", end='')
+        for kk in noSDE.pi_sums[n][k].keys():
+            print(kk, ": ", noSDE.pi_sums[n][k][kk] / float(tot), " ", end='')
+        print("")
+print("")
+print("QValues:")
+print("  - Should be 4 every SEND/KEEP")
+print("  - Should be 5.3 every NOOP")
+for n in range(2):
+    for k in sorted(noSDE.Q[n].keys()):
+        #print(k, ": ", noSDE.pi_sums[k])
+        print(k, ": ", end='')
+        for kk in noSDE.Q[n][k].keys():
+            print(kk, ": ", noSDE.Q[n][k][kk], " ", end='')
+        print("")
+print("")
+print("End NoSDE VI")
+
+print("----------------------------------------------")
+print("    End of Value Iteration Tests")
+print("----------------------------------------------")
+print("")
 #######################################################################
 
+
+print("----------------------------------------------")
+print("   Begin O-LONR Tests")
+print("----------------------------------------------")
+print("")
 
 #######################################################################
 # O-LONR GridWorld
+print("Begin GridWorld O-LONR - deterministic")
 gridMDP = Grid(noise=0.0, startState=36)
 
 # Create LONR Agent and feed in gridMDP
-lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=0.5, epsilon=15)
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.9999)
 
 # Train via VI
-lonrAgent.lonr_online(iterations=1000, log=400)
+lonrAgent.lonr_online(iterations=20000, log=1000)
 
+print("Q values (not QAvg)")
+print("Q for Bottom left (start state)")
+print(gridMDP.Q[0][36])
+
+print("Q for State above bottom right terminal")
+print(gridMDP.Q[0][35])
+
+print("End GridWorld O-LONR - deterministic")
+
+print("")
+
+print("Begin GridWorld O-LONR - non-deterministic")
+gridMDP = Grid(noise=0.2, startState=36)
+
+# Create LONR Agent and feed in gridMDP
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.999)
+
+# Train via VI
+lonrAgent.lonr_online(iterations=20000, log=500, randomized=False)
+
+print("")
+print("Q values (not QAvg)")
 print("Bottom left (start state)")
 print(gridMDP.Q[0][36])
 
 print("State above bottom right terminal")
 print(gridMDP.Q[0][35])
 
+print("End GridWorld O-LONR - non-deterministic")
 print("")
 ######################################################################
 
 
+# Tiger Game O-LONR - Tiger Location 50/50
+print("Begin TigerGame O-LONR - Tiger Location 50/50")
 tigerGame = TigerGame(startState="root")
 
 # # Create LONR Agent and feed in the Tiger game
-lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=0.95, epsilon=15)
+lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.999)
 
-lonrAgent.lonr_online(iterations=1000, log=100, randomized=True)
+lonrAgent.lonr_online(iterations=20000, log=2000, randomized=True)
 
+print("")
+print("Pi sums: ")
 for k in sorted(tigerGame.pi_sums[0].keys()):
     print(k, ": ", end='')
     for kk in sorted(tigerGame.pi_sums[0][k].keys()):
         print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
     print("")
-# print(tigerGame.pi_sums[0]["rootTL"])
-# print(tigerGame.pi_sums[0]["rootTL"])
+
+print("")
+print("Q: ")
+for k in sorted(tigerGame.Q[0].keys()):
+    print(k, ": ", end='')
+    for kk in sorted(tigerGame.Q[0][k].keys()):
+        print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
+    print("")
+
+print("")
+
+# Tiger Game O-LONR - Tiger Location 85/15
+print("Begin TigerGame O-LONR - Tiger Location 85/15")
+tigerGame = TigerGame(startState="root", TLProb=0.85)
+
+# # Create LONR Agent and feed in the Tiger game
+lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.999)
+
+lonrAgent.lonr_online(iterations=20000, log=2000, randomized=True)
+
+print("")
+print("Pi sums: ")
+for k in sorted(tigerGame.pi_sums[0].keys()):
+    print(k, ": ", end='')
+    for kk in sorted(tigerGame.pi_sums[0][k].keys()):
+        print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
+    print("")
+
+print("")
+print("Q: ")
+for k in sorted(tigerGame.Q[0].keys()):
+    print(k, ": ", end='')
+    for kk in sorted(tigerGame.Q[0][k].keys()):
+        print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
+    print("")
 
 print("Done")
 

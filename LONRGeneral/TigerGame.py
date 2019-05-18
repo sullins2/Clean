@@ -6,7 +6,7 @@ import numpy as np
 
 class TigerGame(MDP):
 
-    def __init__(self, startState=None):
+    def __init__(self, startState=None, TLProb=0.5):
         super().__init__(startState=startState)
 
         # Two player MG
@@ -20,7 +20,7 @@ class TigerGame(MDP):
         self.TL = "TL"
         self.TR = "TR"
 
-        self.TLProb = 0.5  # Probability that tiger is on left
+        self.TLProb = TLProb  # Probability that tiger is on left
 
         #total action list
         self.totalActions = [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]

@@ -161,8 +161,13 @@ class Agent:
             #print("MaxQ: ", max(self.Q[36]), "  Q*pi: ", np.dot(self.Q[36], self.pi[36]))
             #print("  Qt+1: ", max(self.Q[3]))
 
+            # self.epsilon = (((float(iterations) / 10.0) - float(t)) / (float(iterations) / 10.0)) * 20.0
+            # self.epsilon = max(0.0, self.epsilon)
+
+            self.alpha *= 0.999
+
             if (t + 1) % log == 0:
-                print("Iteration: ", (t + 1))
+                print("Iteration: ", (t + 1), " alpha: ", self.alpha, "  epsilon: ", self.epsilon)
 
 
     def _train_lonr_online(self, startState=36, iters=0, totalIterations=-1):
@@ -241,8 +246,8 @@ class Agent:
                 #print("Repeat: ", currentState)
                 statesVisited.append(currentState)
 
-        self.epsilon = (((float(totalIterations) / 10.0) - float(iters)) / (float(totalIterations) / 10.0)) * 20.0
-        self.epsilon = max(0.0, self.epsilon)
+        # self.epsilon = (((float(totalIterations) / 10.0) - float(iters)) / (float(totalIterations) / 10.0)) * 20.0
+        # self.epsilon = max(0.0, self.epsilon)
         eppRand = float(np.random.randint(0, 100))
         #print("Iteration: ", iters, "Rand:", eppRand, "  Epsilon: ", self.epsilon)
 

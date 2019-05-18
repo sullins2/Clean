@@ -1,0 +1,350 @@
+Begin GridWorld VI with determinism
+
+# GridWorld grid:
+
+# self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+             ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+             ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+             ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
+
+Starting training..
+Iteration:  1000  alpha:  1.0
+Finish Training
+[North, East, South, West]
+Note: these are Q, not QAvg
+Q for: Bottom left (start state)
+{0: 187.0, 1: -101.0, 2: 186.0, 3: 186.0}
+Q for: State above bottom right terminal
+{0: 197.0, 1: 198.0, 2: 199.0, 3: 197.0}
+End GridWorld VI with non-determism
+
+#########################################################################################################
+
+Begin GridWorld VI with non-determinism
+Starting training..
+Iteration:  1000  alpha:  1.0
+Finish Training
+[North, East, South, West]
+Note: these are Q, not QAvg
+Q for: Bottom left (start state) (West opt = 170.23]
+{0: 150.21037762806571, 1: -45.95324941598541, 2: 142.2103776280656, 3: 170.2337529200729}
+Q for: State above bottom right terminal
+{0: 195.7195697923744, 1: 197.2909962041169, 2: 198.26081478528903, 3: 194.16021082996667}
+End GridWorld VI with non-determism
+
+#########################################################################################################
+
+Begin Soccer VI
+Starting training..
+Iteration:  250  alpha:  0.99
+Iteration:  500  alpha:  0.99
+Iteration:  750  alpha:  0.99
+Iteration:  1000  alpha:  0.99
+Iteration:  1250  alpha:  0.99
+Iteration:  1500  alpha:  0.99
+Iteration:  1750  alpha:  0.99
+Iteration:  2000  alpha:  0.99
+Iteration:  2250  alpha:  0.99
+Iteration:  2500  alpha:  0.99
+Iteration:  2750  alpha:  0.99
+Iteration:  3000  alpha:  0.99
+Iteration:  3250  alpha:  0.99
+Iteration:  3500  alpha:  0.99
+Iteration:  3750  alpha:  0.99
+Iteration:  4000  alpha:  0.99
+Iteration:  4250  alpha:  0.99
+Iteration:  4500  alpha:  0.99
+Finish Training
+Playing 50,000 games where:
+ - Players are facing each other
+ - Player A always starts with ball
+Test iteration:  10000
+Test iteration:  20000
+Test iteration:  30000
+Test iteration:  40000
+Test iteration:  50000
+Player A Wins:  33453 ( 66.906 %)
+Player B Wins:  16547 ( 33.094 %)
+
+Playing 50,000 games where: all initial conditions are randomized
+Random game iteration:  9999
+Random game iteration:  19999
+Random game iteration:  29999
+Random game iteration:  39999
+Random game iteration:  49999
+Player A Wins:  25131 ( 50.26199999999999 %)
+Player B Wins:  24869 ( 49.738 %)
+
+Print out of game states of interest
+Here is board for reminder
+ 0  1  2  3
+ 4  5  6  7
+
+Note: Actions here are: [North, South, East, West]
+
+B has ball in 6, A in 2
+PiB26 A:  {0: 0.3333333333333333, 1: 0.3333333333333333, 2: 0.0, 3: 0.3333333333333333}
+PiB26 B:  {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0}
+
+B has ball in 5, A in 2 (A down to block, B right towards goal)
+PiB25 A:  {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0}
+PiB25 B:  {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0}
+
+A has ball in 2, B in 5
+PiA25 A:  {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0}
+PiA25 B:  {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0}
+
+A has ball in 1, B in 5
+PiA15 A:  {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0}
+PiA15 B:  {0: 0.3333333333333333, 1: 0.3333333333333333, 2: 0.3333333333333333, 3: 0.0}
+
+End Soccer VI
+
+#########################################################################################################
+
+Begin NoSDE VI
+ - Training with 50000 iterations
+Starting training..
+Iteration:  5000  alpha:  1.0
+Iteration:  10000  alpha:  1.0
+Iteration:  15000  alpha:  1.0
+Iteration:  20000  alpha:  1.0
+Iteration:  25000  alpha:  1.0
+Iteration:  30000  alpha:  1.0
+Iteration:  35000  alpha:  1.0
+Iteration:  40000  alpha:  1.0
+Iteration:  45000  alpha:  1.0
+Iteration:  50000  alpha:  1.0
+Finish Training
+
+Normalized Pi Sums:
+ - Player 1 Send with: 2/3 (0.666)
+ - Player 2 Send with 5/12 (0.416
+1 : SEND :  0.6652320605251093  KEEP :  0.3347679394748906
+2 : NOOP :  1.0
+1 : NOOP :  1.0
+2 : SEND :  0.41377724730469573  KEEP :  0.5862227526953042
+
+QValues:
+  - Should be 4 every SEND/KEEP
+  - Should be 5.3 every NOOP
+1 : SEND :  4.104974694796424  KEEP :  4.069488955917297
+2 : NOOP :  5.473473197987937
+1 : NOOP :  5.287968632104771
+2 : SEND :  3.965905448078919  KEEP :  3.981242388731111
+
+End NoSDE VI
+#########################################################################################################
+
+----------------------------------------------
+    End of Value Iteration Tests
+----------------------------------------------
+
+
+
+
+----------------------------------------------
+   Begin O-LONR Tests
+----------------------------------------------
+
+Begin GridWorld O-LONR - deterministic
+Starting training..
+Iteration:  1000  alpha: 0.9050138872858745
+Iteration:  2000  alpha: 0.8188863343435545
+Iteration:  3000  alpha: 0.740955291399637
+Iteration:  4000  alpha: 0.6704407203146573
+Iteration:  5000  alpha: 0.6066368169217928
+Iteration:  6000  alpha: 0.5489049463944978
+Iteration:  7000  alpha: 0.49666725093473746
+Iteration:  8000  alpha: 0.4494008657990524
+Iteration:  9000  alpha: 0.40663268576867767
+Iteration:  10000  alpha: 0.3679346296795588
+Iteration:  11000  alpha: 0.33291935561335123
+Iteration:  12000  alpha: 0.30123638386127816
+Iteration:  13000  alpha: 0.2725685888543155
+Iteration:  14000  alpha: 0.24662902494622216
+Iteration:  15000  alpha: 0.22315805427761576
+Iteration:  16000  alpha: 0.2019207479729125
+Iteration:  17000  alpha: 0.1827045346578385
+Iteration:  18000  alpha: 0.16531707276072138
+Iteration:  19000  alpha: 0.1495843253007138
+Iteration:  20000  alpha: 0.13534881789284928
+Finish Training
+Q values (not QAvg)
+Q for Bottom left (start state)
+{0: 186.99999999999994, 1: -101.0, 2: 185.99999999999997, 3: 185.99999999999997}
+Q for State above bottom right terminal
+{0: 196.99999999999997, 1: 197.99999999999994, 2: 199.00000000000003, 3: 196.99999999999994}
+End GridWorld O-LONR - deterministic
+
+#########################################################################################################
+
+Begin GridWorld O-LONR - non-deterministic
+Starting training..
+Iteration:  500  alpha: 0.6075935243162931
+Iteration:  1000  alpha: 0.36843192017940213
+Iteration:  1500  alpha: 0.22340935901156642
+Iteration:  2000  alpha: 0.1354707313895471
+Iteration:  2500  alpha: 0.08214659915956658
+Iteration:  3000  alpha: 0.049811968122312755
+Iteration:  3500  alpha: 0.03020492867146699
+Iteration:  4000  alpha: 0.01831563277741149
+Iteration:  4500  alpha: 0.011106214078031718
+Iteration:  5000  alpha: 0.006734574374039312
+Iteration:  5500  alpha: 0.0040837041030191285
+Iteration:  6000  alpha: 0.0024762721851140333
+Iteration:  6500  alpha: 0.0015015593147985457
+Iteration:  7000  alpha: 0.0009105139529540224
+Iteration:  7500  alpha: 0.0005521164900736474
+Iteration:  8000  alpha: 0.0003347918146913191
+Iteration:  8500  alpha: 0.0002030107073406833
+Iteration:  9000  alpha: 0.0001231014185127663
+Iteration:  9500  alpha: 7.464610826868624e-05
+Iteration:  10000  alpha: 4.5263828369959666e-05
+Iteration:  10500  alpha: 2.7447032487353916e-05
+Iteration:  11000  alpha: 1.664330259925234e-05
+Iteration:  11500  alpha: 1.009214826914005e-05
+Iteration:  12000  alpha: 6.119666218823787e-06
+Iteration:  12500  alpha: 3.7108367446730024e-06
+Iteration:  13000  alpha: 2.250173269786933e-06
+Iteration:  13500  alpha: 1.3644576930882415e-06
+Iteration:  14000  alpha: 8.273784162425722e-07
+Iteration:  14500  alpha: 5.017048510420881e-07
+Iteration:  15000  alpha: 3.042232582066395e-07
+Iteration:  15500  alpha: 1.8447457831357384e-07
+Iteration:  16000  alpha: 1.1186150015149706e-07
+Iteration:  16500  alpha: 6.7830458432454e-08
+Iteration:  17000  alpha: 4.1130961813721944e-08
+Iteration:  17500  alpha: 2.494094922573037e-08
+Iteration:  18000  alpha: 1.5123666475334736e-08
+Iteration:  18500  alpha: 9.170672919745956e-09
+Iteration:  19000  alpha: 5.5609029687425964e-09
+Iteration:  19500  alpha: 3.3720144746615615e-09
+Iteration:  20000  alpha: 2.0447185792019194e-09
+Finish Training
+
+Q values (not QAvg)
+Bottom left (start state)
+{0: 150.21037761330726, 1: -45.95324941939049, 2: 142.21037761200742, 3: 170.23375290238485}
+State above bottom right terminal
+{0: 195.71956979228216, 1: 197.29099620407317, 2: 198.26081478524435, 3: 194.16021082964875}
+End GridWorld O-LONR - non-deterministic
+
+
+#########################################################################################################
+
+Begin TigerGame O-LONR - Tiger Location 50/50
+Starting training..
+Iteration:  2000  alpha: 0.1354707313895471
+Iteration:  4000  alpha: 0.01831563277741149
+Iteration:  6000  alpha: 0.0024762721851140333
+Iteration:  8000  alpha: 0.0003347918146913191
+Iteration:  10000  alpha: 4.5263828369959666e-05
+Iteration:  12000  alpha: 6.119666218823787e-06
+Iteration:  14000  alpha: 8.273784162425722e-07
+Iteration:  16000  alpha: 1.1186150015149706e-07
+Iteration:  18000  alpha: 1.5123666475334736e-08
+Iteration:  20000  alpha: 2.0447185792019194e-09
+Finish Training
+
+Results:
+
+    For these, for now, rootTL & rootTR -> rootTL
+    Every TigerRight (TR) is mapped to its "TL" version so there is only one Q value for each state
+
+    For instance: rootTL & rootTR are the root
+                  rootTLLGL & rootTRLGL -> rootTLLGL (aka there is one state, rootListenGrowlLeft)
+
+    I will eventually change this so they don't have the TL in the names, but for now
+        the medthod getStateRep() does this mapping so that each state is using 1 Q Value, pi, regretsum, etc
+
+Pi sums: (Unnormalized, but easy to see which one will get most probability)
+root : TL :  0.0  TR :  0.0
+rootTL : L :  19985.46406252999  OL :  5.845564372416633  OR :  8.690373097592492
+rootTLLGL : L :  8927.641343083484  OL :  1.4051851649746958  OR :  58.95347175154058
+rootTLLGLLGL : L :  130.38488306273834  OL :  1.3435976446636202  OR :  8113.271519292599
+rootTLLGLLGR : L :  3484.7044657143542  OL :  3.5968614402845285  OR :  1.698672845361063
+rootTLLGR : L :  9012.299229679384  OL :  20.46245291418962  OR :  1.2383174064270248
+rootTLLGRLGL : L :  3528.0015614851773  OL :  2.064665674605333  OR :  3.9337728402171703
+rootTLLGRLGR : L :  111.73859342912141  OL :  8166.00852772268  OR :  1.2528788481978292
+rootTLOL : exit :  0.0
+rootTLOR : exit :  0.0
+rootTROL : exit :  0.0
+rootTROR : exit :  0.0
+
+Q: (not Qavg)
+root : TL :  0.0  TR :  0.0
+rootTL : L :  1.8087056452412027  OL :  -45.71887162607574  OR :  -44.28112837392261
+rootTLLGL : L :  2.6991071633839847  OL :  -84.73762412440414  OR :  -5.2623758755954615
+rootTLLGLLGL : L :  2.8366110425054143  OL :  -94.5349829161105  OR :  4.534982916110851
+rootTLLGLLGR : L :  2.2772272090077066  OL :  -37.18418021459158  OR :  -52.81581978540811
+rootTLLGR : L :  3.0467955271803886  OL :  -6.452984419270583  OR :  -83.54701558072934
+rootTLLGRLGL : L :  2.321230028452623  OL :  -57.11493229336586  OR :  -32.88506770663365
+rootTLLGRLGR : L :  3.1774108867340822  OL :  4.895974445377598  OR :  -94.8959744453772
+rootTLOL : exit :  -99.9999999999997
+rootTLOR : exit :  9.999999999999996
+rootTR : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGL : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGLLGL : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGLLGR : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGR : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGRLGL : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGRLGR : L :  0.0  OL :  0.0  OR :  0.0
+rootTROL : exit :  10.0
+rootTROR : exit :  -100.00000000000003
+
+#########################################################################################################
+
+Results with different tiger location probability
+
+Begin TigerGame O-LONR - Tiger Location 85/15
+Starting training..
+Iteration:  2000  alpha: 0.1354707313895471
+Iteration:  4000  alpha: 0.01831563277741149
+Iteration:  6000  alpha: 0.0024762721851140333
+Iteration:  8000  alpha: 0.0003347918146913191
+Iteration:  10000  alpha: 4.5263828369959666e-05
+Iteration:  12000  alpha: 6.119666218823787e-06
+Iteration:  14000  alpha: 8.273784162425722e-07
+Iteration:  16000  alpha: 1.1186150015149706e-07
+Iteration:  18000  alpha: 1.5123666475334736e-08
+Iteration:  20000  alpha: 2.0447185792019194e-09
+Finish Training
+
+Of note: Listen-GrowlLeft -> Open Right
+
+Pi sums:
+root : TL :  0.0  TR :  0.0
+rootTL : L :  19916.3031094977  OL :  2.8494884466469825  OR :  80.84740205564853
+rootTLLGL : L :  769.7467765817016  OL :  1.7700279367429501  OR :  12605.48319548155
+rootTLLGLLGL : L :  36.01662542488002  OL :  0.8469042107940263  OR :  3307.1364703643258
+rootTLLGLLGR : L :  1823.666599898575  OL :  1.6065508989407415  OR :  5.726849202484277
+rootTLLGR : L :  4580.450230275541  OL :  2.7982329064296003  OR :  3.75153681802953
+rootTLLGRLGL : L :  4006.106110729054  OL :  0.5489546246529187  OR :  8.344934646293382
+rootTLLGRLGR : L :  8919.871577560394  OL :  887.1173508955436  OR :  1.0110715440634592
+rootTLOL : exit :  0.0
+rootTLOR : exit :  0.0
+rootTROL : exit :  0.0
+rootTROR : exit :  0.0
+
+Q:
+root : TL :  0.0  TR :  0.0
+rootTL : L :  4.140544384941851  OL :  -83.34764503902802  OR :  -6.6523549609715396
+rootTLLGL : L :  5.25083693402852  OL :  -96.40842070756948  OR :  6.40842070756908
+rootTLLGLLGL : L :  4.876732934070733  OL :  -97.07569569348556  OR :  7.075695693485171
+rootTLLGLLGR : L :  1.0254374823121055  OL :  -45.056277399660836  OR :  -44.943722600338695
+rootTLLGR : L :  1.210269253341607  OL :  -47.1479641870061  OR :  -42.852035812993705
+rootTLLGRLGL : L :  4.118726728930648  OL :  -75.99756309214165  OR :  -14.00243690785864
+rootTLLGRLGR : L :  0.1598647536806242  OL :  -0.2990602935805264  OR :  -89.70093970641803
+rootTLOL : exit :  -100.0
+rootTLOR : exit :  9.999999999999998
+rootTR : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGL : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGLLGL : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGLLGR : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGR : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGRLGL : L :  0.0  OL :  0.0  OR :  0.0
+rootTRLGRLGR : L :  0.0  OL :  0.0  OR :  0.0
+rootTROL : exit :  9.999999999999996
+rootTROR : exit :  -100.0000000000001
+Done

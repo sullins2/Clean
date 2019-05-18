@@ -27,7 +27,7 @@ trainingIterations = 6000
 
 agent = Agent(gridworld=newGrid)
 
-agent.train_lonr_online(iterations=trainingIterations, log=1000)
+agent.train_lonr_online(iterations=trainingIterations, log=500)
 
 newGrid.printGrid(q=agent.Q)
 

@@ -5,9 +5,12 @@ import numpy as np
 class MDP(object):
 
     def __init__(self, startState=None):
+
+        # Check if these are used
         self.totalPlayers = 1
         self.totalStates = 1
 
+        # Initialized here but must be defined/created in created class
         self.Q = None
         self.Q_bu = None
         self.QSums = None
@@ -50,6 +53,8 @@ class MDP(object):
         raise NotImplementedError("Please implement information_set method")
 
 
+    # The following are only needed for O-LONR
+
     def getMove(self, s, a):
         """Used to get actual move in the environment for O-LONR
         """
@@ -67,7 +72,7 @@ class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None, gamma=0.99, alpha=0.99, epsilon=10):
+    def __init__(self, M=None, gamma=0.99, alpha=0.99, epsilon=10, alphaDecay=1.0, DCFR=False):
         self.M = M
         #self.N = M.totalPlayers
         #self.S = M.totalStates
@@ -75,7 +80,10 @@ class LONR(object):
         self.gamma = gamma
         self.alpha = alpha
         self.epsilon = epsilon
+        self.alphaDecay = alphaDecay
 
+
+        self.DCFR = DCFR
 
     def lonr_value_iteration(self, iterations=-1, log=-1):
 
@@ -87,8 +95,8 @@ class LONR(object):
 
             self._lonr_value_iteration(t=t)
             #print("")
-            # self.alpha *= 0.9999
-            # self.alpha = max(0.0, self.alpha)
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
 
         print("Finish Training")
 
@@ -123,7 +131,7 @@ class LONR(object):
                         #
                         # I might possibly change it so that instead of setting it here,
                         # M.getActions(terminal) returns one exit action
-                        self.M.Q_bu[n][s][a_current] = self.M.getReward(s, a_current)
+                        self.M.Q_bu[n][s][a_current] = self.M.getReward(s, a_current, 0,0)
                         #print("Terminal: ", s)
                         continue
 
@@ -189,10 +197,11 @@ class LONR(object):
                 for a in self.M.getActions(s, n):
                     action_regret = self.M.Q[n][s][a] - target
 
-                    if action_regret > 0:
-                        action_regret *= alphaWeight
-                    else:
-                        action_regret *= betaWeight
+                    if self.DCFR:
+                        if action_regret > 0:
+                            action_regret *= alphaWeight
+                        else:
+                            action_regret *= betaWeight
 
                     self.M.regret_sums[n][s][a] += action_regret
                     #self.M.regret_sums[n][s][a] = max(0.0, self.M.regret_sums[n][s][a] + action_regret)
@@ -212,7 +221,10 @@ class LONR(object):
                     else:
                         self.M.pi[n][s][a] = 1. / len(self.M.getActions(s, n))
 
-                    self.M.pi_sums[n][s][a] += self.M.pi[n][s][a] * gammaWeight
+                    if self.DCFR:
+                        self.M.pi_sums[n][s][a] += self.M.pi[n][s][a] * gammaWeight
+                    else:
+                        self.M.pi_sums[n][s][a] += self.M.pi[n][s][a]
 
 
     def lonr_online(self, iterations=-1, log=-1, randomized=False):
@@ -221,9 +233,12 @@ class LONR(object):
         for t in range(1, iterations+1):
 
             if (t+1) % log == 0:
-                print("Iteration: ", t+1)
+                print("Iteration: ", t+1, " alpha:", self.alpha)
 
             self._lonr_online(t=t, totalIterations=iterations, randomized=randomized)
+
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
 
         print("Finish Training")
 
@@ -336,7 +351,7 @@ class LONR(object):
             for a in self.M.getActions(currentState, 0):
                 action_regret = self.M.Q[n][self.M.getStateRep(currentState)][a] - target
 
-                RMPLUS = False
+                RMPLUS = True
                 if RMPLUS:
                     self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
                 else:
@@ -383,14 +398,31 @@ class LONR(object):
 
             # randomAction picked, now simulate taking action
             #       GridWorld: This will handle non-determinism, if there is non-determinism
+            #       TigerGame: This will either get the one next state OR
+            #                       if action is LISTEN, it will return next state based on
+            #                       observation accuracy aka (85/15) or (15/85), which is
+            #                       equivalent to hearing a growl left or growl right
             nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
+
+            # If there is only one successor state, pick that
             if len(nextPossStates) == 1:
+                # nextPossStates is list of lists
+                # nextPossStates = [[next_state, prob, reward]]
                 currentState = nextPossStates[0][0]
+
+            # More than one possible successor, pick via probabilities
+            #       GridWorld non-determ:
+            #           3 states: 1-self.noise, (1-self.noise)/2, (1-self.noise)/2
+            #               ex: 0.8, 0.1, 0.1 for randomAction, to the side, to the side
+            #
+            #       Tiger Game:
+            #           Only happens when randomAction is Listen
+            #               Return is based on which side tiger is on, and the obs accuracy
             else:
-                nst = []
-                nspt = []
+                nextStates = []
+                nextStateProbs = []
                 for ns, nsp,_ in nextPossStates:
-                    nst.append(ns)
-                    nspt.append(nsp)
-                currentState = np.random.choice(nst, p=nspt)
+                    nextStates.append(ns)
+                    nextStateProbs.append(nsp)
+                currentState = np.random.choice(nextStates, p=nextStateProbs)
 
