@@ -131,7 +131,7 @@ class LONR(object):
                         #
                         # I might possibly change it so that instead of setting it here,
                         # M.getActions(terminal) returns one exit action
-                        self.M.Q_bu[n][s][a_current] = self.M.getReward(s, a_current, 0,0)
+                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] * + self.alpha*self.M.getReward(s, a_current, 0,0)
                         #print("Terminal: ", s)
                         continue
 
@@ -298,6 +298,7 @@ class LONR(object):
             #           For Tiger Game, this allows shared Q's to converge and not be overwritten
             if self.M.isTerminal(currentState) == True:
                 for a in self.M.getActions(currentState, 0):
+                    # Note, the reward is via the actual state, so there is no getStateRep()
                     self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * self.M.getReward(currentState,a,a,a)
                 done = True
                 continue
