@@ -62,6 +62,9 @@ class NoSDE(MDP):
     def getStates(self):
         return self.total_states
 
+    def getStateRep(self, s):
+        return s
+
     # Need to fix this entire function here and in general.
     def getReward(self, s, a_current, n, a_notN):
 
@@ -134,7 +137,7 @@ class NoSDE(MDP):
 
         successors = []
 
-
+        #print("NextSP: ", " s: ", s, " a_current:", a_current, " n_current: ", n_current)
         otherN = 1 if n_current == 0 else 0
 
 

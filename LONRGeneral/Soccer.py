@@ -53,6 +53,9 @@ class SoccerGame(MDP):
     def getStates(self):
         return self.total_states
 
+    def getStateRep(self, s):
+        return s
+
     def getNextStatesAndProbs(self, s, a_current, n_current):
         """
 
