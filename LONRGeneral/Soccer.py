@@ -138,7 +138,8 @@ class SoccerGame(MDP):
         """Returns reward(s, a, a_other)
 
         """
-        return 0.0
+        return None
+        #return 0.0
 
 
     def isTerminal(self, s):
@@ -291,7 +292,7 @@ class SoccerGame(MDP):
             # print("")
             # print("Game Number: ", iters)
             if (iters + 1) % log == 0:
-                print("Random game iteration: ", iters)
+                print("Random game iteration: ", iters + 1)
 
             validPos = [1, 2, 5, 6]
             ballStart = np.random.uniform(0, 1)

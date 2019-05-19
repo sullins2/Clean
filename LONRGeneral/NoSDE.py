@@ -68,7 +68,8 @@ class NoSDE(MDP):
     # Need to fix this entire function here and in general.
     def getReward(self, s, a_current, n, a_notN):
 
-        return 0.0
+        return None
+        #return 0.0
         #Left state
         # if s == 1:
         #     # Player0
@@ -97,15 +98,15 @@ class NoSDE(MDP):
         #             return 1.0
         #         elif a_current == "SEND":
         #             return 0.0
-
-        # Left State
+        #
+        # #Left State
         # if n == 0:
         #     notN = 1
         # elif n == 1:
         #     notN = 0
-        # if s == 1:
-        #     if n == 0 and n
-        #print("Reward called: ")
+        # # if s == 1:
+        # #     if n == 0 and n
+        # # print("Reward called: ")
         # if s == 1:
         #     if n == 0:
         #         if a_current == "KEEP" and a_notN == "NOOP":
@@ -130,7 +131,7 @@ class NoSDE(MDP):
         #             return 0.0
 
         #self.getReward(s, actions_A, n_current, actions_B)
-        #print("Reward missed: ", "s: ", s, " a_current: ", a_current, " n: ", n, " a_notN: ", a_notN)
+        print("Reward missed: ", "s: ", s, " a_current: ", a_current, " n: ", n, " a_notN: ", a_notN)
 
 
     def getNextStatesAndProbs(self, s, a_current, n_current):

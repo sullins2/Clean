@@ -47,19 +47,20 @@ print("Q for: State above bottom right terminal")
 print(gridMDP.Q[0][35])
 print("End GridWorld VI with non-determism")
 print("")
-# # # ###################################################
-# # #
-# # #
-# # # ####################################################################
+# # # # ###################################################
+# # # #
+# # # #
+# # # # ####################################################################
 # # # Create soccer game MG (inherits from MDP class)
 print("Begin Soccer VI")
+print("THIS CURRENT SETTING WORKS")
 soccer = SoccerGame()
 
 # Create LONR agent, feed in soccer
-lonrAgent = LONR(M=soccer, alpha=0.99, gamma=0.95, VI=True)
+lonrAgent = LONR(M=soccer, alpha=1.0, gamma=0.95, RMPLUS=False, DCFR=False, VI=True)
 
 # Train via VI
-lonrAgent.lonr_value_iteration(iterations=250, log=50)
+lonrAgent.lonr_value_iteration(iterations=4500, log=50)
 
 # Test of the learned policy:
 
@@ -72,13 +73,13 @@ soccer.normalize_pisums()
 print("Playing 50,000 games where:")
 print(" - Players are facing each other")
 print(" - Player A always starts with ball")
-soccer.play(iterations=5000, log=10000)
+soccer.play(iterations=50000, log=10000)
 
 print("")
 
 # Play random games, mix who has ball at start, positions, etc
 print("Playing 50,000 games where: all initial conditions are randomized")
-soccer.play_random(iterations=5000,log=10000)
+soccer.play_random(iterations=50000,log=10000)
 
 print("")
 
@@ -123,7 +124,7 @@ noSDE = NoSDE()
 
 # Create LONR agent, feed in soccer (gamma should be 0.75 here)
 # DCFR had to be added here, as it is the only one that converges!
-lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=1.0, alphaDecay=0.9999, DCFR=True, VI=True)
+lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.5, alphaDecay=0.9999, DCFR=True, VI=True)
 
 print(" - Training with 50000 iterations")
 lonrAgent.lonr_value_iteration(iterations=20000, log=5000)
@@ -162,19 +163,48 @@ for n in range(2):
 print("")
 print("End NoSDE VI")
 
+
+######################################################################
+# Tiger Game VI
+#####################################################################
+# tigerGame = TigerGame(startState="root", TLProb=0.5)
+#
+# # # Create LONR Agent and feed in the Tiger game
+# lonrAgent = LONR(M=tigerGame, gamma=0.5, alpha=0.5, epsilon=15, alphaDecay=1.0, RMPLUS=False, VI=True)
+#
+# lonrAgent.lonr_value_iteration(iterations=1111, log=1000)#, randomized=True)
+#
+# print("")
+# print("Pi sums: ")
+# for k in sorted(tigerGame.pi_sums[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.pi_sums[0][k].keys()):
+#         print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
+#     print("")
+#
+# print("")
+# print("Q: ")
+# for k in sorted(tigerGame.Q[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.Q[0][k].keys()):
+#         print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
+#     print("")
+
+
+#
 print("----------------------------------------------")
 print("    End of Value Iteration Tests")
 print("----------------------------------------------")
 print("")
 # #######################################################################
-#
-#
+
+
 print("----------------------------------------------")
 print("   Begin O-LONR Tests")
 print("----------------------------------------------")
 print("")
 
-######################################################################
+#####################################################################
 # O-LONR GridWorld
 print("Begin GridWorld O-LONR - deterministic")
 print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")

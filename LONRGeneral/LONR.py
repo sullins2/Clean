@@ -89,7 +89,9 @@ class LONR(object):
         self.RMPLUS = RMPLUS
         self.DCFR = DCFR
 
-        self.VI = False
+        self.VI = VI
+
+        self.randomize = False
 
         print("LONR initialized with:")
         print("   gamma: ", self.gamma)
@@ -114,20 +116,38 @@ class LONR(object):
 
     def QUpdate(self, n, s, a_current2, randomS=None):
 
-        #print("randomS: ", randomS)
+        #print("IN:  s: ", s, " RANDOMS: ", randomS)
         for a_current in a_current2:
+
             if self.M.isTerminal(s):
                 #print("TERMINAL")
                 if self.VI == True:
-                    self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * self.M.getReward(s, a_current, 0, 0)
+                    if randomS is None:
+                        reward = self.M.getReward(s, a_current, 0, 0)
+                        if reward == None:
+                            reward = 0.0
+                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward #self.M.getReward(s, a_current, 0, 0)
+                    # else:
+                    #
+                    #     reward = self.M.getReward(randomS, a_current, 0, 0)
+                    #     #print("HERE: ", reward)
+                    #     if reward == None:
+                    #         reward = 0.0
+                    #     print("Setting: ", s, " with ", randomS)
+                    #     self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward
                     continue
                 else:
                     if randomS is None:
                         #print("HHEHEHE: ", randomS)
-                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + self.alpha*self.M.getReward(s, a_current, 0,0)
+                        reward = self.M.getReward(s, a_current, 0,0)
+                        if reward == None:
+                            reward = 0.0
+                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + self.alpha*reward#self.M.getReward(s, a_current, 0,0)
                     else:
-                        #print("USED")
-                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * self.M.getReward(randomS, a_current, 0, 0)
+                        reward = self.M.getReward(randomS, a_current, 0, 0)
+                        if reward == None:
+                            reward = 0.0
+                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward#self.M.getReward(randomS, a_current, 0, 0)
                     continue
 
             # Get next states and transition probs for MDP
@@ -145,88 +165,20 @@ class LONR(object):
 
                 # Loop thru actions in s_prime for player n
                 for a_current_prime in self.M.getActions(s_prime, n):
-                    tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][s_prime][a_current_prime]
+                    tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
 
-                reward = self.M.getReward(s, a_current, 0, 0)
-                Value += prob * (reward + self.gamma * tempValue)
 
-            self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + (self.alpha)*Value
+                reww = self.M.getReward(s, a_current, n, 0)
 
-        # if self.M.isTerminal(s): return True
-        # if self.M.isTerminal(s):
-        #     self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * self.M.getReward(s, a_current, 0, 0)
-        #     continue
-        #
-        # # Get next states and transition probs for MDP
-        # # Get next states and other players policy for MG
-        # succs = self.M.getNextStatesAndProbs(s, a_current, n)
-        # # print("s: ", s, " a:", a_current, "   succs: ", succs)
-        #
-        # # print("  SUCCS: ", succs)
-        # Value = 0.0
-        #
-        # # Loop thru each next state and prob
-        # for s_prime, prob, reward in succs:
-        #     # print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
-        #     tempValue = 0.0
-        #
-        #     # Loop thru actions in s_prime for player n
-        #     for a_current_prime in self.M.getActions(s_prime, n):
-        #         tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][s_prime][a_current_prime]
-        #
-        #     Value += prob * (reward + self.gamma * tempValue)
-        #
-        # self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + (self.alpha) * Value
 
-        # print("Entered QUpdate: ", " s: ", currentState, " a:", a_current)
-        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-        #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a_current] + self.alpha * self.M.getReward(self.M.getStateRep(currentState), a_current, 0, 0)
-        #     #for a in self.M.getActions(currentState, n):
-        #         # Note, the reward is via the actual state, so there is no getStateRep()
-        #     #    self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * self.M.getReward(currentState, a, a, a)
-        #     return
-        #     # done = True
-        #     # continue
-        #
-        # # totStates keeps track of which states need Qvalue copying
-        # #   as not all states need to be backed up, only the ones visited
-        # totStates = []
-        # totStates.append(currentState)
-        #
-        # # Loop through all actions
-        # for a in self.M.getActions(currentState, n):
-        #     # print(" - in loop a: ", a)
-        #     # Get successor states
-        #     succs = self.M.getNextStatesAndProbs(currentState, a, n)
-        #
-        #     Value = 0.0
-        #     # Loop through each s', T(s' | s, a)
-        #     #   - Last parameter in loop is reward, which eventually will be included
-        #     #       -
-        #     for s_prime, prob, _ in succs:
-        #
-        #         tempValue = 0.0
-        #         for a_prime in self.M.getActions(s_prime, n):
-        #             # print("  -- SR: ", self.M.getStateRep(s_prime))
-        #             # print("    - ", self.M.Q[n][self.M.getStateRep(s_prime)]) #self.M.pi[n][self.M.getStateRep(s_prime)][a_prime])
-        #             tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_prime]
-        #         Value += prob * (self.M.getReward(self.M.getStateRep(currentState), a, 0, 0) + self.gamma * tempValue)
-        #
-        #         # REMOVE: Q[S_PRIME] is not updated/changed
-        #         if s_prime not in totStates:
-        #             totStates.append(s_prime)
-        #
-        #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a_current] + self.alpha * Value
+                if reww is None:
+                    Value += prob * (reward + self.gamma * tempValue)
+                else:
+                    Value += prob * (reww + self.gamma * tempValue)
 
-        # Copy Q Values over for states visited
-        # for s in totStates:
-        #     for a in self.M.getActions(s, n):
-        #         self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
-                # self.Qsums[self.tigergame.getStateRep(s)][a] += self.Q_bu[self.tigergame.getStateRep(s)][a]
+            self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha)*self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha)*Value
 
-        # Don't update terminal states
-        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-        #     continue
+
 
     def QBackup(self, n):
         for s in self.M.getStates():
@@ -310,8 +262,12 @@ class LONR(object):
 
                 # Loop through actions of current player n
                 # for a in self.M.getActions(s, n):
-                a = self.M.getActions(s, n)
-                self.QUpdate(n, s, a)
+                a = self.M.getActions(self.M.getStateRep(s), n)
+                if self.randomize == False:
+                    self.QUpdate(n, s, a, randomS=None)
+                else:
+                    #print("SR: ", self.M.getStateRep(s), "  s: ", s)
+                    self.QUpdate(n, s=self.M.getStateRep(s), a_current2=a, randomS=s)
 
         # Q Backup
         for n in range(self.M.N):
@@ -383,15 +339,7 @@ class LONR(object):
         # Episode loop - until terminal state is reached
         while done == False:
 
-            # # if self.M.isTerminal(currentState) == True:
-            # #     done = True
-            # #     continue
-            # #print("RANDOMIZED: ", randomized)
-            # actions = self.M.getActions(currentState, 0)
-            # if randomized == False:
-            #     self.QUpdate(n, self.M.getStateRep(currentState), actions, randomS=None)
-            # else:
-            #     self.QUpdate(n, self.M.getStateRep(currentState), actions, randomS=currentState)
+
             if self.M.isTerminal(currentState) == True:
                 # for a in self.M.getActions(currentState, 0):
                 #     # Note, the reward is via the actual state, so there is no getStateRep()
@@ -450,42 +398,7 @@ class LONR(object):
             self.regretUpdate(n, self.M.getStateRep(currentState), t)
 
 
-            # Calculate regret - this variable name needs a better name
-            # target = 0.0
-            #
-            # for a in self.M.getActions(currentState, 0):
-            #     target += self.M.Q[n][self.M.getStateRep(currentState)][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
-            #
-            # for a in self.M.getActions(currentState, 0):
-            #     action_regret = self.M.Q[n][self.M.getStateRep(currentState)][a] - target
-            #
-            #     #RMPLUS = True
-            #     if self.RMPLUS:
-            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            #     else:
-            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
-            #
-            #
-            # # Skip terminal states
-            # # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-            # #     continue
-            #
-            # for a in self.M.getActions(self.M.getStateRep(currentState), 0):
-            #
-            #     # Sum up total regret
-            #     rgrt_sum = 0.0
-            #     for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
-            #         rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
-            #
-            #     # Check if this is a "trick"
-            #     # Check if this can go here or not
-            #     if rgrt_sum > 0:
-            #         self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
-            #     else:
-            #         self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(self.M.getStateRep(currentState),0))
-            #
-            #     # Add to policy sum
-            #     self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
+
 
             # Epsilon Greedy action selection
             if np.random.randint(0, 100) < int(self.epsilon):
@@ -560,11 +473,126 @@ class LONR(object):
 
 
 
+# Calculate regret - this variable name needs a better name
+            # target = 0.0
+            #
+            # for a in self.M.getActions(currentState, 0):
+            #     target += self.M.Q[n][self.M.getStateRep(currentState)][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+            #
+            # for a in self.M.getActions(currentState, 0):
+            #     action_regret = self.M.Q[n][self.M.getStateRep(currentState)][a] - target
+            #
+            #     #RMPLUS = True
+            #     if self.RMPLUS:
+            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            #     else:
+            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+            #
+            #
+            # # Skip terminal states
+            # # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+            # #     continue
+            #
+            # for a in self.M.getActions(self.M.getStateRep(currentState), 0):
+            #
+            #     # Sum up total regret
+            #     rgrt_sum = 0.0
+            #     for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+            #         rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+            #
+            #     # Check if this is a "trick"
+            #     # Check if this can go here or not
+            #     if rgrt_sum > 0:
+            #         self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+            #     else:
+            #         self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(self.M.getStateRep(currentState),0))
+            #
+            #     # Add to policy sum
+            #     self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+
+#####################################################################################################
 
 
 
 
+# if self.M.isTerminal(s): return True
+        # if self.M.isTerminal(s):
+        #     self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * self.M.getReward(s, a_current, 0, 0)
+        #     continue
+        #
+        # # Get next states and transition probs for MDP
+        # # Get next states and other players policy for MG
+        # succs = self.M.getNextStatesAndProbs(s, a_current, n)
+        # # print("s: ", s, " a:", a_current, "   succs: ", succs)
+        #
+        # # print("  SUCCS: ", succs)
+        # Value = 0.0
+        #
+        # # Loop thru each next state and prob
+        # for s_prime, prob, reward in succs:
+        #     # print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
+        #     tempValue = 0.0
+        #
+        #     # Loop thru actions in s_prime for player n
+        #     for a_current_prime in self.M.getActions(s_prime, n):
+        #         tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][s_prime][a_current_prime]
+        #
+        #     Value += prob * (reward + self.gamma * tempValue)
+        #
+        # self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + (self.alpha) * Value
 
+        # print("Entered QUpdate: ", " s: ", currentState, " a:", a_current)
+        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+        #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a_current] + self.alpha * self.M.getReward(self.M.getStateRep(currentState), a_current, 0, 0)
+        #     #for a in self.M.getActions(currentState, n):
+        #         # Note, the reward is via the actual state, so there is no getStateRep()
+        #     #    self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * self.M.getReward(currentState, a, a, a)
+        #     return
+        #     # done = True
+        #     # continue
+        #
+        # # totStates keeps track of which states need Qvalue copying
+        # #   as not all states need to be backed up, only the ones visited
+        # totStates = []
+        # totStates.append(currentState)
+        #
+        # # Loop through all actions
+        # for a in self.M.getActions(currentState, n):
+        #     # print(" - in loop a: ", a)
+        #     # Get successor states
+        #     succs = self.M.getNextStatesAndProbs(currentState, a, n)
+        #
+        #     Value = 0.0
+        #     # Loop through each s', T(s' | s, a)
+        #     #   - Last parameter in loop is reward, which eventually will be included
+        #     #       -
+        #     for s_prime, prob, _ in succs:
+        #
+        #         tempValue = 0.0
+        #         for a_prime in self.M.getActions(s_prime, n):
+        #             # print("  -- SR: ", self.M.getStateRep(s_prime))
+        #             # print("    - ", self.M.Q[n][self.M.getStateRep(s_prime)]) #self.M.pi[n][self.M.getStateRep(s_prime)][a_prime])
+        #             tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_prime]
+        #         Value += prob * (self.M.getReward(self.M.getStateRep(currentState), a, 0, 0) + self.gamma * tempValue)
+        #
+        #         # REMOVE: Q[S_PRIME] is not updated/changed
+        #         if s_prime not in totStates:
+        #             totStates.append(s_prime)
+        #
+        #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a_current] + self.alpha * Value
+
+        # Copy Q Values over for states visited
+        # for s in totStates:
+        #     for a in self.M.getActions(s, n):
+        #         self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
+                # self.Qsums[self.tigergame.getStateRep(s)][a] += self.Q_bu[self.tigergame.getStateRep(s)][a]
+
+        # Don't update terminal states
+        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+        #     continue
+
+#############################################################################
 
 
  #             if self.M.isTerminal(s):
