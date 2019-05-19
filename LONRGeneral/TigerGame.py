@@ -67,14 +67,14 @@ class TigerGame(MDP):
                             self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR]
 
         self.totalStatesLeft = [self.rootTL,
-                                self.rootTLOL, self.rootTLOR,
                                 self.rootTLLGL, self.rootTLLGR,
-                                self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR]
+                                self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
+                                self.rootTLOL, self.rootTLOR,]
 
         self.totalStatesRight = [self.rootTR,
-                                 self.rootTROL, self.rootTROR,
                                  self.rootTRLGL, self.rootTRLGR,
-                                 self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR]
+                                 self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
+                                 self.rootTROL, self.rootTROR]
 
 
         n = 0
@@ -176,6 +176,7 @@ class TigerGame(MDP):
             return self.rootTLLGRLGR
 
 
+
         elif state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
             return state
         elif state == self.root:
@@ -196,6 +197,8 @@ class TigerGame(MDP):
 
     #self, s, a_current, n, a_notN
     def getReward(self, s, a_current, n, a_notN):
+
+
         #return 0.0
         # Tiger left, open LEFT
         if s == self.root:

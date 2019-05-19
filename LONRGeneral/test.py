@@ -170,9 +170,9 @@ print("End NoSDE VI")
 # tigerGame = TigerGame(startState="root", TLProb=0.5)
 #
 # # # Create LONR Agent and feed in the Tiger game
-# lonrAgent = LONR(M=tigerGame, gamma=0.5, alpha=0.5, epsilon=15, alphaDecay=1.0, RMPLUS=False, VI=True)
+# lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.999, RMPLUS=False, DCFR=True, VI=True, randomize=True)
 #
-# lonrAgent.lonr_value_iteration(iterations=1111, log=1000)#, randomized=True)
+# lonrAgent.lonr_value_iteration(iterations=2222, log=1000)
 #
 # print("")
 # print("Pi sums: ")
@@ -189,7 +189,15 @@ print("End NoSDE VI")
 #     for kk in sorted(tigerGame.Q[0][k].keys()):
 #         print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
 #     print("")
-
+#
+#
+# print("")
+# print("Pi : ")
+# for k in sorted(tigerGame.pi[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.pi[0][k].keys()):
+#         print(kk, ": ", tigerGame.pi[0][k][kk], " ", end="")
+#     print("")
 
 #
 print("----------------------------------------------")
@@ -204,7 +212,7 @@ print("   Begin O-LONR Tests")
 print("----------------------------------------------")
 print("")
 
-#####################################################################
+####################################################################
 # O-LONR GridWorld
 print("Begin GridWorld O-LONR - deterministic")
 print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")
@@ -254,17 +262,17 @@ print(gridMDP.Q[0][35])
 
 print("End GridWorld O-LONR - non-deterministic")
 print("")
-######################################################################
-#
-#
-# # Tiger Game O-LONR - Tiger Location 50/50
+#####################################################################
+
+
+# Tiger Game O-LONR - Tiger Location 50/50
 print("Begin TigerGame O-LONR - Tiger Location 50/50")
 tigerGame = TigerGame(startState="root", TLProb=0.5)
 
 # # Create LONR Agent and feed in the Tiger game
-lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.999, RMPLUS=False, VI=False)
+lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=0.5, epsilon=20, alphaDecay=1.0, RMPLUS=False, VI=False, randomize=True)
 
-lonrAgent.lonr_online(iterations=10000, log=1000, randomized=True)
+lonrAgent.lonr_online(iterations=15000, log=1000, randomized=True)
 
 print("")
 print("Pi sums: ")
