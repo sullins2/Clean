@@ -170,11 +170,11 @@ from LONRGeneral.TigerGame import *
 tigerGame = TigerGame(startState="root", TLProb=0.5)
 
 # # Create LONR Agent and feed in the Tiger game
-lonrAgent = LONR(M=tigerGame, gamma=0.199, alpha=1.0, epsilon=15, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=True)
+lonrAgent = LONR(M=tigerGame, gamma=0.999, alpha=0.5, epsilon=15, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=True)
 
-iters = 11111
-lonrAgent.lonr_value_iteration(iterations=iters, log=1111)
-
+iters = 422
+lonrAgent.lonr_value_iteration(iterations=iters, log=1)
+#
 print("")
 print("Pi sums: ")
 for k in sorted(tigerGame.pi_sums[0].keys()):
@@ -201,17 +201,18 @@ for k in sorted(tigerGame.pi[0].keys()):
     print("")
 
 
-# print("Q Avg")
-# for k in sorted(tigerGame.QSums[0].keys()):
-#     tot = 0.0
-#     # for kk in agent.Qsums[k].keys():
-#     #     tot += agent.Qsums[k][kk]
-#     # if tot == 0:
-#     #     tot = 1.0
-#     print(k, ": ", end='')
-#     for kk in tigerGame.QSums[0][k].keys():
-#         print(kk, ": ", tigerGame.QSums[0][k][kk] / (float(iters) * 2.0), " ", end='')
-#     print("")
+print("")
+print("Q Avg")
+for k in sorted(tigerGame.QSums[0].keys()):
+    tot = 0.0
+    # for kk in agent.Qsums[k].keys():
+    #     tot += agent.Qsums[k][kk]
+    # if tot == 0:
+    #     tot = 1.0
+    print(k, ": ", end='')
+    for kk in tigerGame.QSums[0][k].keys():
+        print(kk, ": ", tigerGame.QSums[0][k][kk] / (float(iters) * 1.0), " ", end='')
+    print("")
 
 
 print("")
@@ -295,7 +296,7 @@ for k in sorted(tigerGame.regret_sums[0].keys()):
 # # # Create LONR Agent and feed in the Tiger game
 # lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=0.5, epsilon=20, alphaDecay=1.0, RMPLUS=False, VI=False, randomize=True)
 #
-# lonrAgent.lonr_online(iterations=15000, log=1000, randomized=True)
+# lonrAgent.lonr_online(iterations=20111, log=1000, randomized=True)
 #
 # print("")
 # print("Pi sums: ")
@@ -314,13 +315,13 @@ for k in sorted(tigerGame.regret_sums[0].keys()):
 #     print("")
 #
 # print("")
-# #
-# # Tiger Game O-LONR - Tiger Location 85/15
+
+# Tiger Game O-LONR - Tiger Location 85/15
 # print("Begin TigerGame O-LONR - Tiger Location 85/15")
 # tigerGame = TigerGame(startState="root", TLProb=0.85)
 #
-# # # Create LONR Agent and feed in the Tiger game
-# lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=1.0, epsilon=15, alphaDecay=0.999)
+# # Create LONR Agent and feed in the Tiger game
+# lonrAgent = LONR(M=tigerGame, gamma=1.0, alpha=0.5, epsilon=15, alphaDecay=0.999)
 #
 # lonrAgent.lonr_online(iterations=20000, log=2000, randomized=True)
 #

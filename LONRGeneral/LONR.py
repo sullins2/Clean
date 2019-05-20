@@ -98,6 +98,9 @@ class LONR(object):
         print("LONR initialized with:")
         print("   gamma: ", self.gamma)
         print("   alpha: ", self.alpha)
+        print("     rm+: ", self.RMPLUS)
+        print("    DCFR: ", self.DCFR)
+        print("      VI: ", self.VI)
 
 
     def lonr_value_iteration(self, iterations=-1, log=-1):
@@ -121,65 +124,100 @@ class LONR(object):
         #print("IN:  s: ", s, " RANDOMS: ", randomS)
         for a_current in a_current2:
 
-            if self.M.isTerminal(s):
-                #print("TERMINAL")
-                if self.VI == True:
-                    if randomS is None:
-                        reward = self.M.getReward(s, a_current, 0, 0)
-                        if reward == None:
-                            reward = 0.0
-                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward #self.M.getReward(s, a_current, 0, 0)
+            # if self.M.isTerminal(s):
+            #
+            #     # Value iteration
+            #     if self.VI == True:
+            #         # All except tiger game
+            #         if randomS is None:
+            #             reward = self.M.getReward(s, a_current, 0, 0)
+            #             if reward == None:
+            #                 reward = 0.0
+            #             self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward #self.M.getReward(s, a_current, 0, 0)
+            #         # Tiger game value iteration
+            #         else:
+            #             reward = self.M.getReward(randomS, a_current, 0, 0)
+            #             print("HERE: terminal s: ", s)
+            #             if reward == None:
+            #                 reward = 0.0
+            #                 print("NOOOOO")
+            #             else:
+            #                 print("DDDDDDD")
+            #                 #self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward
+            #         continue
+            #
+            #     # Online
+            #     else:
+            #         if randomS is None:
+            #
+            #             reward = self.M.getReward(s, a_current, 0,0)
+            #             if reward == None:
+            #                 reward = 0.0
+            #             self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + self.alpha*reward#self.M.getReward(s, a_current, 0,0)
+            #         else:
+            #             reward = self.M.getReward(randomS, a_current, 0, 0)
+            #             if reward == None:
+            #                 reward = 0.0
+            #
+            #             self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + self.alpha * reward#self.M.getReward(randomS, a_current, 0, 0)
+            #         continue
+
+
+            if self.VI == True and randomS is not None:
+                succs = self.M.getNextStatesAndProbs(s, a_current, n)
+                print("s: ", s, " a:", a_current, "   succs: ", succs)
+                Value = 0.0
+
+                # Loop thru each next state and prob
+                for s_prime, prob, reward in succs:
+                    # print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
+                    tempValue = 0.0
+
+                    # Loop thru actions in s_prime for player n
+                    for a_current_prime in self.M.getActions(s_prime, n):
+                        tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
+
+                    #reww = self.M.getReward(randomS, a_current, n, 0)
+                    reww = self.M.getReward(s, a_current, n, 0)
+
+                    print("REWW: ", reww)
+                    if reww is None:
+                        Value += prob * (reward + self.gamma * tempValue)
                     else:
-                        reward = self.M.getReward(randomS, a_current, 0, 0)
-                        #print("HERE: ", reward)
-                        if reward == None:
-                            reward = 0.0
-                        else:
-                            #print("DDDDDDD")
-                            self.M.Q_bu[n][s][a_current] = reward#(1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward
-                    continue
-                else:
-                    if randomS is None:
-                        #print("HHEHEHE: ", randomS)
-                        reward = self.M.getReward(s, a_current, 0,0)
-                        if reward == None:
-                            reward = 0.0
-                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + self.alpha*reward#self.M.getReward(s, a_current, 0,0)
+                        Value += prob * (reww + self.gamma * tempValue)
+
+                self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha) * Value
+                print("SETTING: s: ", self.M.getStateRep(s), " a_current: ", a_current, " to: ", self.M.Q_bu[n][self.M.getStateRep(s)][a_current])
+            else:
+                print("S: ", s)
+
+                # Get next states and transition probs for MDP
+                # Get next states and other players policy for MG
+                succs = self.M.getNextStatesAndProbs(s, a_current, n)
+                print("s: ", s, " a:", a_current, "   succs: ", succs)
+
+                #print("  SUCCS: ", succs)
+                Value = 0.0
+
+                #Loop thru each next state and prob
+                for s_prime, prob, reward in succs:
+                    #print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
+                    tempValue = 0.0
+
+                    # Loop thru actions in s_prime for player n
+                    for a_current_prime in self.M.getActions(s_prime, n):
+                        tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
+
+
+                    reww = self.M.getReward(s, a_current, n, 0)
+
+
+                    if reww is None:
+                        Value += prob * (reward + self.gamma * tempValue)
                     else:
-                        reward = self.M.getReward(randomS, a_current, 0, 0)
-                        if reward == None:
-                            reward = 0.0
-                        #print("S:", s, " randomS: ", randomS, "reward: ", reward)
-                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward#self.M.getReward(randomS, a_current, 0, 0)
-                    continue
+                        Value += prob * (reww + self.gamma * tempValue)
 
-            # Get next states and transition probs for MDP
-            # Get next states and other players policy for MG
-            succs = self.M.getNextStatesAndProbs(s, a_current, n)
-            #print("s: ", s, " a:", a_current, "   succs: ", succs)
-
-            #print("  SUCCS: ", succs)
-            Value = 0.0
-
-            #Loop thru each next state and prob
-            for s_prime, prob, reward in succs:
-                #print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
-                tempValue = 0.0
-
-                # Loop thru actions in s_prime for player n
-                for a_current_prime in self.M.getActions(s_prime, n):
-                    tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
-
-
-                reww = self.M.getReward(s, a_current, n, 0)
-
-
-                if reww is None:
-                    Value += prob * (reward + self.gamma * tempValue)
-                else:
-                    Value += prob * (reww + self.gamma * tempValue)
-
-            self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha)*self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha)*Value
+                self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha)*self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha)*Value
 
 
 
@@ -195,7 +233,7 @@ class LONR(object):
             for s in WW:
                 for a in self.M.getActions(s, n):
                     #self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
-                    self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
+                    self.M.Q[n][s][a] = (1.0 - self.alpha)*self.M.Q_bu[n][s][a] + self.alpha*self.M.Q[n][s][a]
                     self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
 
     def regretUpdate(self, n, currentState, t):
@@ -271,6 +309,7 @@ class LONR(object):
 
         WW = None
         # Q Update
+        # All except Tiger Game
         if self.randomize == False:
             for n in range(self.M.N):
 
@@ -285,9 +324,11 @@ class LONR(object):
                     else:
                         self.QUpdate(n, s=s, a_current2=a, randomS=s)
 
+        # Tiger Game
         elif self.randomize == True:
+            print("Tiger game - value iteration")
             r = np.random.randint(0, 2)
-            # if r == 0:
+            #if r == 0:
             if self.alt == 1:
                 WW = self.M.totalStatesLeft
                 self.alt = 2
@@ -295,22 +336,31 @@ class LONR(object):
                 WW = self.M.totalStatesRight
                 self.alt = 1
 
+            print("WW: ")
+            print(WW)
             for n in range(self.M.N):
 
                 # Loop through all states
                 for s in WW: #self.M.getStates(): #WW:
 
+                    print(" S in loop: ", s)
                     # Loop through actions of current player n
                     # for a in self.M.getActions(s, n):
-                    a = self.M.getActions(s, n)
+                    aa = self.M.getActions(s, n)
                     # if self.randomize == False:
                     #     self.QUpdate(n, s, a, randomS=None)
                     # else:
-                    self.QUpdate(n, s=s, a_current2=a, randomS=s)
+                    print("AA: ", aa)
+                    for a in aa:
+                        #print(" a: ", a)
+                        al = []
+                        al.append(a)
+                        print(" a: ", a)
+                        self.QUpdate(n, s=s, a_current2=al, randomS=s)
 
         # Q Backup
         for n in range(self.M.N):
-            self.QBackup(n)
+            self.QBackup(n, WW=WW)
 
         # Update regret sums, pi, pi sums
 
@@ -320,7 +370,7 @@ class LONR(object):
                     self.regretUpdate(n, s, t)
         else:
             for n in range(self.M.N):
-                for s in WW:
+                for s in WW: #self.M.totalStatesLeft: #WW:
                     if self.M.isTerminal(s): continue
                     self.regretUpdate(n, s, t)
 
@@ -382,14 +432,15 @@ class LONR(object):
         done = False
         n = 0  # One player
 
+        #print("")
         # Episode loop - until terminal state is reached
         while done == False:
 
+            #print("Current state: ", currentState)
             if self.M.isTerminal(currentState) == True:
                 # for a in self.M.getActions(currentState, 0):
                 #     # Note, the reward is via the actual state, so there is no getStateRep()
                 #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * self.M.getReward(currentState,a,a,a)
-                #for a in self.M.getActions(currentState, 0):
                 a = self.M.getActions(currentState, 0)
                 self.QUpdate(n, currentState, a, currentState)
                 done = True
@@ -402,34 +453,6 @@ class LONR(object):
             totStates = []
             totStates.append(currentState)
 
-            # Loop through all actions
-            # for a in self.M.getActions(currentState, 0):
-            #
-            #     # Get successor states
-            #     succs = self.M.getNextStatesAndProbs(currentState, a, 0)
-            #
-            #     Value = 0.0
-            #     # Loop through each s', T(s' | s, a)
-            #     #   - Last parameter in loop is reward, which eventually will be included
-            #     #       -
-            #     for s_prime, prob, _ in succs:
-            #
-            #         tempValue = 0.0
-            #         for a_prime in self.M.getActions(s_prime, 0):
-            #             tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_prime]
-            #         Value += prob * (self.M.getReward(currentState, a, 0,0) + self.gamma * tempValue)
-            #
-            #         if s_prime not in totStates:
-            #             totStates.append(s_prime)
-            #
-            #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * Value
-
-
-            # Copy Q Values over for states visited
-            # for s in totStates:
-            #     for a in self.M.getActions(s, 0):
-            #         self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
-            #         # self.Qsums[self.tigergame.getStateRep(s)][a] += self.Q_bu[self.tigergame.getStateRep(s)][a]
             # Q Backup
             for n in range(self.M.N):
                 self.QBackup(n)
@@ -470,6 +493,7 @@ class LONR(object):
             #                       equivalent to hearing a growl left or growl right
             nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
 
+            #print("NPS: ", nextPossStates)
             # If there is only one successor state, pick that
             if len(nextPossStates) == 1:
                 # nextPossStates is list of lists
@@ -492,6 +516,7 @@ class LONR(object):
                     nextStateProbs.append(nsp)
                 currentState = np.random.choice(nextStates, p=nextStateProbs)
 
+            #print("BCS: ", currentState)
             # if self.M.isTerminal(currentState):
             #     done = True
 
@@ -515,8 +540,36 @@ class LONR(object):
 
 
 
+            # Loop through all actions
+            # for a in self.M.getActions(currentState, 0):
+            #
+            #     # Get successor states
+            #     succs = self.M.getNextStatesAndProbs(currentState, a, 0)
+            #
+            #     Value = 0.0
+            #     # Loop through each s', T(s' | s, a)
+            #     #   - Last parameter in loop is reward, which eventually will be included
+            #     #       -
+            #     for s_prime, prob, _ in succs:
+            #
+            #         tempValue = 0.0
+            #         for a_prime in self.M.getActions(s_prime, 0):
+            #             tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_prime]
+            #         Value += prob * (self.M.getReward(currentState, a, 0,0) + self.gamma * tempValue)
+            #
+            #         if s_prime not in totStates:
+            #             totStates.append(s_prime)
+            #
+            #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * Value
 
 
+            # Copy Q Values over for states visited
+            # for s in totStates:
+            #     for a in self.M.getActions(s, 0):
+            #         self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
+            #         # self.Qsums[self.tigergame.getStateRep(s)][a] += self.Q_bu[self.tigergame.getStateRep(s)][a]
+
+###################################################################################
 
 # Calculate regret - this variable name needs a better name
             # target = 0.0

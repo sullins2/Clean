@@ -69,14 +69,12 @@ class TigerGame(MDP):
         self.totalStatesLeft = [self.rootTL,
                                 self.rootTLLGL, self.rootTLLGR,
                                 self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
-                                self.rootTLOL, self.rootTLOR,
-                                self.rootTROL, self.rootTROR]
+                                self.rootTLOL, self.rootTLOR]
 
         self.totalStatesRight = [self.rootTR,
                                  self.rootTRLGL, self.rootTRLGR,
                                  self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
-                                 self.rootTROL, self.rootTROR,
-                                 self.rootTLOL, self.rootTLOR]
+                                 self.rootTROL, self.rootTROR]
 
 
         n = 0
@@ -200,9 +198,24 @@ class TigerGame(MDP):
     #self, s, a_current, n, a_notN
     def getReward(self, s, a_current, n, a_notN):
 
+        #return None
+        # if s == self.rootTLOL:
+        #     return -100.0
+        #     # Tiger left, open RIGHT
+        # elif s == self.rootTLOR:
+        #     return 10.0
+        # # Tiger right, open LEFT
+        # elif s == self.rootTROL:
+        #     return 10.0
+        # # Tiger right, open RIGHT
+        # elif s == self.rootTROR:
+        #     return -100.0
 
-        # return None
-        # Tiger left, open LEFT
+        #if self.VI == True:
+
+
+        # if self.VI == False:
+            #Tiger left, open LEFT
         if s == self.root:
             return 0.0
         elif s == self.rootTL or s == self.rootTR:
@@ -242,7 +255,7 @@ class TigerGame(MDP):
         else:
             print("Not caught: ", s)
             return 0.0
-
+    #
     def isTerminal(self, state):
         if state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
             return True
@@ -264,6 +277,9 @@ class TigerGame(MDP):
                 return [[self.rootTL, 0.5, 0.0]]
             else:
                 return [[self.rootTR, 0.5, 0.0]]
+
+        # elif state == self.rootTLOL:
+        #     return []
 
         # Top root of Tiger on left
         elif state == self.rootTL:
