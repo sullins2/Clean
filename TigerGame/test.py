@@ -25,13 +25,13 @@ if __name__ == '__main__':
 
     agent = TigerAgent(tigergame=newTigerGame)
 
-    #agent.train_lonr_value_iteration(iterations=trainingIterations)
+    agent.train_lonr_value_iteration(iterations=trainingIterations)
 
-    cl, cr = agent.train_lonr_online(iterations=trainingIterations, log=1000)
+    #cl, cr = agent.train_lonr_online(iterations=trainingIterations, log=1000)
 
-    print(cl, "  ", cr)
-    print("")
-    print("")
+    # print(cl, "  ", cr)
+    # print("")
+    # print("")
     print("Agent pi:")
     for k in sorted(agent.pi.keys()):
         if len(list(agent.pi[k].keys())) > 1:

@@ -69,12 +69,14 @@ class TigerGame(MDP):
         self.totalStatesLeft = [self.rootTL,
                                 self.rootTLLGL, self.rootTLLGR,
                                 self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
-                                self.rootTLOL, self.rootTLOR,]
+                                self.rootTLOL, self.rootTLOR,
+                                self.rootTROL, self.rootTROR]
 
         self.totalStatesRight = [self.rootTR,
                                  self.rootTRLGL, self.rootTRLGR,
                                  self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
-                                 self.rootTROL, self.rootTROR]
+                                 self.rootTROL, self.rootTROR,
+                                 self.rootTLOL, self.rootTLOR]
 
 
         n = 0
@@ -199,7 +201,7 @@ class TigerGame(MDP):
     def getReward(self, s, a_current, n, a_notN):
 
 
-        #return 0.0
+        # return None
         # Tiger left, open LEFT
         if s == self.root:
             return 0.0
@@ -305,18 +307,18 @@ class TigerGame(MDP):
         # Tiger on RIGHT, Listen, GL
         elif state == self.rootTRLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 0.0]]
+                return [[self.rootTROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, 0.0]]
+                return [[self.rootTROR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGLLGL, 0.15, -1.0], [self.rootTRLGLLGR, 0.85, -1.0]]
 
         # Tiger on RIGHT, LISTEN, GR
         elif state == self.rootTRLGR:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 0.0]]
+                return [[self.rootTROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, 0.0]]
+                return [[self.rootTROR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGRLGL, 0.15, -1.0], [self.rootTRLGRLGR, 0.85, -1.0]]
 
@@ -329,7 +331,7 @@ class TigerGame(MDP):
             elif action == self.OPENRIGHT:
                 return [[self.rootTLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
-                return [[self.rootTLLGLLGL, 0.85, 0.0], [self.rootTLLGLLGR, 0.15, 0.0]]
+                return [[self.rootTLLGLLGL, 0.85, -1.0], [self.rootTLLGLLGR, 0.15, -1.0]]
 
         elif state == self.rootTLLGLLGR:
             if action == self.OPENLEFT:
@@ -338,7 +340,7 @@ class TigerGame(MDP):
             elif action == self.OPENRIGHT:
                 return [[self.rootTLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
-                return [[self.rootTLLGRLGL, 0.85, 0.0], [self.rootTLLGRLGR, 0.15, 0.0]]
+                return [[self.rootTLLGRLGL, 0.85, -1.0], [self.rootTLLGRLGR, 0.15, -1.0]]
 
         elif state == self.rootTLLGRLGL:
             if action == self.OPENLEFT:
@@ -346,7 +348,7 @@ class TigerGame(MDP):
             elif action == self.OPENRIGHT:
                 return [[self.rootTLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
-                return [[self.rootTLLGLLGL, 0.85, 0.0], [self.rootTLLGLLGR, 0.15, 0.0]]
+                return [[self.rootTLLGLLGL, 0.85, -1.0], [self.rootTLLGLLGR, 0.15, -1.0]]
 
         elif state == self.rootTLLGRLGR:
             if action == self.OPENLEFT:
@@ -355,40 +357,40 @@ class TigerGame(MDP):
             elif action == self.OPENRIGHT:
                 return [[self.rootTLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
-                return [[self.rootTLLGRLGL, 0.85, 0.0], [self.rootTLLGRLGR, 0.15, 0.0]]
+                return [[self.rootTLLGRLGL, 0.85, -1.0], [self.rootTLLGRLGR, 0.15, -1.0]]
 
         # Tiger on right
         elif state == self.rootTRLGLLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 0.0]]
+                return [[self.rootTROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, 0.0]]
+                return [[self.rootTROR, 1.0, -100.0]]
             elif action == self.LISTEN:
-                return [[self.rootTRLGLLGL, 0.15, 0.0], [self.rootTRLGLLGR, 0.85, 0.0]]
+                return [[self.rootTRLGLLGL, 0.15, -1.0], [self.rootTRLGLLGR, 0.85, -1.0]]
 
         elif state == self.rootTRLGLLGR:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 0.0]]
+                return [[self.rootTROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, 0.0]]
+                return [[self.rootTROR, 1.0, -100.0]]
             elif action == self.LISTEN:
-                return [[self.rootTRLGRLGL, 0.15, 0.0], [self.rootTRLGRLGR, 0.85, 0.0]]
+                return [[self.rootTRLGRLGL, 0.15, -1.0], [self.rootTRLGRLGR, 0.85, -1.0]]
 
         elif state == self.rootTRLGRLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 0.0]]
+                return [[self.rootTROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, 0.0]]
+                return [[self.rootTROR, 1.0, -100.0]]
             elif action == self.LISTEN:
-                return [[self.rootTRLGLLGL, 0.15, 0.0], [self.rootTRLGLLGR, 0.85, 0.0]]
+                return [[self.rootTRLGLLGL, 0.15, -1.0], [self.rootTRLGLLGR, 0.85, -1.0]]
 
         elif state == self.rootTRLGRLGR:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 0.0]]
+                return [[self.rootTROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, 0.0]]
+                return [[self.rootTROR, 1.0, -100.0]]
             elif action == self.LISTEN:
-                return [[self.rootTRLGRLGL, 0.15, 0.0], [self.rootTRLGRLGR, 0.85, 0.0]]
+                return [[self.rootTRLGRLGL, 0.15, -1.0], [self.rootTRLGRLGR, 0.85, -1.0]]
 
         # No other states have actions
         else:

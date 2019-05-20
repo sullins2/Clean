@@ -93,6 +93,8 @@ class LONR(object):
 
         self.randomize = randomize
 
+        self.alt = 1
+
         print("LONR initialized with:")
         print("   gamma: ", self.gamma)
         print("   alpha: ", self.alpha)
@@ -132,8 +134,9 @@ class LONR(object):
                         #print("HERE: ", reward)
                         if reward == None:
                             reward = 0.0
-                        #print("Setting: ", s, " with ", randomS)
-                        self.M.Q_bu[n][s][a_current] = reward#(1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward
+                        else:
+                            #print("DDDDDDD")
+                            self.M.Q_bu[n][s][a_current] = reward#(1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward
                     continue
                 else:
                     if randomS is None:
@@ -180,12 +183,20 @@ class LONR(object):
 
 
 
-    def QBackup(self, n):
-        for s in self.M.getStates():
-            for a in self.M.getActions(s, n):
-                #self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
-                self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
-                self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
+    def QBackup(self, n, WW=None):
+
+        if WW is None:
+            for s in self.M.getStates():
+                for a in self.M.getActions(s, n):
+                    #self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
+                    self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
+                    self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
+        else:
+            for s in WW:
+                for a in self.M.getActions(s, n):
+                    #self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
+                    self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
+                    self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
 
     def regretUpdate(self, n, currentState, t):
 
@@ -275,16 +286,19 @@ class LONR(object):
                         self.QUpdate(n, s=s, a_current2=a, randomS=s)
 
         elif self.randomize == True:
-            r = np.random.randint(0, 100)
-            if r < 50:
+            r = np.random.randint(0, 2)
+            # if r == 0:
+            if self.alt == 1:
                 WW = self.M.totalStatesLeft
+                self.alt = 2
             else:
                 WW = self.M.totalStatesRight
+                self.alt = 1
 
             for n in range(self.M.N):
 
                 # Loop through all states
-                for s in WW:
+                for s in WW: #self.M.getStates(): #WW:
 
                     # Loop through actions of current player n
                     # for a in self.M.getActions(s, n):
@@ -307,6 +321,7 @@ class LONR(object):
         else:
             for n in range(self.M.N):
                 for s in WW:
+                    if self.M.isTerminal(s): continue
                     self.regretUpdate(n, s, t)
 
 
