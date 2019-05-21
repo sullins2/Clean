@@ -20,8 +20,8 @@ class Agent:
         self.total_states = create_state_comb(list(range(self.num_states)), list(range(self.num_states)))
         self.total_actions = [0, 1, 2, 3]
 
-        self.gamma = 0.299
-        self.alpha = 0.99
+        self.gamma = 1.0#0.299
+        self.alpha = 1.0#0.99
 
         self.verbose = False
 
@@ -154,7 +154,7 @@ class Agent:
                         Value += self.QvaluesA[new_state][action_] * self.piA[new_state][action_]
                     QV += self.piB[s][actions_B] * (rA + self.gamma * Value)
 
-                self.QValue_backupA[s][actions_A] = (0.1 * self.QvaluesA[s][actions_A]) + (0.9 * QV)
+                self.QValue_backupA[s][actions_A] = QV #(0.1 * self.QvaluesA[s][actions_A]) + (0.9 * QV)
 
 
 
@@ -229,7 +229,7 @@ class Agent:
                         Value += self.QvaluesB[new_state][action_] * self.piB[new_state][action_]
                     QV += self.piA[s][actions_A] * (rB + self.gamma * Value)
 
-                    self.QValue_backupB[s][actions_B] = (0.1 * self.QvaluesB[s][actions_B]) + (0.9 * QV)
+                    self.QValue_backupB[s][actions_B] = QV# (0.1 * self.QvaluesB[s][actions_B]) + (0.9 * QV)
 
         self.QvaluesA = copy.copy(self.QValue_backupA)
         self.QvaluesB = copy.copy(self.QValue_backupB)
@@ -318,16 +318,16 @@ class Agent:
                 self.pi_sumsB[s][a] += self.piB[s][a] * gammaWeight
 
         # Normailize pi_sums
-        for s in self.total_states:
-            if self.isTerminal(s): continue
-            pAtotal = 0.0
-            pBtotal = 0.0
-            for a in self.total_actions:
-                pAtotal += self.pi_sumsA[s][a]
-                pBtotal += self.pi_sumsB[s][a]
-            for a in self.total_actions:
-                self.pi_sumsA[s][a] /= pAtotal
-                self.pi_sumsB[s][a] /= pBtotal
+        # for s in self.total_states:
+        #     if self.isTerminal(s): continue
+        #     pAtotal = 0.0
+        #     pBtotal = 0.0
+        #     for a in self.total_actions:
+        #         pAtotal += self.pi_sumsA[s][a]
+        #         pBtotal += self.pi_sumsB[s][a]
+        #     for a in self.total_actions:
+        #         self.pi_sumsA[s][a] /= pAtotal
+        #         self.pi_sumsB[s][a] /= pBtotal
 
 
     def test_lonr(self, iterations=-1, log=-1):

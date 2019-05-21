@@ -18,19 +18,19 @@ def main():
 
     lonrAgent = Agent()
 
-    lonrAgent.train_lonr(iterations=1500, log=50)
+    lonrAgent.train_lonr(iterations=5500, log=50)
 
-    lonrAgent.test_lonr(iterations=50000, log=5000)
-
-    lonrAgent.test_lonr_random_games(iterations=50000, log=5000)
+    # lonrAgent.test_lonr(iterations=50000, log=5000)
+    #
+    # lonrAgent.test_lonr_random_games(iterations=50000, log=5000)
 
 
     print("Print out of game states of interest")
-    print("PiB26 A: ", lonrAgent.pi_sumsA["B26"])
-    print("PiB26 B: ", lonrAgent.pi_sumsB["B26"])
+    print("PiA25 A: ", lonrAgent.pi_sumsA["A25"])  #B26
+    print("PiA25 B: ", lonrAgent.pi_sumsB["A25"])
     print("")
-    print("PiB25 A: ", lonrAgent.pi_sumsA["B25"])
-    print("PiB25 B: ", lonrAgent.pi_sumsB["B25"])
+    print("PiA21 A: ", lonrAgent.pi_sumsA["A21"])
+    print("PiA21 B: ", lonrAgent.pi_sumsB["A21"])
     print("")
     print("Counter: ", lonrAgent.counter)
     # print(lonrAgent.pi_sumsA)

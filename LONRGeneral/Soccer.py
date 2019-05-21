@@ -123,6 +123,10 @@ class SoccerGame(MDP):
             world.set_goals(100, 0, 'A')
             world.set_goals(100, 3, 'B')
 
+            # if world.map_player_state() == "A25":
+            #     print("State: ", world.map_player_state())
+            #     world.plot_grid()
+
             if n_current == 0:
                 actions = {'A': actions_A, 'B': actions_B}
             else:
@@ -316,7 +320,7 @@ class SoccerGame(MDP):
 
             curState = world.map_player_state()
 
-            # world.plot_grid()
+
 
             gms = 0
 

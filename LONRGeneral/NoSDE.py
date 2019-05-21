@@ -131,7 +131,7 @@ class NoSDE(MDP):
         #             return 0.0
 
         #self.getReward(s, actions_A, n_current, actions_B)
-        print("Reward missed: ", "s: ", s, " a_current: ", a_current, " n: ", n, " a_notN: ", a_notN)
+        # print("Reward missed: ", "s: ", s, " a_current: ", a_current, " n: ", n, " a_notN: ", a_notN)
 
 
     def getNextStatesAndProbs(self, s, a_current, n_current):

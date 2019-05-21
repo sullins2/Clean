@@ -39,6 +39,9 @@ class Grid(MDP):
         self.rows = 4
         self.cols = 12
 
+        self.rows = 2
+        self.cols = 12
+
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
         self.N = 1
@@ -46,10 +49,13 @@ class Grid(MDP):
         # Non-determinism - this value is split between sideways moves
         self.noise = noise
 
+        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0]
+
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
+                     ' ', -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10]
 
         # self.Q = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
         # self.Q_bu = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
@@ -73,20 +79,28 @@ class Grid(MDP):
         self.pi = {}
         self.pi_sums = {}
         self.regret_sums = {}
+        self.QSum = []
+        self.iterations = []
+        self.weights = {}
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
             self.QSums[n] = {}
+            #self.QSumSoFar[n] = {}
+            #self.QSumSoFar[n] = {}
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
+            self.weights[n] = {}
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
                 self.QSums[n][s] = {}
+                #self.QSumSoFar[s]
                 self.pi[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
+                self.weights[n][s] = {}
                 for a in self.getActions(s,0):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
@@ -94,11 +108,13 @@ class Grid(MDP):
                     self.pi[n][s][a] = 1.0 / 4.0  # len(list(total_actions.keys())
                     self.regret_sums[n][s][a] = 0.0
                     self.pi_sums[n][s][a] = 0.0
+                    self.weights[n][s][a] = 1.0
+
 
         # self.grid = [' ', ' ', ' ',
         #              ' ', ' ', 10]
 
-        self.livingReward = -1.0
+        self.livingReward = 0.0#-1.0
 
     def getActions(self, s, n):
         return [self.UP, self.RIGHT, self.DOWN, self.LEFT]

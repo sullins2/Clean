@@ -8,15 +8,15 @@ from LONRGeneral.TigerGame import *
 # GridWorld MDP
 ####################################################
 
-# Create GridWorld (inherits from MDP class)
+# # Create GridWorld (inherits from MDP class)
 # print("Begin GridWorld VI with determinism")
 # gridMDP = Grid(noise=0.0)
 #
 # # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
-# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, DCFR=False, VI=True)
+# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, DCFR=False, VI=True, randomize=False)
 #
 # # Train via VI
-# lonrAgent.lonr_value_iteration(iterations=150, log=10)
+# lonrAgent.lonr_value_iteration(iterations=250, log=10)
 # print("[North, East, South, West]")
 # print("Note: these are Q, not QAvg")
 # print("Q for: Bottom left (start state)")
@@ -26,9 +26,9 @@ from LONRGeneral.TigerGame import *
 # print(gridMDP.Q[0][35])
 # print("End GridWorld VI with determism")
 # print("")
-#
-#
-# # # Create GridWorld (inherits from MDP class)
+# #
+# #
+# # # # Create GridWorld (inherits from MDP class)
 # print("Begin GridWorld VI with non-determinism")
 # gridMDP = Grid(noise=0.2)
 #
@@ -55,17 +55,38 @@ from LONRGeneral.TigerGame import *
 # print("Begin Soccer VI")
 # print("THIS CURRENT SETTING WORKS")
 # soccer = SoccerGame()
+
+# Create LONR agent, feed in soccer
+# A25
+# ** | ** | ** | ** | ** | **
+# ** | gB |    | A+ | gA | **
+# ** | gB | B  |    | gA | **
+# ** | ** | ** | ** | ** | **
+
+# FIX TODAY
+# lonrAgent = LONR(M=soccer, alpha=0.99, gamma=0.99, alphaDecay=1.0, RMPLUS=False, DCFR=True, VI=True)
 #
-# # Create LONR agent, feed in soccer
-# lonrAgent = LONR(M=soccer, alpha=1.0, gamma=0.95, RMPLUS=False, DCFR=False, VI=True)
-#
-# # Train via VI
+# # Train via VI (4500 to get PI to converge)
 # lonrAgent.lonr_value_iteration(iterations=4500, log=50)
 #
 # # Test of the learned policy:
 #
 # # Normalize pi sums here for now
-# soccer.normalize_pisums()
+# # soccer.normalize_pisums()
+# # print("A21pisums Player A", soccer.pi_sums[0]["A21"])
+# # print("A21Q  Player A", soccer.Q[0]["A21"])
+# # print("")
+# # print("A21pisums Player B", soccer.pi_sums[1]["A21"])
+# # print("A21Q  Player B", soccer.Q[1]["A21"])
+#
+# print("")
+# print("A25pisums Player A", soccer.pi_sums[0]["A25"])
+# print("A25Q  Player A", soccer.Q[0]["A25"])
+# print("")
+# print("A25pisums Player B", soccer.pi_sums[1]["A25"])
+# print("A25Q  Player B", soccer.Q[1]["A25"])
+
+
 #
 # # This plays face-to-face start state, player A has the ball
 # # This is 66/33 win/lose for playerA. Should double check that is correct
@@ -167,61 +188,61 @@ from LONRGeneral.TigerGame import *
 ######################################################################
 # Tiger Game VI
 #####################################################################
-tigerGame = TigerGame(startState="root", TLProb=0.5)
-
-# # Create LONR Agent and feed in the Tiger game
-lonrAgent = LONR(M=tigerGame, gamma=0.999, alpha=0.5, epsilon=15, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=True)
-
-iters = 422
-lonrAgent.lonr_value_iteration(iterations=iters, log=1)
+# tigerGame = TigerGame(startState="root", TLProb=0.5)
 #
-print("")
-print("Pi sums: ")
-for k in sorted(tigerGame.pi_sums[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.pi_sums[0][k].keys()):
-        print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
-    print("")
-
-print("")
-print("Q: ")
-for k in sorted(tigerGame.Q[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.Q[0][k].keys()):
-        print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
-    print("")
-
-
-print("")
-print("Pi : ")
-for k in sorted(tigerGame.pi[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.pi[0][k].keys()):
-        print(kk, ": ", tigerGame.pi[0][k][kk], " ", end="")
-    print("")
-
-
-print("")
-print("Q Avg")
-for k in sorted(tigerGame.QSums[0].keys()):
-    tot = 0.0
-    # for kk in agent.Qsums[k].keys():
-    #     tot += agent.Qsums[k][kk]
-    # if tot == 0:
-    #     tot = 1.0
-    print(k, ": ", end='')
-    for kk in tigerGame.QSums[0][k].keys():
-        print(kk, ": ", tigerGame.QSums[0][k][kk] / (float(iters) * 1.0), " ", end='')
-    print("")
-
-
-print("")
-print("Regret sums : ")
-for k in sorted(tigerGame.regret_sums[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.regret_sums[0][k].keys()):
-        print(kk, ": ", tigerGame.regret_sums[0][k][kk], " ", end="")
-    print("")
+# # # Create LONR Agent and feed in the Tiger game
+# lonrAgent = LONR(M=tigerGame, gamma=0.999, alpha=0.5, epsilon=15, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=True)
+#
+# iters = 422
+# lonrAgent.lonr_value_iteration(iterations=iters, log=1)
+# #
+# print("")
+# print("Pi sums: ")
+# for k in sorted(tigerGame.pi_sums[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.pi_sums[0][k].keys()):
+#         print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
+#     print("")
+#
+# print("")
+# print("Q: ")
+# for k in sorted(tigerGame.Q[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.Q[0][k].keys()):
+#         print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
+#     print("")
+#
+#
+# print("")
+# print("Pi : ")
+# for k in sorted(tigerGame.pi[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.pi[0][k].keys()):
+#         print(kk, ": ", tigerGame.pi[0][k][kk], " ", end="")
+#     print("")
+#
+#
+# print("")
+# print("Q Avg")
+# for k in sorted(tigerGame.QSums[0].keys()):
+#     tot = 0.0
+#     # for kk in agent.Qsums[k].keys():
+#     #     tot += agent.Qsums[k][kk]
+#     # if tot == 0:
+#     #     tot = 1.0
+#     print(k, ": ", end='')
+#     for kk in tigerGame.QSums[0][k].keys():
+#         print(kk, ": ", tigerGame.QSums[0][k][kk] / (float(iters) * 1.0), " ", end='')
+#     print("")
+#
+#
+# print("")
+# print("Regret sums : ")
+# for k in sorted(tigerGame.regret_sums[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.regret_sums[0][k].keys()):
+#         print(kk, ": ", tigerGame.regret_sums[0][k][kk], " ", end="")
+#     print("")
 
 #
 # print("----------------------------------------------")
@@ -238,32 +259,55 @@ for k in sorted(tigerGame.regret_sums[0].keys()):
 
 ####################################################################
 # O-LONR GridWorld
-# print("Begin GridWorld O-LONR - deterministic")
-# print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")
-# print("THIS grid will work with vanilla RM, just takes 30k iterations or so")
-# gridMDP = Grid(noise=0.0, startState=36)
-#
-# # Create LONR Agent and feed in gridMDP
-# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=True, DCFR=False, VI=False)
-#
-# # Train via VI
-# lonrAgent.lonr_online(iterations=10000, log=1000)
-#
+print("Begin GridWorld O-LONR - deterministic")
+print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")
+print("THIS grid will work with vanilla RM, just takes 30k iterations or so")
+gridMDP = Grid(noise=0.0, startState=12)
+
+# Create LONR Agent and feed in gridMDP
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False)
+
+# Train via VI
+totalIters = 40001
+lonrAgent.lonr_online(iterations=totalIters, log=2000)
+
 # for k in gridMDP.pi[0].keys():
 #     print("PI: ", k, ": ", gridMDP.pi[0][k])
 #
 # for k in gridMDP.regret_sums[0].keys():
 #     print("regretSums: ", k, ": ", gridMDP.regret_sums[0][k])
-#
-#
-# print("Q values (not QAvg)")
-# print("Q for Bottom left (start state)")
-# print(gridMDP.Q[0][36])
-#
-# print("Q for State above bottom right terminal")
-# print(gridMDP.Q[0][35])
-#
-# print("End GridWorld O-LONR - deterministic")
+
+
+#print("Q values (not QAvg)")
+print("QAvg for Bottom left (start state)")
+for a in sorted(gridMDP.QSums[0][12].keys()):
+    print(a, ": ", gridMDP.QSums[0][12][a] / float(totalIters))
+
+print("Q for Bottom left (start state)")
+for a in sorted(gridMDP.Q[0][12].keys()):
+    print(gridMDP.Q[0][12][a])
+
+print("Pi for Bottom left (start state)")
+for a in sorted(gridMDP.pi[0][12].keys()):
+    print(gridMDP.pi[0][12][a])
+print("")
+print("Pi:")
+for s in gridMDP.pi[0].keys():
+    print(s, ": ", gridMDP.pi[0][s])
+print("")
+print("Pi sums:")
+for s in gridMDP.pi_sums[0].keys():
+    print(s, ": ", gridMDP.pi_sums[0][s])
+
+print("Weights:")
+for s in sorted(gridMDP.weights[0].keys()):
+    print(s, ": ", gridMDP.weights[0][s])
+
+
+print("Q for State above bottom right terminal")
+#print(gridMDP.QSums[0][35])
+
+print("End GridWorld O-LONR - deterministic")
 #
 # print("")
 #
