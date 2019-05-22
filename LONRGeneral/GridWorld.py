@@ -55,7 +55,7 @@ class Grid(MDP):
                      ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0]
 
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10]
+                     ' ', -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1]
 
         # self.Q = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
         # self.Q_bu = np.zeros((self.N, self.numberOfStates, self.numberOfActions))

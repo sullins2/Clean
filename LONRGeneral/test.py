@@ -266,18 +266,19 @@ gridMDP = Grid(noise=0.0, startState=12)
 
 # Create LONR Agent and feed in gridMDP
 # lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False)
-lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.5)
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.15)
 
 # Train via VI
-totalIters = 23400
-lonrAgent.lonr_online(iterations=totalIters, log=1200)
+totalIters = 9000
+lonrAgent.lonr_online(iterations=totalIters, log=2000)
 
-lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.0)
+# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.0)
+#
+# # Train via VI
+# totalIters = 23400
+# lonrAgent.lonr_online(iterations=totalIters, log=1200)
 
-# Train via VI
-totalIters = 23400
-lonrAgent.lonr_online(iterations=totalIters, log=1200)
-
+print("Pi")
 for k in gridMDP.pi[0].keys():
     print("PI: ", k, ": ", gridMDP.pi[0][k])
 #
@@ -293,6 +294,17 @@ print(gridMDP.Q[0][12])
 print("State above bottom right terminal")
 print(gridMDP.Q[0][11])
 # print(gridMDP.Q[0][35])
+
+print("PI Sums")
+for k in gridMDP.pi_sums[0].keys():
+    print("PISUM: ", k, " ( ", end='')
+    total = 0.0
+    for kk in gridMDP.pi_sums[0][k].keys():
+        total += gridMDP.pi_sums[0][k][kk]
+    if total <= 0: total = 1
+    for kk in gridMDP.pi_sums[0][k].keys():
+        print(kk, ": ", gridMDP.pi_sums[0][k][kk] / total, " ", end='')
+    print(" )")
 
 
 print("")

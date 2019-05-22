@@ -367,7 +367,7 @@ class LONR(object):
         ww = []
         for w in weights:
             ww.append(w / norm)
-        ra = np.random.choice([0,1,2,3], p=ww)
+        ra = np.random.choice([0, 1, 2, 3], p=ww)
 
         return ra
         # choice = np.random.uniform(0, sum(weights))
@@ -382,7 +382,19 @@ class LONR(object):
 
     def distr(self, weights, gamma=0.0):
         theSum = float(sum(weights))
-        return list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+        lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+        return lp#list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+
+
+    def distr2(self, currentState, weights, gamma=0.0):
+        theSum = float(sum(weights))
+
+        # theSum = 0.0
+        # for ww in self.M.weights[0][currentState].keys():
+        #     theSum += self.M.pi[0][currentState][ww] *
+
+        lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+        return lp#list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
 
     def mean(self, aList):
         theSum = 0
@@ -394,11 +406,9 @@ class LONR(object):
 
         return 0 if count == 0 else theSum / count
 
+    def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin=-1.0, rewardMax=1.0):
 
-    def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin = -1.0, rewardMax = 10.0):
-
-
-        if t % 2000 == 0:
+        if t % 500 == 0:
             verbose = True
         else:
             verbose = False
@@ -419,17 +429,17 @@ class LONR(object):
 
         if verbose: print("Weights: ", weights)
 
-
-
         gamma = self.exp3gamma
         # Get distribution
         probabilityDistribution = self.distr(weights, gamma)
+
+        piSUMDist = self.distr(weights, gamma=0.0)
 
         # Loop thru and set pi
         aa = 0
         for a in sorted(self.M.weights[0][currentState].keys()):
             self.M.pi[0][currentState][a] = probabilityDistribution[aa]
-            self.M.pi_sums[0][currentState][a] += self.M.pi[0][currentState][a]
+            self.M.pi_sums[0][currentState][a] += piSUMDist[aa] #self.M.pi[0][currentState][a]
             aa += 1
 
         # Get action choice from prob dist
@@ -437,17 +447,44 @@ class LONR(object):
         choice = self.draw(probabilityDistribution)
 
         # Get reward (Q-Value)
-        if verbose: print("Choice: ", choice)  #0-3
+        if verbose: print("Choice: ", choice)  # 0-3
         theReward = self.M.Q[0][currentState][choice]
+
+        theRewards = []
+        for q in sorted(self.M.Q[0][currentState].keys()):
+            theRewards.append(self.M.Q[0][currentState][q])
 
         # Scale reward (Not sure this is correct, scaling is set in function arguments above) line 386
         if verbose: print("Reward for choice: ", theReward)
         scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin)  # rewards scaled to 0,1
 
+        scaledRewards = []
+        for r in theRewards:
+            sr = (r - rewardMin)/ (rewardMax - rewardMin)
+            scaledRewards.append(sr)
+
+
         # Not entirely sure what this does
         if verbose: print("Scaled Reward: ", scaledReward)
         estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
+
+        estimatedRewards = []
+        aa = 0
+        for er in scaledRewards:
+            estimatedRewards.append(1.0 * er / probabilityDistribution[aa])
+            aa += 1
+
+        tot = 0.0
+        aa = 0
+        for er in sorted(self.M.weights[0][currentState].keys()):
+            tot += self.M.pi[0][currentState][aa] * math.exp(estimatedRewards[aa] * gamma / float(numActions))
+            aa += 1
         if verbose: print("Estimated reward: ", estimatedReward)
+
+        aa = 0
+        for er in sorted(self.M.weights[0][currentState].keys()):
+            self.M.pi[0][currentState][aa] = (self.M.pi[0][currentState][aa] * math.exp(estimatedRewards[aa] * gamma / float(numActions)) ) / tot
+            aa += 1
 
         # Update weights
         if verbose: print("Updating choice: ", choice)
@@ -455,8 +492,142 @@ class LONR(object):
         if verbose: print("Weights: ", self.M.weights[0][currentState])
         if verbose: print("")
 
+        minW = self.M.weights[0][currentState][0]
+        #     # # if verbose: print("Init min weight: ", self.M.weights[0][currentState][0])
+        aa = 0
+        for w in self.M.weights[0][currentState].keys():
+            if self.M.weights[0][currentState][w] < minW:
+                minW = self.M.weights[0][currentState][w]
+            aa += 1
+
+        if t % 1000 == 0:
+            self.M.weights[0][currentState][choice] = self.M.weights[0][currentState][choice] - minW
+            if self.M.weights[0][currentState][choice] < 1.0:
+                self.M.weights[0][currentState][choice] = 1.0
+
         # Return action
+
         return choice
+
+    # def draw(self, weights):
+    #
+    #     # norm = sum(weights)
+    #     # ww = []
+    #     # for w in weights:
+    #     #     ww.append(w / norm)
+    #     # ra = np.random.choice([0,1,2,3], p=ww)
+    #     #
+    #     # return ra
+    #     choice = np.random.uniform(0, sum(weights))
+    #     choiceIndex = 0
+    #
+    #     for weight in weights:
+    #         choice -= weight
+    #         if choice <= 0:
+    #             return choiceIndex
+    #
+    #         choiceIndex += 1
+    #
+    # def distr(self, weights, gamma=0.0):
+    #     theSum = float(sum(weights))
+    #     return list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+    #
+    # def distrForPISUMS(self, weights, gamma=0.0):
+    #     theSum = float(sum(weights))
+    #     return list((1.0 - gamma) * (w / theSum) for w in weights) # + (gamma / len(weights))
+    #
+    # # def mean(self, aList):
+    # #     theSum = 0
+    # #     count = 0
+    # #
+    # #     for x in aList:
+    # #         theSum += x
+    # #         count += 1
+    # #
+    # #     return 0 if count == 0 else theSum / count
+    #
+    #
+    # def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin = -1.0, rewardMax = 10.0):
+    #
+    #
+    #     if t % 2000 == 0:
+    #         verbose = True
+    #     else:
+    #         verbose = False
+    #     if verbose:
+    #         print("Iteration: ", t)
+    #         print("Current state: ", currentState)
+    #
+    #     weightsA = {}
+    #
+    #     # Get weights for actions [UP, RIGHT, DOWN, LEFT]
+    #     for a in sorted(self.M.weights[n][currentState].keys()):
+    #         weightsA[a] = self.M.weights[n][currentState][a]
+    #
+    #     # Put weights into a list
+    #     weights = []
+    #     for a in weightsA.keys():
+    #         weights.append(weightsA[a])
+    #
+    #     if verbose: print("Weights: ", weights)
+    #
+    #
+    #
+    #     gamma = self.exp3gamma
+    #     # Get distribution
+    #     probabilityDistribution = self.distr(weights, gamma)
+    #
+    #     probDistForPISUMS = self.distrForPISUMS(weights, gamma=0.0)
+    #
+    #     # Loop thru and set pi
+    #     aa = 0
+    #     for a in sorted(self.M.weights[0][currentState].keys()):
+    #         self.M.pi[0][currentState][a] = probabilityDistribution[aa]
+    #         self.M.pi_sums[0][currentState][a] += probDistForPISUMS[aa]
+    #         aa += 1
+    #
+    #     # Get action choice from prob dist
+    #     if verbose: print("ProbDist: ", probabilityDistribution)
+    #     choice = self.draw(probabilityDistribution)
+    #
+    #     # Get reward (Q-Value)
+    #     if verbose: print("Choice: ", choice)  #0-3
+    #     theReward = self.M.Q[0][currentState][choice]
+    #
+    #     # Scale reward (Not sure this is correct, scaling is set in function arguments above) line 386
+    #     if verbose: print("Reward for choice: ", theReward)
+    #     scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin)  # rewards scaled to 0,1
+    #
+    #     # Not entirely sure what this does
+    #     if verbose: print("Scaled Reward: ", scaledReward)
+    #     estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
+    #     if verbose: print("Estimated reward: ", estimatedReward)
+    #
+    #     # Update weights
+    #     if verbose: print("Updating choice: ", choice)
+    #
+    #     #if verbose: print("Weights after: ", self.M.weights[0][currentState])
+    #     self.M.weights[0][currentState][choice] *= math.exp(estimatedReward * gamma / float(numActions))  # important that we use estimated reward here!
+    #
+    #     # minW = self.M.weights[0][currentState][0]
+    #     # # if verbose: print("Init min weight: ", self.M.weights[0][currentState][0])
+    #     # aa = 0
+    #     # for w in self.M.weights[0][currentState].keys():
+    #     #     if self.M.weights[0][currentState][w] < minW:
+    #     #         minW = self.M.weights[0][currentState][w]
+    #     #     aa += 1
+    #
+    #     # if t % 100 == 0:
+    #     #     for w in self.M.weights[0][currentState].keys():
+    #     #         #if t < 120: continue
+    #     #         # if t % 100 == 0:
+    #     #         self.M.weights[0][currentState][w] = self.M.weights[0][currentState][w] - (minW / 1.0) + 1.0
+    #     #         # if self.M.weights[0][currentState][w] < 1:
+    #     #         #     self.M.weights[0][currentState][w] = 1.0
+    #     if verbose: print("")
+    #
+    #     # Return action
+    #     return choice
 
 
 
