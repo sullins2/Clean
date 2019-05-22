@@ -19,6 +19,7 @@ class MDP(object):
         self.regret_sums = None
 
         self.weights = None
+        self.runningRewards = None
 
         self.QSum = [1,2]
 
@@ -76,7 +77,7 @@ class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None, gamma=1.0, alpha=1.0, epsilon=10, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=False, showSettings=True, EXP3=False,exp3gamma=0.5):
+    def __init__(self, M=None, gamma=1.0, alpha=1.0, epsilon=10, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=False, showSettings=True, EXP3=False,exp3gamma=0.5, LONR=True):
 
 
 
@@ -151,11 +152,14 @@ class LONR(object):
         #EXP3 = False, exp3gamma = 0.5
         self.EXP3 = EXP3
         self.exp3gamma = exp3gamma
+
+        self.LONR = LONR
         # Set grid
         # set living cost
 
         if self.showSettings:
             print("LONR initialized with:")
+            print("   LONR : ", self.LONR)
             print("   gamma: ", self.gamma)
             print("   alpha: ", self.alpha)
             print(" epsilon: ", self.epsilon)
@@ -229,6 +233,92 @@ class LONR(object):
         elif self.SOCCER:
             return self.QSumSoccerB21Right, self.iters
 
+    # Regular Q-Learning
+    def QLearningUpdate(self, n, s, a_current2, randomS=None):
+        #randomS = None
+        # if self.M.isTerminal(s):
+        #     print("###########################")
+        for a_current in a_current2:
+
+            if self.M.isTerminal(s):
+
+                # Value iteration
+                if self.VI == True:
+
+                    # All except tiger game
+                    if randomS is None:
+                        reward = self.M.getReward(s, a_current, 0, 0)
+                        if reward == None:
+                            reward = 0.0
+                        self.M.Q_bu[n][s][a_current] = reward #(1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward #self.M.getReward(s, a_current, 0, 0)
+                    continue
+
+                # Online
+                else:
+                    #print("IN terminal: ", s, " RAN:", randomS)
+                    if randomS is None:
+
+                        reward = self.M.getReward(s, a_current, 0,0)
+                        if reward == None:
+                            reward = 0.0
+
+                        self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*self.M.Q[n][s][a_current] + self.alpha*reward#self.M.getReward(s, a_current, 0,0)
+                        #print("SET: ",  self.M.Q_bu[n][s][a_current], " REW: ", reward, " s: ", s)
+                    else:
+                        reward = self.M.getReward(randomS, a_current, 0, 0)
+                        if reward == None:
+                            reward = 0.0
+
+                        self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + self.alpha * reward#self.M.getReward(randomS, a_current, 0, 0)
+                    continue
+
+
+
+
+            # Get next states and transition probs for MDP
+            # Get next states and other players policy for MG
+            succs = self.M.getNextStatesAndProbs(s, a_current, n)
+            # print("s: ", s, " a:", a_current, "   succs: ", succs)
+
+            #print("  SUCCS: ", succs)
+            Value = 0.0
+
+            #Loop thru each next state and prob
+
+            bestValue = -10000.0
+            bestReward = 0
+            bestProb = None
+            for s_prime, prob, reward in succs:
+
+                #bestAct = 0
+                for a_current_prime in self.M.getActions(s_prime, n):
+                    temp = self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime]  # values[(state,a)]
+                    if temp > bestValue:
+
+                        #reww = self.M.getReward(s, a_current, n, 0)
+                        bestValue = temp
+                        bestReward = reward
+                        bestProb = prob
+                        #bestAct = a_current_prime
+
+                # Loop thru actions in s_prime for player n
+                # for a_current_prime in self.M.getActions(s_prime, n):
+                #     tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
+                #
+                #
+                # reww = self.M.getReward(s, a_current, n, 0)
+                #
+                #
+                # if reww is None:
+                #     Value += prob * (reward + self.gamma * tempValue)
+                # else:
+                #     Value += prob * (reww + self.gamma * tempValue)
+
+
+            Value = (bestReward + self.gamma*bestValue)
+            #print("Value: ", Value)
+            self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha)*self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha)*Value
+
 
     def QUpdate(self, n, s, a_current2, randomS=None):
 
@@ -244,21 +334,12 @@ class LONR(object):
                         reward = self.M.getReward(s, a_current, 0, 0)
                         if reward == None:
                             reward = 0.0
-                        self.M.Q_bu[n][s][a_current] = reward #(1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward #self.M.getReward(s, a_current, 0, 0)
-                    # Tiger game value iteration
-                    # else:
-                    #     reward = self.M.getReward(randomS, a_current, 0, 0)
-                    #     print("HERE: terminal s: ", s)
-                    #     if reward == None:
-                    #         reward = 0.0
-                    #         print("NOOOOO")
-                    #     else:
-                    #         print("DDDDDDD")
-                    #         #self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha * reward
+                        self.M.Q_bu[n][s][a_current] = reward
                     continue
 
-                # Online
+                # Asynchronous VI
                 else:
+
                     if randomS is None:
 
                         reward = self.M.getReward(s, a_current, 0,0)
@@ -269,38 +350,8 @@ class LONR(object):
                         reward = self.M.getReward(randomS, a_current, 0, 0)
                         if reward == None:
                             reward = 0.0
-
                         self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + self.alpha * reward#self.M.getReward(randomS, a_current, 0, 0)
                     continue
-
-
-            # if self.VI == True and randomS is not None:
-            #     succs = self.M.getNextStatesAndProbs(s, a_current, n)
-            #     #print("s: ", s, " a:", a_current, "   succs: ", succs)
-            #     Value = 0.0
-            #
-            #     # Loop thru each next state and prob
-            #     for s_prime, prob, reward in succs:
-            #         # print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
-            #         tempValue = 0.0
-            #
-            #         # Loop thru actions in s_prime for player n
-            #         for a_current_prime in self.M.getActions(s_prime, n):
-            #             tempValue += self.M.Q[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
-            #
-            #         #reww = self.M.getReward(randomS, a_current, n, 0)
-            #         reww = self.M.getReward(s, a_current, n, 0)
-            #
-            #         #print("REWW: ", reww)
-            #         if reww is None:
-            #             Value += prob * (reward + self.gamma * tempValue)
-            #         else:
-            #             Value += prob * (reww + self.gamma * tempValue)
-            #
-            #     self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha) * Value
-            #     print("SETTING: s: ", self.M.getStateRep(s), " a_current: ", a_current, " to: ", self.M.Q_bu[n][self.M.getStateRep(s)][a_current])
-            # else:
-            # print("S: ", s)
 
             # Get next states and transition probs for MDP
             # Get next states and other players policy for MG
@@ -337,16 +388,13 @@ class LONR(object):
         if WW is None:
             for s in self.M.getStates():
                 for a in self.M.getActions(s, n):
-                    #self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
                     self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
                     self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
-                    #if s == 36 and a == self.M.UP:
-                    #self.M.QSum.append(self.M.Q[n][s][a])
+
         else:
             for s in WW:
                 for a in self.M.getActions(s, n):
                     self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
-                    #self.M.Q[n][s][a] = (1.0 - self.alpha)*self.M.Q_bu[n][s][a] + self.alpha*self.M.Q[n][s][a]
                     self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
 
 
@@ -359,280 +407,7 @@ class LONR(object):
 
 
 
- #####################################################################################
 
-    def draw(self, weights):
-
-        norm = sum(weights)
-        ww = []
-        for w in weights:
-            ww.append(w / norm)
-        ra = np.random.choice([0, 1, 2, 3], p=ww)
-
-        return ra
-        # choice = np.random.uniform(0, sum(weights))
-        # choiceIndex = 0
-        #
-        # for weight in weights:
-        #     choice -= weight
-        #     if choice <= 0:
-        #         return choiceIndex
-        #
-        #     choiceIndex += 1
-
-    def distr(self, weights, gamma=0.0):
-        theSum = float(sum(weights))
-        lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
-        return lp#list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
-
-
-    def distr2(self, currentState, weights, gamma=0.0):
-        theSum = float(sum(weights))
-
-        # theSum = 0.0
-        # for ww in self.M.weights[0][currentState].keys():
-        #     theSum += self.M.pi[0][currentState][ww] *
-
-        lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
-        return lp#list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
-
-    def mean(self, aList):
-        theSum = 0
-        count = 0
-
-        for x in aList:
-            theSum += x
-            count += 1
-
-        return 0 if count == 0 else theSum / count
-
-    def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin=-1.0, rewardMax=1.0):
-
-        if t % 500 == 0:
-            verbose = True
-        else:
-            verbose = False
-        if verbose:
-            print("Iteration: ", t)
-            print("Current state: ", currentState)
-
-        weightsA = {}
-
-        # Get weights for actions [UP, RIGHT, DOWN, LEFT]
-        for a in sorted(self.M.weights[n][currentState].keys()):
-            weightsA[a] = self.M.weights[n][currentState][a]
-
-        # Put weights into a list
-        weights = []
-        for a in weightsA.keys():
-            weights.append(weightsA[a])
-
-        if verbose: print("Weights: ", weights)
-
-        gamma = self.exp3gamma
-        # Get distribution
-        probabilityDistribution = self.distr(weights, gamma)
-
-        piSUMDist = self.distr(weights, gamma=0.0)
-
-        # Loop thru and set pi
-        aa = 0
-        for a in sorted(self.M.weights[0][currentState].keys()):
-            self.M.pi[0][currentState][a] = probabilityDistribution[aa]
-            self.M.pi_sums[0][currentState][a] += piSUMDist[aa] #self.M.pi[0][currentState][a]
-            aa += 1
-
-        # Get action choice from prob dist
-        if verbose: print("ProbDist: ", probabilityDistribution)
-        choice = self.draw(probabilityDistribution)
-
-        # Get reward (Q-Value)
-        if verbose: print("Choice: ", choice)  # 0-3
-        theReward = self.M.Q[0][currentState][choice]
-
-        theRewards = []
-        for q in sorted(self.M.Q[0][currentState].keys()):
-            theRewards.append(self.M.Q[0][currentState][q])
-
-        # Scale reward (Not sure this is correct, scaling is set in function arguments above) line 386
-        if verbose: print("Reward for choice: ", theReward)
-        scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin)  # rewards scaled to 0,1
-
-        scaledRewards = []
-        for r in theRewards:
-            sr = (r - rewardMin)/ (rewardMax - rewardMin)
-            scaledRewards.append(sr)
-
-
-        # Not entirely sure what this does
-        if verbose: print("Scaled Reward: ", scaledReward)
-        estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
-
-        estimatedRewards = []
-        aa = 0
-        for er in scaledRewards:
-            estimatedRewards.append(1.0 * er / probabilityDistribution[aa])
-            aa += 1
-
-        tot = 0.0
-        aa = 0
-        for er in sorted(self.M.weights[0][currentState].keys()):
-            tot += self.M.pi[0][currentState][aa] * math.exp(estimatedRewards[aa] * gamma / float(numActions))
-            aa += 1
-        if verbose: print("Estimated reward: ", estimatedReward)
-
-        aa = 0
-        for er in sorted(self.M.weights[0][currentState].keys()):
-            self.M.pi[0][currentState][aa] = (self.M.pi[0][currentState][aa] * math.exp(estimatedRewards[aa] * gamma / float(numActions)) ) / tot
-            aa += 1
-
-        # Update weights
-        if verbose: print("Updating choice: ", choice)
-        self.M.weights[0][currentState][choice] *= math.exp(estimatedReward * gamma / float(numActions))  # important that we use estimated reward here!
-        if verbose: print("Weights: ", self.M.weights[0][currentState])
-        if verbose: print("")
-
-        minW = self.M.weights[0][currentState][0]
-        #     # # if verbose: print("Init min weight: ", self.M.weights[0][currentState][0])
-        aa = 0
-        for w in self.M.weights[0][currentState].keys():
-            if self.M.weights[0][currentState][w] < minW:
-                minW = self.M.weights[0][currentState][w]
-            aa += 1
-
-        if t % 1000 == 0:
-            self.M.weights[0][currentState][choice] = self.M.weights[0][currentState][choice] - minW
-            if self.M.weights[0][currentState][choice] < 1.0:
-                self.M.weights[0][currentState][choice] = 1.0
-
-        # Return action
-
-        return choice
-
-    # def draw(self, weights):
-    #
-    #     # norm = sum(weights)
-    #     # ww = []
-    #     # for w in weights:
-    #     #     ww.append(w / norm)
-    #     # ra = np.random.choice([0,1,2,3], p=ww)
-    #     #
-    #     # return ra
-    #     choice = np.random.uniform(0, sum(weights))
-    #     choiceIndex = 0
-    #
-    #     for weight in weights:
-    #         choice -= weight
-    #         if choice <= 0:
-    #             return choiceIndex
-    #
-    #         choiceIndex += 1
-    #
-    # def distr(self, weights, gamma=0.0):
-    #     theSum = float(sum(weights))
-    #     return list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
-    #
-    # def distrForPISUMS(self, weights, gamma=0.0):
-    #     theSum = float(sum(weights))
-    #     return list((1.0 - gamma) * (w / theSum) for w in weights) # + (gamma / len(weights))
-    #
-    # # def mean(self, aList):
-    # #     theSum = 0
-    # #     count = 0
-    # #
-    # #     for x in aList:
-    # #         theSum += x
-    # #         count += 1
-    # #
-    # #     return 0 if count == 0 else theSum / count
-    #
-    #
-    # def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin = -1.0, rewardMax = 10.0):
-    #
-    #
-    #     if t % 2000 == 0:
-    #         verbose = True
-    #     else:
-    #         verbose = False
-    #     if verbose:
-    #         print("Iteration: ", t)
-    #         print("Current state: ", currentState)
-    #
-    #     weightsA = {}
-    #
-    #     # Get weights for actions [UP, RIGHT, DOWN, LEFT]
-    #     for a in sorted(self.M.weights[n][currentState].keys()):
-    #         weightsA[a] = self.M.weights[n][currentState][a]
-    #
-    #     # Put weights into a list
-    #     weights = []
-    #     for a in weightsA.keys():
-    #         weights.append(weightsA[a])
-    #
-    #     if verbose: print("Weights: ", weights)
-    #
-    #
-    #
-    #     gamma = self.exp3gamma
-    #     # Get distribution
-    #     probabilityDistribution = self.distr(weights, gamma)
-    #
-    #     probDistForPISUMS = self.distrForPISUMS(weights, gamma=0.0)
-    #
-    #     # Loop thru and set pi
-    #     aa = 0
-    #     for a in sorted(self.M.weights[0][currentState].keys()):
-    #         self.M.pi[0][currentState][a] = probabilityDistribution[aa]
-    #         self.M.pi_sums[0][currentState][a] += probDistForPISUMS[aa]
-    #         aa += 1
-    #
-    #     # Get action choice from prob dist
-    #     if verbose: print("ProbDist: ", probabilityDistribution)
-    #     choice = self.draw(probabilityDistribution)
-    #
-    #     # Get reward (Q-Value)
-    #     if verbose: print("Choice: ", choice)  #0-3
-    #     theReward = self.M.Q[0][currentState][choice]
-    #
-    #     # Scale reward (Not sure this is correct, scaling is set in function arguments above) line 386
-    #     if verbose: print("Reward for choice: ", theReward)
-    #     scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin)  # rewards scaled to 0,1
-    #
-    #     # Not entirely sure what this does
-    #     if verbose: print("Scaled Reward: ", scaledReward)
-    #     estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
-    #     if verbose: print("Estimated reward: ", estimatedReward)
-    #
-    #     # Update weights
-    #     if verbose: print("Updating choice: ", choice)
-    #
-    #     #if verbose: print("Weights after: ", self.M.weights[0][currentState])
-    #     self.M.weights[0][currentState][choice] *= math.exp(estimatedReward * gamma / float(numActions))  # important that we use estimated reward here!
-    #
-    #     # minW = self.M.weights[0][currentState][0]
-    #     # # if verbose: print("Init min weight: ", self.M.weights[0][currentState][0])
-    #     # aa = 0
-    #     # for w in self.M.weights[0][currentState].keys():
-    #     #     if self.M.weights[0][currentState][w] < minW:
-    #     #         minW = self.M.weights[0][currentState][w]
-    #     #     aa += 1
-    #
-    #     # if t % 100 == 0:
-    #     #     for w in self.M.weights[0][currentState].keys():
-    #     #         #if t < 120: continue
-    #     #         # if t % 100 == 0:
-    #     #         self.M.weights[0][currentState][w] = self.M.weights[0][currentState][w] - (minW / 1.0) + 1.0
-    #     #         # if self.M.weights[0][currentState][w] < 1:
-    #     #         #     self.M.weights[0][currentState][w] = 1.0
-    #     if verbose: print("")
-    #
-    #     # Return action
-    #     return choice
-
-
-
-
-######################################################################################
 
     def regretUpdate(self, n, currentState, t):
 
@@ -781,8 +556,10 @@ class LONR(object):
         print("Starting training..")
         for t in range(1, iterations+1):
 
+            self.epsilon *= 0.999
+
             if (t+1) % log == 0:
-                print("Iteration: ", t+1, " alpha:", self.alpha)
+                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon)
 
             self._lonr_online(t=t, totalIterations=iterations, randomized=randomized)
 
@@ -910,7 +687,8 @@ class LONR(object):
         done = False
         n = 0  # One player
 
-        #print("")
+
+
         # Episode loop - until terminal state is reached
         while done == False:
 
@@ -919,17 +697,26 @@ class LONR(object):
                 # for a in self.M.getActions(currentState, 0):
                 #     # Note, the reward is via the actual state, so there is no getStateRep()
                 #     self.M.Q_bu[n][self.M.getStateRep(currentState)][a] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(currentState)][a] + self.alpha * self.M.getReward(currentState,a,a,a)
+                #print("TEEEEEEEEEEEEEEEETMMR")
                 a = self.M.getActions(currentState, 0)
-                self.QUpdate(n, currentState, a, currentState)
+                if self.LONR == True:
+                    self.QUpdate(n, currentState, a, currentState)
+                else:
+                    #print("LALALALLALA")
+                    self.QLearningUpdate(n, currentState, a, currentState)
+                # print("DONE = ", done)
                 done = True
                 continue
 
             a = self.M.getActions(currentState, 0)
-            self.QUpdate(n, currentState, a, currentState)
+            if self.LONR == True:
+                self.QUpdate(n, currentState, a, currentState)
+            else:
+                self.QLearningUpdate(n, currentState, a, currentState)
             # totStates keeps track of which states need Qvalue copying
             #   as not all states need to be backed up, only the ones visited
-            totStates = []
-            totStates.append(currentState)
+            # totStates = []
+            # totStates.append(currentState)
 
             # Q Backup
             for n in range(self.M.N):
@@ -942,13 +729,19 @@ class LONR(object):
                 continue
 
             if self.EXP3 == False:
-                self.regretUpdate(n, self.M.getStateRep(currentState), t)
+
+                if self.LONR == True:
+                    self.regretUpdate(n, self.M.getStateRep(currentState), t)
+                else:
+                    noRegretUpdate = True
+                    #self.QLearningPIUpdate()
 
                 # Epsilon Greedy action selection
                 if np.random.randint(0, 100) < int(self.epsilon):
                     totalActions = self.M.getActions(currentState, 0)
                     randomAction = np.random.randint(0, len(totalActions))
                     randomAction = totalActions[randomAction]
+                    #print("RAndom action: ", randomAction)
 
                 else:
 
@@ -959,7 +752,12 @@ class LONR(object):
                         totalActions.append(action)
                         totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
                     #print(totalActionsProbs)
-                    randomAction = np.random.choice(totalActions, p=totalActionsProbs)
+                    if self.LONR == True:
+                        randomAction = np.random.choice(totalActions, p=totalActionsProbs)
+                    else:
+                        randomActionValue = max(totalActionsProbs)
+                        randomAction = totalActionsProbs.index(randomActionValue)
+                        #print("Random Action: ", randomAction)
 
             #Exp 3 is true
             else:
@@ -979,30 +777,329 @@ class LONR(object):
                 # nextPossStates is list of lists
                 # nextPossStates = [[next_state, prob, reward]]
                 currentState = nextPossStates[0][0]
-
-            # More than one possible successor, pick via probabilities
-            #       GridWorld non-determ:
-            #           3 states: 1-self.noise, (1-self.noise)/2, (1-self.noise)/2
-            #               ex: 0.8, 0.1, 0.1 for randomAction, to the side, to the side
-            #
-            #       Tiger Game:
-            #           Only happens when randomAction is Listen
-            #               Return is based on which side tiger is on, and the obs accuracy
             else:
                 nextStates = []
                 nextStateProbs = []
                 for ns, nsp,_ in nextPossStates:
                     nextStates.append(ns)
                     nextStateProbs.append(nsp)
+                #print("Nextposs: ", nextPossStates)
                 currentState = np.random.choice(nextStates, p=nextStateProbs)
+            # if self.LONR == False:
+            #     aa = []
+            #     aa.append(randomAction)
+            #     self.QLearningUpdate(n, currentState, aa, currentState)
+            # print("Current state: ", currentState)
 
-            #print("BCS: ", currentState)
-            # if self.M.isTerminal(currentState):
-            #     done = True
+    #####################################################################################
 
+    def draw(self, weights):
 
+        norm = sum(weights)
+        ww = []
+        if norm == 0:
+            norm = 1.0
+        for w in weights:
+            ww.append(w / norm)
+        ra = np.random.choice([0, 1, 2, 3], p=ww)
 
+        return ra
+        # choice = np.random.uniform(0, sum(weights))
+        # choiceIndex = 0
+        #
+        # for weight in weights:
+        #     choice -= weight
+        #     if choice <= 0:
+        #         return choiceIndex
+        #
+        #     choiceIndex += 1
 
+    def distr(self, weights, gamma=0.0):
+
+        # get the max weight
+        # #print("Weights: ", weights)
+        # maxWeight = max(weights)
+        # #print("Max Weight: ", maxWeight)
+        # weigths_copy = weights.copy()
+        # weigths_copy.remove(maxWeight)
+        # maxWeight2 = max(weigths_copy)
+        # #print(maxWeight, "  ", maxWeight2)
+        #
+        # #if maxWeight - maxWeight2 > 100000000.0:
+        # #    gamma = 1.0
+        #
+        # thresh = 100000.0 #maxWeight - maxWeight2
+        theSum = float(sum(weights))
+        # if maxWeight - maxWeight2 > thresh:
+        #
+        #     lp = []
+        #     for w in weights:
+        #         if w > maxWeight - maxWeight2:
+        #             cc = gamma / len(weights)
+        #         else:
+        #             cc = 0.0 #(1.0 - gamma) * (w / theSum) + (gamma / len(weights))
+        #         lp.append(cc)
+        # else:
+        lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+
+        #print(lp)
+        # summ = 0.0
+        # for w in lp:
+        #     summ += w
+        #
+        # if summ <= 0:
+        #     summ = 1.0
+        # for i in range(len(lp)):
+        #     lp[i] = lp[i] / summ
+
+        #theSum = float(sum(weights))
+        #lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+        return lp  # list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+
+    # def distr2(self, currentState, weights, gamma=0.0):
+    #     theSum = float(sum(weights))
+    #
+    #     # theSum = 0.0
+    #     # for ww in self.M.weights[0][currentState].keys():
+    #     #     theSum += self.M.pi[0][currentState][ww] *
+    #
+    #     lp = list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+    #     return lp  # list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+
+    def mean(self, aList):
+        theSum = 0
+        count = 0
+
+        for x in aList:
+            theSum += x
+            count += 1
+
+        return 0 if count == 0 else theSum / count
+
+    def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin=-100.0, rewardMax=0.0):
+
+        if t % 500 == 0:
+            verbose = True
+        else:
+            verbose = False
+        if verbose:
+            print("Iteration: ", t)
+            print("Current state: ", currentState)
+
+        weightsA = {}
+
+        # Get weights for actions [UP, RIGHT, DOWN, LEFT]
+        for a in sorted(self.M.weights[n][currentState].keys()):
+            weightsA[a] = self.M.weights[n][currentState][a]
+
+        # Put weights into a list
+        weights = []
+        for a in weightsA.keys():
+            weights.append(weightsA[a])
+
+        if verbose: print("Weights: ", weights)
+
+        # gap = weights.index(max(weights))
+        # weigths_copy = weights.copy()
+        # weigths_copyGap = weigths_copy.index(max(weigths_copy))
+
+        gamma = self.exp3gamma
+        # Get distribution
+        probabilityDistribution = self.distr(weights, gamma)
+
+        #for x in range()
+
+        piSUMDist = self.distr(weights, gamma=0.0)
+
+        # Loop thru and set pi
+        aa = 0
+        for a in sorted(self.M.weights[0][currentState].keys()):
+            self.M.pi[0][currentState][a] = probabilityDistribution[aa]
+            self.M.pi_sums[0][currentState][a] += piSUMDist[aa]  # self.M.pi[0][currentState][a]
+            aa += 1
+
+        # Get action choice from prob dist
+        if verbose: print("ProbDist: ", probabilityDistribution)
+        choice = self.draw(probabilityDistribution)
+
+        # Get reward (Q-Value)
+        if verbose: print("Choice: ", choice)  # 0-3
+        theReward = self.M.Q[0][currentState][choice]
+        #
+        # theRewards = []
+        # for q in sorted(self.M.Q[0][currentState].keys()):
+        #     theRewards.append(self.M.Q[0][currentState][q])
+        #
+        # # Scale reward (Not sure this is correct, scaling is set in function arguments above) line 386
+        # if verbose: print("Reward for choice: ", theReward)
+        scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin)  # rewards scaled to 0,1
+        #
+        # scaledRewards = []
+        # for r in theRewards:
+        #     sr = (r - rewardMin) / (rewardMax - rewardMin)
+        #     scaledRewards.append(sr)
+        #
+        # # Not entirely sure what this does
+        # if verbose: print("Scaled Reward: ", scaledReward)
+        estimatedReward = scaledReward / probabilityDistribution[choice]
+
+        self.M.runningRewards[0][currentState][choice] += estimatedReward
+
+        totRewards = []
+        minReward = self.M.runningRewards[0][currentState][0]
+        for c in self.M.runningRewards[0][currentState].keys():
+            if self.M.runningRewards[0][currentState][c] < minReward:
+                minReward = self.M.runningRewards[0][currentState][c]
+            #totRewards.append(self.M.runningRewards[0][currentState][c])
+
+        estimatedReward = estimatedReward - minReward
+
+        # Update weights
+        if verbose: print("Updating choice: ", choice)
+        self.M.weights[0][currentState][choice] *= math.exp(estimatedReward * gamma / float(numActions))  # important that we use estimated reward here!
+        if verbose: print("Weights: ", self.M.weights[0][currentState])
+        if verbose: print("")
+
+        # minW = self.M.weights[0][currentState][0]
+        # #     # # if verbose: print("Init min weight: ", self.M.weights[0][currentState][0])
+        # aa = 0
+        # for w in self.M.weights[0][currentState].keys():
+        #     if self.M.weights[0][currentState][w] < minW:
+        #         minW = self.M.weights[0][currentState][w]
+        #     aa += 1
+        #
+        # if t % 1000 == 0:
+        #     self.M.weights[0][currentState][choice] = self.M.weights[0][currentState][choice] - minW
+        #     if self.M.weights[0][currentState][choice] < 1.0:
+        #         self.M.weights[0][currentState][choice] = 1.0
+
+        # Return action
+
+        return choice
+
+    # def draw(self, weights):
+    #
+    #     # norm = sum(weights)
+    #     # ww = []
+    #     # for w in weights:
+    #     #     ww.append(w / norm)
+    #     # ra = np.random.choice([0,1,2,3], p=ww)
+    #     #
+    #     # return ra
+    #     choice = np.random.uniform(0, sum(weights))
+    #     choiceIndex = 0
+    #
+    #     for weight in weights:
+    #         choice -= weight
+    #         if choice <= 0:
+    #             return choiceIndex
+    #
+    #         choiceIndex += 1
+    #
+    # def distr(self, weights, gamma=0.0):
+    #     theSum = float(sum(weights))
+    #     return list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+    #
+    # def distrForPISUMS(self, weights, gamma=0.0):
+    #     theSum = float(sum(weights))
+    #     return list((1.0 - gamma) * (w / theSum) for w in weights) # + (gamma / len(weights))
+    #
+    # # def mean(self, aList):
+    # #     theSum = 0
+    # #     count = 0
+    # #
+    # #     for x in aList:
+    # #         theSum += x
+    # #         count += 1
+    # #
+    # #     return 0 if count == 0 else theSum / count
+    #
+    #
+    # def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin = -1.0, rewardMax = 10.0):
+    #
+    #
+    #     if t % 2000 == 0:
+    #         verbose = True
+    #     else:
+    #         verbose = False
+    #     if verbose:
+    #         print("Iteration: ", t)
+    #         print("Current state: ", currentState)
+    #
+    #     weightsA = {}
+    #
+    #     # Get weights for actions [UP, RIGHT, DOWN, LEFT]
+    #     for a in sorted(self.M.weights[n][currentState].keys()):
+    #         weightsA[a] = self.M.weights[n][currentState][a]
+    #
+    #     # Put weights into a list
+    #     weights = []
+    #     for a in weightsA.keys():
+    #         weights.append(weightsA[a])
+    #
+    #     if verbose: print("Weights: ", weights)
+    #
+    #
+    #
+    #     gamma = self.exp3gamma
+    #     # Get distribution
+    #     probabilityDistribution = self.distr(weights, gamma)
+    #
+    #     probDistForPISUMS = self.distrForPISUMS(weights, gamma=0.0)
+    #
+    #     # Loop thru and set pi
+    #     aa = 0
+    #     for a in sorted(self.M.weights[0][currentState].keys()):
+    #         self.M.pi[0][currentState][a] = probabilityDistribution[aa]
+    #         self.M.pi_sums[0][currentState][a] += probDistForPISUMS[aa]
+    #         aa += 1
+    #
+    #     # Get action choice from prob dist
+    #     if verbose: print("ProbDist: ", probabilityDistribution)
+    #     choice = self.draw(probabilityDistribution)
+    #
+    #     # Get reward (Q-Value)
+    #     if verbose: print("Choice: ", choice)  #0-3
+    #     theReward = self.M.Q[0][currentState][choice]
+    #
+    #     # Scale reward (Not sure this is correct, scaling is set in function arguments above) line 386
+    #     if verbose: print("Reward for choice: ", theReward)
+    #     scaledReward = (theReward - rewardMin) / (rewardMax - rewardMin)  # rewards scaled to 0,1
+    #
+    #     # Not entirely sure what this does
+    #     if verbose: print("Scaled Reward: ", scaledReward)
+    #     estimatedReward = 1.0 * scaledReward / probabilityDistribution[choice]
+    #     if verbose: print("Estimated reward: ", estimatedReward)
+    #
+    #     # Update weights
+    #     if verbose: print("Updating choice: ", choice)
+    #
+    #     #if verbose: print("Weights after: ", self.M.weights[0][currentState])
+    #     self.M.weights[0][currentState][choice] *= math.exp(estimatedReward * gamma / float(numActions))  # important that we use estimated reward here!
+    #
+    #     # minW = self.M.weights[0][currentState][0]
+    #     # # if verbose: print("Init min weight: ", self.M.weights[0][currentState][0])
+    #     # aa = 0
+    #     # for w in self.M.weights[0][currentState].keys():
+    #     #     if self.M.weights[0][currentState][w] < minW:
+    #     #         minW = self.M.weights[0][currentState][w]
+    #     #     aa += 1
+    #
+    #     # if t % 100 == 0:
+    #     #     for w in self.M.weights[0][currentState].keys():
+    #     #         #if t < 120: continue
+    #     #         # if t % 100 == 0:
+    #     #         self.M.weights[0][currentState][w] = self.M.weights[0][currentState][w] - (minW / 1.0) + 1.0
+    #     #         # if self.M.weights[0][currentState][w] < 1:
+    #     #         #     self.M.weights[0][currentState][w] = 1.0
+    #     if verbose: print("")
+    #
+    #     # Return action
+    #     return choice
+
+    # def QLearningPIUpdate(self, n, currentState, t):
+
+######################################################################################
 
 
 

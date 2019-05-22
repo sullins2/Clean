@@ -54,8 +54,12 @@ class Grid(MDP):
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0]
 
-        self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1]
+        self.grid = [
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0]
+
+        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', -100, -100, -100, -100, 0]
 
         # self.Q = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
         # self.Q_bu = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
@@ -82,6 +86,7 @@ class Grid(MDP):
         self.QSum = []
         self.iterations = []
         self.weights = {}
+        self.runningRewards = {}
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
@@ -92,6 +97,7 @@ class Grid(MDP):
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
             self.weights[n] = {}
+            self.runningRewards[n] = {}
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -101,6 +107,7 @@ class Grid(MDP):
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
                 self.weights[n][s] = {}
+                self.runningRewards[n][s] = {}
                 for a in self.getActions(s,0):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
@@ -109,12 +116,13 @@ class Grid(MDP):
                     self.regret_sums[n][s][a] = 0.0
                     self.pi_sums[n][s][a] = 0.0
                     self.weights[n][s][a] = 1.0
+                    self.runningRewards[n][s][a] = 0.0
 
 
         # self.grid = [' ', ' ', ' ',
         #              ' ', ' ', 10]
 
-        self.livingReward = 0.0#-1.0
+        self.livingReward = 0.0 #-1.0
 
     def getActions(self, s, n):
         return [self.UP, self.RIGHT, self.DOWN, self.LEFT]

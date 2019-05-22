@@ -258,57 +258,69 @@ from LONRGeneral.TigerGame import *
 # print("")
 
 ####################################################################
-# O-LONR GridWorld
-print("Begin GridWorld O-LONR - deterministic")
-print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")
-print("THIS grid will work with vanilla RM, just takes 30k iterations or so")
-gridMDP = Grid(noise=0.0, startState=12)
 
-# Create LONR Agent and feed in gridMDP
-# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False)
-lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.15)
 
-# Train via VI
-totalIters = 9000
-lonrAgent.lonr_online(iterations=totalIters, log=2000)
 
-# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.0)
+
+#################################################################################
+# # START OF EXP 3
+# # change grid, rows, cols, living cost in GridWorld.py
+#
+# # O-LONR GridWorld
+# print("Begin GridWorld O-LONR - deterministic")
+# print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")
+# print("THIS grid will work with vanilla RM, just takes 30k iterations or so")
+# gridMDP = Grid(noise=0.0, startState=12)
+#
+# # Create LONR Agent and feed in gridMDP
+# ###QLEARNlonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=40, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, LONR=False)
+# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.15)
 #
 # # Train via VI
-# totalIters = 23400
-# lonrAgent.lonr_online(iterations=totalIters, log=1200)
-
-print("Pi")
-for k in gridMDP.pi[0].keys():
-    print("PI: ", k, ": ", gridMDP.pi[0][k])
+# totalIters = 1811
+# lonrAgent.lonr_online(iterations=totalIters, log=500)
 #
-# for k in gridMDP.regret_sums[0].keys():
-#     print("regretSums: ", k, ": ", gridMDP.regret_sums[0][k])
+# # lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.0)
+# #
+# # # Train via VI
+# # totalIters = 23400
+# # lonrAgent.lonr_online(iterations=totalIters, log=1200)
+#
+# print("Pi")
+# for k in gridMDP.pi[0].keys():
+#     print("Pi: ", k, ": ", gridMDP.pi[0][k])
+# #
+# # for k in gridMDP.regret_sums[0].keys():
+# #     print("regretSums: ", k, ": ", gridMDP.regret_sums[0][k])
+#
+# print("")
+# print("Q values (not QAvg)")
+# print("Bottom left (start state)")
+# print(gridMDP.Q[0][12])
+#
+# print("State above bottom right terminal")
+# print(gridMDP.Q[0][12])
+#
+# print("PI Sums")
+# for k in gridMDP.pi_sums[0].keys():
+#     print("PISUM: ", k, " ( ", end='')
+#     total = 0.0
+#     for kk in gridMDP.pi_sums[0][k].keys():
+#         total += gridMDP.pi_sums[0][k][kk]
+#     if total <= 0: total = 1
+#     for kk in gridMDP.pi_sums[0][k].keys():
+#         print(kk, ": ", gridMDP.pi_sums[0][k][kk] / total, " ", end='')
+#     print(" )")
+#
+#
+# print("")
+# print("End GridWorld O-LONR - deterministic")
+#
+#
+#
+# ## END OF EXP3
+#######################################################################################
 
-print("")
-print("Q values (not QAvg)")
-print("Bottom left (start state)")
-#print(gridMDP.Q[0][36])
-print(gridMDP.Q[0][12])
-
-print("State above bottom right terminal")
-print(gridMDP.Q[0][11])
-# print(gridMDP.Q[0][35])
-
-print("PI Sums")
-for k in gridMDP.pi_sums[0].keys():
-    print("PISUM: ", k, " ( ", end='')
-    total = 0.0
-    for kk in gridMDP.pi_sums[0][k].keys():
-        total += gridMDP.pi_sums[0][k][kk]
-    if total <= 0: total = 1
-    for kk in gridMDP.pi_sums[0][k].keys():
-        print(kk, ": ", gridMDP.pi_sums[0][k][kk] / total, " ", end='')
-    print(" )")
-
-
-print("")
-print("End GridWorld O-LONR - deterministic")
 #
 # print("")
 #
