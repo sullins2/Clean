@@ -106,6 +106,8 @@ class LONR(object):
 
         # GRIDWORLD
         self.runningSum = 0.0
+        self.runningSumPI = 0.0
+        self.PIsums = []
 
         # NoSDE
         self.QSumSEND = []
@@ -160,6 +162,8 @@ class LONR(object):
             print("     rm+: ", self.RMPLUS)
             print("    DCFR: ", self.DCFR)
             print("      VI: ", self.VI)
+            print("    EXP3: ", self.EXP3)
+            print("exp3gama: ", self.exp3gamma)
 
 
     def lonr_value_iteration(self, iterations=-1, log=-1):
@@ -186,8 +190,12 @@ class LONR(object):
             if self.GRIDWORLD:
                 if self.M.noise > 0:
                     self.runningSum += self.M.Q[0][36][3]
+                    self.runningSumPI += self.M.pi[0][36][3]
                 else:
                     self.runningSum += self.M.Q[0][36][0]
+                    self.runningSumPI += self.M.pi[0][36][0]
+                #print("RUNPIS: ", self.runningSumPI)
+                self.PIsums.append(float(self.runningSumPI) / float(t))
                 self.QSums.append(float(self.runningSum) / float(t))
             elif self.NOSDE:
                 # Player 0, state left, KEEP
@@ -214,7 +222,7 @@ class LONR(object):
         #print(self.QSums)
         #print("PRINTED QSUMS")
         if self.GRIDWORLD:
-            return self.QSums, self.iters
+            return self.QSums, self.PIsums, self.iters
         elif self.NOSDE:
 
             return self.QSumSEND, self.QSumKEEP, self.QSumNOOP,  self.iters
