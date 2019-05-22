@@ -76,7 +76,7 @@ class LONR(object):
 
     # M: Markov game (MDP, markov game, tiger game)
 
-    def __init__(self, M=None, gamma=1.0, alpha=1.0, epsilon=10, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=False, showSettings=True):
+    def __init__(self, M=None, gamma=1.0, alpha=1.0, epsilon=10, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=True, randomize=False, showSettings=True, EXP3=False,exp3gamma=0.5):
 
 
 
@@ -146,7 +146,11 @@ class LONR(object):
         self.NOSDE = False
         self.TIGERGAME = False
 
-        self.EXP3 = True
+        #EXP3 = False, exp3gamma = 0.5
+        self.EXP3 = EXP3
+        self.exp3gamma = exp3gamma
+        # Set grid
+        # set living cost
 
         if self.showSettings:
             print("LONR initialized with:")
@@ -386,8 +390,10 @@ class LONR(object):
     def exp3Update(self, n, currentState, numActions, reward, gamma, t, rewardMin = -1.0, rewardMax = 10.0):
 
 
-
-        verbose = False
+        if t % 2000 == 0:
+            verbose = True
+        else:
+            verbose = False
         if verbose:
             print("Iteration: ", t)
             print("Current state: ", currentState)
@@ -407,7 +413,7 @@ class LONR(object):
 
 
 
-        gamma = 0.5
+        gamma = self.exp3gamma
         # Get distribution
         probabilityDistribution = self.distr(weights, gamma)
 

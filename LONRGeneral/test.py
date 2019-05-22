@@ -265,48 +265,37 @@ print("THIS grid will work with vanilla RM, just takes 30k iterations or so")
 gridMDP = Grid(noise=0.0, startState=12)
 
 # Create LONR Agent and feed in gridMDP
-lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False)
+# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False)
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.5)
 
 # Train via VI
-totalIters = 40001
-lonrAgent.lonr_online(iterations=totalIters, log=2000)
+totalIters = 23400
+lonrAgent.lonr_online(iterations=totalIters, log=1200)
 
-# for k in gridMDP.pi[0].keys():
-#     print("PI: ", k, ": ", gridMDP.pi[0][k])
+lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False, EXP3=True, exp3gamma=0.0)
+
+# Train via VI
+totalIters = 23400
+lonrAgent.lonr_online(iterations=totalIters, log=1200)
+
+for k in gridMDP.pi[0].keys():
+    print("PI: ", k, ": ", gridMDP.pi[0][k])
 #
 # for k in gridMDP.regret_sums[0].keys():
 #     print("regretSums: ", k, ": ", gridMDP.regret_sums[0][k])
 
-
-#print("Q values (not QAvg)")
-print("QAvg for Bottom left (start state)")
-for a in sorted(gridMDP.QSums[0][12].keys()):
-    print(a, ": ", gridMDP.QSums[0][12][a] / float(totalIters))
-
-print("Q for Bottom left (start state)")
-for a in sorted(gridMDP.Q[0][12].keys()):
-    print(gridMDP.Q[0][12][a])
-
-print("Pi for Bottom left (start state)")
-for a in sorted(gridMDP.pi[0][12].keys()):
-    print(gridMDP.pi[0][12][a])
 print("")
-print("Pi:")
-for s in gridMDP.pi[0].keys():
-    print(s, ": ", gridMDP.pi[0][s])
+print("Q values (not QAvg)")
+print("Bottom left (start state)")
+#print(gridMDP.Q[0][36])
+print(gridMDP.Q[0][12])
+
+print("State above bottom right terminal")
+print(gridMDP.Q[0][11])
+# print(gridMDP.Q[0][35])
+
+
 print("")
-print("Pi sums:")
-for s in gridMDP.pi_sums[0].keys():
-    print(s, ": ", gridMDP.pi_sums[0][s])
-
-print("Weights:")
-for s in sorted(gridMDP.weights[0].keys()):
-    print(s, ": ", gridMDP.weights[0][s])
-
-
-print("Q for State above bottom right terminal")
-#print(gridMDP.QSums[0][35])
-
 print("End GridWorld O-LONR - deterministic")
 #
 # print("")
@@ -384,6 +373,70 @@ print("End GridWorld O-LONR - deterministic")
 #     for kk in sorted(tigerGame.Q[0][k].keys()):
 #         print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
 #     print("")
+
+
+
+
+
+######################################################
+# Exp3
+# O-LONR GridWorld
+# print("Begin GridWorld O-LONR - deterministic")
+# print("THIS WORKS MUCH BETTER WITH RM+ - undo past large negative regret sums")
+# print("THIS grid will work with vanilla RM, just takes 30k iterations or so")
+# gridMDP = Grid(noise=0.0, startState=12)
+#
+# Make Sure to Set EXP bool
+# # Create LONR Agent and feed in gridMDP
+# lonrAgent = LONR(M=gridMDP, gamma=1.0, alpha=1.0, epsilon=20, alphaDecay=1.0, RMPLUS=False, DCFR=False, VI=False)
+#
+# # Train via VI
+# totalIters = 40001
+# lonrAgent.lonr_online(iterations=totalIters, log=2000)
+#
+# # for k in gridMDP.pi[0].keys():
+# #     print("PI: ", k, ": ", gridMDP.pi[0][k])
+# #
+# # for k in gridMDP.regret_sums[0].keys():
+# #     print("regretSums: ", k, ": ", gridMDP.regret_sums[0][k])
+#
+#
+# #print("Q values (not QAvg)")
+# print("QAvg for Bottom left (start state)")
+# for a in sorted(gridMDP.QSums[0][12].keys()):
+#     print(a, ": ", gridMDP.QSums[0][12][a] / float(totalIters))
+#
+# print("Q for Bottom left (start state)")
+# for a in sorted(gridMDP.Q[0][12].keys()):
+#     print(gridMDP.Q[0][12][a])
+#
+# print("Pi for Bottom left (start state)")
+# for a in sorted(gridMDP.pi[0][12].keys()):
+#     print(gridMDP.pi[0][12][a])
+# print("")
+# print("Pi:")
+# for s in gridMDP.pi[0].keys():
+#     print(s, ": ", gridMDP.pi[0][s])
+# print("")
+# print("Pi sums:")
+# for s in gridMDP.pi_sums[0].keys():
+#     print(s, ": ", gridMDP.pi_sums[0][s])
+#
+# print("Weights:")
+# for s in sorted(gridMDP.weights[0].keys()):
+#     print(s, ": ", gridMDP.weights[0][s])
+#
+#
+# print("Q for State above bottom right terminal")
+# #print(gridMDP.QSums[0][35])
+#
+# print("End GridWorld O-LONR - deterministic")
+
+
+
+
+
+
 
 print("Done")
 
