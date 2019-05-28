@@ -33,18 +33,11 @@ class Grid(MDP):
         self.LEFT = 3
 
         # Dimensions
-        self.rows = 2
-        self.cols = 3
-
         self.rows = 4
-        self.cols = 12
-
-        self.rows = 2
         self.cols = 12
 
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
-        self.N = 1
 
         # Non-determinism - this value is split between sideways moves
         self.noise = noise
@@ -52,47 +45,35 @@ class Grid(MDP):
         self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0]
+                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
-        self.grid = [
-                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 0]
 
-        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', -100, -100, -100, -100, 0]
-
-        # self.Q = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-        # self.Q_bu = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-        # self.QSums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-        #
-        # # Policies
-        # self.pi = np.zeros((self.N, self.numberOfStates, self.numberOfActions))  # policy (if needed)
-        # self.pi_sums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))
-        #
-        # # Regret Sums
-        # self.regret_sums = np.zeros((self.N, self.numberOfStates, self.numberOfActions))  # regret_sum (if needed)
-        #
-        # for n in range(self.N):
-        #     for s in range(self.numberOfStates):
-        #         for a in range(self.numberOfActions):
-        #             self.pi[n][s][a] = 1.0 / self.numberOfActions
-
+        # Q
         self.Q = {}
         self.Q_bu = {}
         self.QSums = {}
+        self.QSum = []
+        self.QTouched = {}
+
+        # Policy
         self.pi = {}
         self.pi_sums = {}
         self.regret_sums = {}
-        self.QSum = []
+
+        # Misc
         self.iterations = []
         self.weights = {}
         self.runningRewards = {}
+
+        # Initialize everything
+        # Ex: Q[player][state][action] -> Q[n][s][a]
+
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
             self.QSums[n] = {}
-            #self.QSumSoFar[n] = {}
-            #self.QSumSoFar[n] = {}
+            self.QTouched[n] = {}
+
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
@@ -102,7 +83,8 @@ class Grid(MDP):
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
                 self.QSums[n][s] = {}
-                #self.QSumSoFar[s]
+                self.QTouched[n][s] = {}
+
                 self.pi[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
@@ -112,17 +94,35 @@ class Grid(MDP):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
                     self.QSums[n][s][a] = 0.0
-                    self.pi[n][s][a] = 1.0 / 4.0  # len(list(total_actions.keys())
+                    self.QTouched[n][s][a] = 0.0
+
+                    self.pi[n][s][a] = 1.0 / len(self.getActions(s, 0)) # uniform init
                     self.regret_sums[n][s][a] = 0.0
                     self.pi_sums[n][s][a] = 0.0
                     self.weights[n][s][a] = 1.0
                     self.runningRewards[n][s][a] = 0.0
 
 
-        # self.grid = [' ', ' ', ' ',
-        #              ' ', ' ', 10]
 
-        self.livingReward = 0.0 #-1.0
+
+        self.livingReward = -1.0
+
+        logSettings = True
+        if logSettings:
+            print("Grid Settings: ")
+            print("     Grid: ")
+            gcell = 0
+            for x in range(self.rows):
+                for y in range(self.cols):
+                    g = self.grid[x * self.cols + y]
+                    g = " ***** " if g == ' ' else g
+                    if type(g) == int:
+                        g = " " + str(g) + " "
+                    print(g, end='')
+                print("")
+            # print("           ", self.grid)
+            print("     Noise: ", self.noise)
+            print("     Living reward: ", self.livingReward)
 
     def getActions(self, s, n):
         return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
@@ -250,5 +250,66 @@ class Grid(MDP):
             if massLeft > 0.0:
                 successors.append([upState,massLeft/2.0, self.getReward(state,action,0,0)])
                 successors.append([downState,massLeft/2.0, self.getReward(state,action,0,0)])
+
+        return successors
+
+
+    def getNextStatesAndProbsGrid(self, state, action, n_current):
+        """ Returns a list of [Action, resulting state, transition probability]
+        """
+
+        #convert to coordinates
+        x = state // self.cols
+        y = state % self.cols
+
+
+        successors = []
+
+        # UP
+        if self._isValidMove(x-1, y):
+            upState = self.XYToState(x-1, y)
+        else:
+            upState = state
+
+        # LEFT
+        if self._isValidMove(x, y-1):
+            leftState = self.XYToState(x, y-1)
+        else:
+            leftState = state
+
+        # DOWN
+        if self._isValidMove(x+1, y):
+            downState = self.XYToState(x+1, y)
+        else:
+            downState = state
+
+        # RIGHT
+        if self._isValidMove(x, y+1):
+            rightState = self.XYToState(x, y+1)
+        else:
+            rightState = state
+
+        # Return the correct one
+        if action == self.UP or action == self.DOWN:
+            if action == self.UP:
+                successors.append([upState,1.0-self.noise, self.getReward(state,action,0,0), self.UP])
+            else:
+                successors.append([downState,1.0-self.noise, self.getReward(state,action,0,0), self.DOWN])
+
+            massLeft = self.noise
+            if massLeft > 0.0:
+                successors.append([leftState,massLeft/2.0, self.getReward(state,self.LEFT,0,0), self.LEFT])
+                successors.append([rightState,massLeft/2.0, self.getReward(state,self.RIGHT,0,0), self.RIGHT])
+
+        if action == self.LEFT or action == self.RIGHT:
+            if action == self.LEFT:
+                successors.append([leftState,1.0-self.noise, self.getReward(state,action,0,0), self.LEFT])
+            else:
+                successors.append([rightState,1.0-self.noise, self.getReward(state,action,0,0), self.RIGHT])
+
+            massLeft = self.noise
+            if massLeft > 0.0:
+                successors.append([upState,massLeft/2.0, self.getReward(state,self.UP,0,0), self.UP])
+                successors.append([downState,massLeft/2.0, self.getReward(state,self.DOWN,0,0), self.DOWN])
 
         return successors

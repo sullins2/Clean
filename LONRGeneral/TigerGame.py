@@ -4,13 +4,387 @@ import numpy as np
 
 
 
+# Make two totally separate MDPs for each side.
+# Have them share Q Values but not rewards()
+
+
 class TigerGame(MDP):
 
-    def __init__(self, startState=None, TLProb=0.5):
+    def __init__(self, startState="START", TLProb=0.5, version=1):
         super().__init__(startState=startState)
 
-        # Two player MG
+        # One player MG
         self.N = 1
+
+        # Start with Tiger on Left
+        self.version = 1
+
+        # Actions
+        self.OPENLEFT = "OL"
+        self.LISTEN = "L"
+        self.OPENRIGHT = "OR"
+
+        self.TL = "TL"
+        self.TR = "TR"
+
+        self.TLProb = TLProb  # Probability that tiger is on left
+
+        # total action list
+        self.totalActions = [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
+
+        self.START = "START"
+        self.LEFT = "LEFT"
+        self.RIGHT = "RIGHT"
+        self.LEFTLEFT = "LEFTLEFT"
+        self.LEFTRIGHT = "LEFTRIGHT"
+        self.RIGHTLEFT = "RIGHTLEFT"
+        self.RIGHTRIGHT = "RIGHTRIGHT"
+
+        self.totalStates = [self.START,
+            self.LEFT,self.RIGHT,
+            self.LEFTLEFT, self.LEFTRIGHT, self.RIGHTLEFT, self.RIGHTRIGHT]
+
+        # depth = 1
+        # self.rootTL = "rootTL"  # MDP with Tiger on left
+        #
+        # # depth = 2
+        # self.rootTLOL = "rootTLOL"  # Tiger on LEFT, OL
+        # self.rootTLOR = "rootTLOR"  # Tiger on LEFT, OR
+        #
+        # # depth = 3
+        # self.rootTLLGL = "rootTLLGL"  # Tiger on LEFT, LISTEN, GL
+        # self.rootTLLGR = "rootTLLGR"  # Tiger on LEFT, LISTEN, GR
+        #
+        #
+        # # depth = 4
+        # self.rootTLLGLLGL = "rootTLLGLLGL"  # Tiger on left, Listen, Growl Left, Listen, Growl Left
+        # self.rootTLLGLLGR = "rootTLLGLLGR"
+        # self.rootTLLGRLGL = "rootTLLGRLGL"
+        # self.rootTLLGRLGR = "rootTLLGRLGR"
+
+
+        # self.totalStates = [self.rootTL,
+        #                         self.rootTLLGL, self.rootTLLGR,
+        #                         self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR]
+
+
+        self.Q = {}
+        self.Q_bu = {}
+        self.QSums = {}
+        self.QTouched = {}
+        self.pi = {}
+        self.pi_sums = {}
+        self.regret_sums = {}
+        for n in range(self.N):
+            self.Q[n] = {}
+            self.Q_bu[n] = {}
+            self.QSums[n] = {}
+            self.QTouched[n] = {}
+            self.pi[n] = {}
+            self.pi_sums[n] = {}
+            self.regret_sums[n] = {}
+            for s in self.getStates():
+                self.Q[n][s] = {}
+                self.Q_bu[n][s] = {}
+                self.QSums[n][s] = {}
+                self.QTouched[n][s] = {}
+                # stateInfoSet = self.stateIDtoIS(s)
+                # if stateInfoSet == None: continue
+                # if stateInfoSet not in self.pi:
+                self.pi[n][s] = {}
+                self.pi_sums[n][s] = {}
+                self.regret_sums[n][s] = {}
+
+                for a in self.getActions(s, n):
+                    self.Q[n][s][a] = 0.0
+                    self.Q_bu[n][s][a] = 0.0
+                    self.QSums[n][s][a] = 0.0
+                    self.QTouched[n][s][a] = 0.0
+                    self.pi[n][s][a] = 1.0 / len(self.getActions(s, 0))
+                    self.pi_sums[n][s][a] = 0.0
+                    self.regret_sums[n][s][a] = 0.0
+
+
+    def getStateRep(self, s):
+
+        return s
+        #return self.stateIDtoIS(s)
+
+    def stateIDtoIS(self, state):
+        """Returns the information set of state
+
+        """
+        return state
+        # if state == self.rootTL:
+        #     return self.rootTL
+        # elif state == self.rootTLLGL:# or state == self.rootTRLGL:
+        #     return self.rootTLLGL
+        # elif state == self.rootTLLGR:# or state == self.rootTRLGR:
+        #     return self.rootTLLGR
+        # elif state == self.rootTLLGLLGL:# or state == self.rootTRLGLLGL:
+        #     return self.rootTLLGLLGL
+        # elif state == self.rootTLLGLLGR:# or state == self.rootTRLGLLGR:
+        #     return self.rootTLLGLLGR
+        # elif state == self.rootTLLGRLGL:# or state == self.rootTRLGRLGL:
+        #     return self.rootTLLGRLGL
+        # elif state == self.rootTLLGRLGR:# or state == self.rootTRLGRLGR:
+        #     return self.rootTLLGRLGR
+        # elif state == self.rootTLOL or state == self.rootTLOR:# or state == self.rootTROL or state == self.rootTROR:
+        #     return state
+        # else:
+        #     for i in range(100):
+        #         print("Tiger game tiger left constructor - missed")
+        #     return None
+
+    def getActions(self, state, n):
+        return [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
+
+    def getStates(self, init=False):
+        return self.totalStates
+
+    def getReward(self, s, a_current, n, a_notN):
+
+        return 0.0
+        # if a_current == self.LISTEN:
+        #     return -1.0
+        # else:
+        #     return 0.0
+
+        # if s == self.rootTLOL:
+        #     return -100.0
+        # # Tiger left, open RIGHT
+        # elif s == self.rootTLOR:
+        #     return 10.0
+        #
+        # elif s == self.rootTL:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        #
+        # elif s == self.rootTLLGL or s == self.rootTLLGR:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        # elif s == self.rootTLLGLLGL or s == self.rootTLLGLLGR or s == self.rootTLLGRLGL or s == self.rootTLLGRLGR:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        #
+        #
+        # else:
+        #     print("Not caught: ", s)
+        #     return 0.0
+
+    def isTerminal(self, state):
+        return False
+        #if state == self.rootTLOL or state == self.rootTLOR:
+        #    return True
+        #else:
+        #   return False
+
+    def getNextStatesAndProbs(self, state, action, n_current):
+
+        # Top root of Tiger on left
+        if self.version == 1:
+
+            # If at start
+            if state == self.START:
+
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFT, 0.85, -1.0], [self.RIGHT, 0.15, -1.0]]
+
+
+            # Tiger on left, Listen, GL
+            elif state == self.LEFT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+            # Tiger on left, LISTEN, GR
+            elif state == self.RIGHT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
+
+
+            ## Bottom depth
+            # Tiger on left
+            elif state == self.LEFTLEFT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+            elif state == self.LEFTRIGHT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
+            elif state == self.RIGHTLEFT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+            elif state == self.RIGHTRIGHT:
+                if action == self.OPENLEFT:
+                    # print("state: ", state, " action: ", action)
+                    return [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return [[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
+        # Top root of Tiger on right
+        if self.version == 2:
+
+            # If at start
+            if state == self.START:
+
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFT, 0.15, -1.0], [self.RIGHT, 0.85, -1.0]]
+
+
+            # Tiger on right, Listen, GL
+            elif state == self.LEFT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
+
+            # Tiger on right, LISTEN, GR
+            elif state == self.RIGHT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+
+
+            ## Bottom depth
+            # Tiger on right
+            elif state == self.LEFTLEFT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
+
+            elif state == self.LEFTRIGHT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+            elif state == self.RIGHTLEFT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
+
+            elif state == self.RIGHTRIGHT:
+                if action == self.OPENLEFT:
+                    return [[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return [[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return [[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+        # No other states have actions
+        else:
+            print("None: ", state, "  ", action)
+            return []
+
+    def getMove(self, s, a):
+        if self.isTerminal(s): return None
+        # print("S: ", s , "  a: ", a )
+        nextPossStates = self.getNextStatesAndProbs(s, a, 0)
+        if nextPossStates == None: return None
+        # print("NPS: ", nextPossStates)
+        if len(nextPossStates) == 1:
+            currentState = nextPossStates[0][0]
+        else:
+            nst = []
+            nspt = []
+            for nstate, nsp, nr in nextPossStates:
+                nst.append(nstate)
+                nspt.append(nsp)
+            currentState = np.random.choice(nst, p=nspt)
+        return currentState
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class TigerGame2(MDP):
+
+    # version: 0 is for LONR-A
+    #          1 is for left mdp
+    #          2 is for right mdp
+    def __init__(self, startState=None, TLProb=0.5, version=0):
+        super().__init__(startState=startState)
+
+        # One player MG
+        self.N = 1
+
+        self.version = 1
 
         # Actions
         self.OPENLEFT = "OL"
@@ -43,65 +417,105 @@ class TigerGame(MDP):
 
         # depth = 3
         self.rootTLLGL = "rootTLLGL"      # Tiger on LEFT, LISTEN, GL
+        self.rootTLLGLOL = "rootTLLGLOL"
+        self.rootTLLGLOR = "rootTLLGLOR"
+
         self.rootTLLGR = "rootTLLGR"     # Tiger on LEFT, LISTEN, GR
+        self.rootTLLGROL = "rootTLLGROL"
+        self.rootTLLGROR = "rootTLLGROR"
 
         self.rootTRLGL = "rootTRLGL"     # Tiger on RIGHT, LISTEN, GL
+        self.rootTRLGLOL = "rootTRLGLOL"
+        self.rootTRLGLOR = "rootTRLGLOR"
+
         self.rootTRLGR = "rootTRLGR"     # Tiger on RIGHT, LISTEN, GR
+        self.rootTRLGROL = "rootTRLGROL"
+        self.rootTRLGROR = "rootTRLGROR"
 
         # depth = 4
         self.rootTLLGLLGL = "rootTLLGLLGL" # Tiger on left, Listen, Growl Left, Listen, Growl Left
+        self.rootTLLGLLGLOL = "rootTLLGLLGLOL"
+        self.rootTLLGLLGLOR = "rootTLLGLLGLOR"
+
         self.rootTLLGLLGR = "rootTLLGLLGR"
+        self.rootTLLGLLGROL = "rootTLLGLLGROL"
+        self.rootTLLGLLGROR = "rootTLLGLLGROR"
+
         self.rootTLLGRLGL = "rootTLLGRLGL"
+        self.rootTLLGRLGLOL = "rootTLLGRLGLOL"
+        self.rootTLLGRLGLOR = "rootTLLGRLGLOR"
+
         self.rootTLLGRLGR = "rootTLLGRLGR"
+        self.rootTLLGRLGROL = "rootTLLGRLGROL"
+        self.rootTLLGRLGROR = "rootTLLGRLGROR"
 
         self.rootTRLGLLGL = "rootTRLGLLGL" # Tiger on right,
+        self.rootTRLGLLGLOL = "rootTRLGLLGLOL"
+        self.rootTRLGLLGLOR = "rootTRLGLLGLOR"
+
         self.rootTRLGLLGR = "rootTRLGLLGR"
+        self.rootTRLGLLGROL = "rootTRLGLLGROL"
+        self.rootTRLGLLGROR = "rootTRLGLLGROR"
+
         self.rootTRLGRLGL = "rootTRLGRLGL"
+        self.rootTRLGRLGLOL = "rootTRLGRLGLOL"
+        self.rootTRLGRLGLOR = "rootTRLGRLGLOR"
+
         self.rootTRLGRLGR = "rootTRLGRLGR"
+        self.rootTRLGRLGROL = "rootTRLGRLGROL"
+        self.rootTRLGRLGROR = "rootTRLGRLGROR"
 
-        self.totalStates = [self.root,
-                            self.rootTL, self.rootTR,
-                            self.rootTLOL, self.rootTLOR, self.rootTROL, self.rootTROR,
+        self.totalStates = [
+                            self.rootTL, self.rootTR, self.rootTLOL, self.rootTLOR, self.rootTROL, self.rootTROR,
+
                             self.rootTLLGL, self.rootTLLGR, self.rootTRLGL, self.rootTRLGR,
+                            self.rootTLLGLOL, self.rootTLLGROL, self.rootTRLGLOL, self.rootTRLGROL,
+                            self.rootTLLGLOR, self.rootTLLGROR, self.rootTRLGLOR, self.rootTRLGROR,
+
                             self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
-                            self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR]
+                            self.rootTLLGLLGLOL, self.rootTLLGLLGROL, self.rootTLLGRLGLOL, self.rootTLLGRLGROL,
+                            self.rootTLLGLLGLOR, self.rootTLLGLLGROR, self.rootTLLGRLGLOR, self.rootTLLGRLGROR,
 
-        self.totalStatesLeft = [self.rootTL,
+                            self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
+                            self.rootTRLGLLGLOL, self.rootTRLGLLGROL, self.rootTRLGRLGLOL, self.rootTRLGRLGROL,
+                            self.rootTRLGLLGLOR, self.rootTRLGLLGROR, self.rootTRLGRLGLOR, self.rootTRLGRLGROR]
+
+        self.totalStatesLeft = [self.rootTL, self.rootTLOL, self.rootTLOR,
                                 self.rootTLLGL, self.rootTLLGR,
-                                self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
-                                self.rootTLOL, self.rootTLOR]
+                                self.rootTLLGLOL, self.rootTLLGROL,
+                                self.rootTLLGLOR, self.rootTLLGROR,
+                            self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
+                            self.rootTLLGLLGLOL, self.rootTLLGLLGROL, self.rootTLLGRLGLOL, self.rootTLLGRLGROL,
+                            self.rootTLLGLLGLOR, self.rootTLLGLLGROR, self.rootTLLGRLGLOR, self.rootTLLGRLGROR
+                             ]
 
-        self.totalStatesRight = [self.rootTR,
-                                 self.rootTRLGL, self.rootTRLGR,
-                                 self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
-                                 self.rootTROL, self.rootTROR]
+        self.totalStatesRight = [self.rootTR, self.rootTROL, self.rootTROR,
+                            self.rootTRLGL, self.rootTRLGR,
+                            self.rootTRLGLOL, self.rootTRLGROL,
+                            self.rootTRLGLOR, self.rootTRLGROR,
+
+                            self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
+                            self.rootTRLGLLGLOL, self.rootTRLGLLGROL, self.rootTRLGRLGLOL, self.rootTRLGRLGROL,
+                            self.rootTRLGLLGLOR, self.rootTRLGLLGROR, self.rootTRLGRLGLOR, self.rootTRLGRLGROR]
+
+        # self.totalStates = [self.root,
+        #                     self.rootTL, self.rootTR,
+        #                     self.rootTLOL, self.rootTLOR, self.rootTROL, self.rootTROR,
+        #                     self.rootTLLGL, self.rootTLLGR, self.rootTRLGL, self.rootTRLGR,
+        #                     self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
+        #                     self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR]
+        #
+        # self.totalStatesLeft = [self.rootTL,
+        #                         self.rootTLLGL, self.rootTLLGR,
+        #                         self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR,
+        #                         self.rootTLOL, self.rootTLOR]
+        #
+        # self.totalStatesRight = [self.rootTR,
+        #                          self.rootTRLGL, self.rootTRLGR,
+        #                          self.rootTRLGLLGL, self.rootTRLGLLGR, self.rootTRLGRLGL, self.rootTRLGRLGR,
+        #                          self.rootTROL, self.rootTROR]
 
 
-        n = 0
-        # for s in self.getStates():
-        #
-        #     for a in self.getActions(s, n):
-        #
-        #         # Add entry into Qs
-        #         if s not in self.Q:
-        #             self.Q[s] = {}
-        #             self.Q_bu[s] = {}
-        #             self.Qsums[s] = {}
-        #         self.Q[s][a] = 0.0
-        #         self.Q_bu[s][a] = 0.0
-        #         self.Qsums[s][a] = 0.0
-        #
-        #         # Add all TLxxx as info sets
-        #         stateInfoSet = self.tigergame.stateIDtoIS(s)
-        #         if stateInfoSet == None: continue
-        #         if stateInfoSet not in self.pi:
-        #             self.pi[stateInfoSet] = {}
-        #             self.pi_sums[stateInfoSet] = {}
-        #             self.regret_sums[stateInfoSet] = {}
-        #
-        #         self.pi[stateInfoSet][a] = 1.0 / len(self.tigergame.getActions(stateInfoSet))
-        #         self.pi_sums[stateInfoSet][a] = 0.0
-        #         self.regret_sums[stateInfoSet][a] = 0.0
 
         self.Q = {}
         self.Q_bu = {}
@@ -116,7 +530,7 @@ class TigerGame(MDP):
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
-            for s in self.getStates():
+            for s in self.getStates(init=True):
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
                 self.QSums[n][s] = {}
@@ -145,12 +559,8 @@ class TigerGame(MDP):
                         self.regret_sums[n][stateInfoSet][a] = 0.0
 
 
-                    # self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
-                    # self.regret_sums[n][s][a] = 0.0
-                    # self.pi_sums[n][s][a] = 0.0
-
-
     def getStateRep(self, s):
+
         return self.stateIDtoIS(s)
 
     def stateIDtoIS(self, state):
@@ -175,33 +585,59 @@ class TigerGame(MDP):
         elif state == self.rootTLLGRLGR or state == self.rootTRLGRLGR:
             return self.rootTLLGRLGR
 
-
-
-        elif state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
-            return state
-        elif state == self.root:
-            return state
         else:
-            return None
+            return state
+
+        # elif state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
+        #     return state
+        # elif state == self.root:
+        #     return state
+        # else:
+        #     return None
 
     def getActions(self, state, n):
         if state == self.root:
             return [self.TL, self.TR]
-        elif state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
-            return ["exit"]
+        # elif state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
+        #     return [] #["exit"]
         else:
             return [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
 
-    def getStates(self):
-        return self.totalStates
+    def getStates(self, init=False):
+
+        if init:
+            return self.totalStates
+        else:
+            if self.version == 1:
+                return self.totalStatesLeft
+            else:
+                return self.totalStatesRight
+
+        # if self.version == 1:
+        #     return self.totalStatesLeft
+        # elif self.version == 2:
+        #     return self.totalStatesRight
+        # else:
+        #     return self.totalStates
 
     #self, s, a_current, n, a_notN
     def getReward(self, s, a_current, n, a_notN):
 
-        #return None
+        # if s == self.root:
+        #     return 0.0
+
+        if s == self.rootTLOL or s == self.rootTLLGLOL or s ==self.rootTLLGROL or s == self.rootTLLGLLGLOL or s == self.rootTLLGLLGROL or s == self.rootTLLGRLGLOL or s == self.rootTLLGRLGROL:
+            return -100.0
+        if s == self.rootTLOR or s == self.rootTLLGLOR or s == self.rootTLLGROR or s == self.rootTLLGLLGLOR or s == self.rootTLLGLLGROR or s == self.rootTLLGRLGLOR or s == self.rootTLLGRLGROR:
+            return 10.0
+
+        if s == self.rootTROL or s == self.rootTRLGLOL or s == self.rootTRLGROL or s == self.rootTRLGLLGLOL or s == self.rootTRLGLLGROL or s == self.rootTRLGRLGLOL or s == self.rootTRLGRLGROL:
+            return 10.0
+        if s == self.rootTROR or s == self.rootTRLGLOR or s == self.rootTRLGROR or s == self.rootTRLGLLGLOR or s == self.rootTRLGLLGROR or s == self.rootTRLGRLGLOR or s == self.rootTRLGRLGROR:
+            return -100.0
         # if s == self.rootTLOL:
         #     return -100.0
-        #     # Tiger left, open RIGHT
+        # # Tiger left, open RIGHT
         # elif s == self.rootTLOR:
         #     return 10.0
         # # Tiger right, open LEFT
@@ -211,72 +647,70 @@ class TigerGame(MDP):
         # elif s == self.rootTROR:
         #     return -100.0
 
-        #if self.VI == True:
-
-
-        # if self.VI == False:
-            #Tiger left, open LEFT
-        if s == self.root:
-            return 0.0
-        elif s == self.rootTL or s == self.rootTR:
-            if a_current == self.LISTEN:
-                return -1.0
-            else:
-                return 0.0
-        if s == self.rootTLOL:
-            return -100.0
-        # Tiger left, open RIGHT
-        elif s == self.rootTLOR:
-            return 10.0
-        # Tiger right, open LEFT
-        elif s == self.rootTROL:
-            return 10.0
-        # Tiger right, open RIGHT
-        elif s == self.rootTROR:
-            return -100.0
-
-        elif s == self.rootTLLGL or s == self.rootTLLGR or s == self.rootTRLGL or s == self.rootTRLGR:
-            if a_current == self.LISTEN:
-                return -1.0
-            else:
-                return 0.0
-        elif s == self.rootTLLGLLGL or s == self.rootTLLGLLGR or s == self.rootTLLGRLGL or s == self.rootTLLGRLGR:
-            if a_current == self.LISTEN:
-                return -1.0
-            else:
-                return 0.0
-        elif s == self.rootTRLGLLGL or s == self.rootTRLGLLGR or s == self.rootTRLGRLGL or s == self.rootTRLGRLGR:
-            if a_current == self.LISTEN:
-                return -1.0
-            else:
-                return 0.0
-
-
+        if a_current == self.LISTEN:
+            return -1.0
         else:
-            print("Not caught: ", s)
             return 0.0
-    #
+
+        # elif s == self.rootTL or s == self.rootTR:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        #
+        # elif s == self.rootTLLGL or s == self.rootTLLGR or s == self.rootTRLGL or s == self.rootTRLGR:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        # elif s == self.rootTLLGLLGL or s == self.rootTLLGLLGR or s == self.rootTLLGRLGL or s == self.rootTLLGRLGR:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        # elif s == self.rootTRLGLLGL or s == self.rootTRLGLLGR or s == self.rootTRLGRLGL or s == self.rootTRLGRLGR:
+        #     if a_current == self.LISTEN:
+        #         return -1.0
+        #     else:
+        #         return 0.0
+        #
+        #
+        # else:
+        #     print("Not caught: ", s)
+        #     return 0.0
+
     def isTerminal(self, state):
-        if state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
+
+        stateStr = state
+        length = len(state)
+        if state[-2] == "O":
+            #print("TERMINAL: ", state)
             return True
+
         else:
+            #print("NOT TERMINAL: ", state)
             return False
+        # if state == self.rootTLOL or state == self.rootTLOR or state == self.rootTROL or state == self.rootTROR:
+        #     return True
+        # else:
+        #     return False
 
 
     def getNextStatesAndProbs(self, state, action, n_current):
 
         #self.UP, upState, 1.0 - self.noise]
 
+        print("state: ", state, " action: ", action)
         # Top most root
         if state == self.root:
             if action == None:
                 return [[self.rootTL, self.TLProb, 0.0], [self.rootTR, 1.0 - self.TLProb, 0.0]]
 
             # Shouldn't be reached
-            elif action == "TL":
-                return [[self.rootTL, 0.5, 0.0]]
-            else:
-                return [[self.rootTR, 0.5, 0.0]]
+            # elif action == "TL":
+            #     return [[self.rootTL, 0.5, 0.0]]
+            # else:
+            #     return [[self.rootTR, 0.5, 0.0]]
 
         # elif state == self.rootTLOL:
         #     return []
@@ -304,9 +738,9 @@ class TigerGame(MDP):
         # Tiger on left, Listen, GL
         elif state == self.rootTLLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTLOL, 1.0, -100.0]]
+                return [[self.rootTLLGLOL, 1.0, -100.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTLOR, 1.0, 10.0]]
+                return [[self.rootTLLGLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
                 return [[self.rootTLLGLLGL, 0.85, -1.0], [self.rootTLLGLLGR, 0.15, -1.0]]
 
@@ -314,27 +748,27 @@ class TigerGame(MDP):
         elif state == self.rootTLLGR:
             if action == self.OPENLEFT:
                 #print("state: ", state, " action: ", action)
-                return [[self.rootTLOL, 1.0, -100.0]]
+                return [[self.rootTLLGROL, 1.0, -100.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTLOR, 1.0, 10.0]]
+                return [[self.rootTLLGROR, 1.0, 10.0]]
             elif action == self.LISTEN:
                 return [[self.rootTLLGRLGL, 0.85, -1.0], [self.rootTLLGRLGR, 0.15, -1.0]]
 
         # Tiger on RIGHT, Listen, GL
         elif state == self.rootTRLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 10.0]]
+                return [[self.rootTRLGLOL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, -100.0]]
+                return [[self.rootTRLGLOR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGLLGL, 0.15, -1.0], [self.rootTRLGLLGR, 0.85, -1.0]]
 
         # Tiger on RIGHT, LISTEN, GR
         elif state == self.rootTRLGR:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 10.0]]
+                return [[self.rootTRLGROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, -100.0]]
+                return [[self.rootTRLGROR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGRLGL, 0.15, -1.0], [self.rootTRLGRLGR, 0.85, -1.0]]
 
@@ -342,75 +776,72 @@ class TigerGame(MDP):
         # Tiger on left
         elif state == self.rootTLLGLLGL:
             if action == self.OPENLEFT:
-                #print("state: ", state, " action: ", action)
-                return [[self.rootTLOL, 1.0, -100.0]]
+                return [[self.rootTLLGLLGLOL, 1.0, -100.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTLOR, 1.0, 10.0]]
+                return [[self.rootTLLGLLGLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
                 return [[self.rootTLLGLLGL, 0.85, -1.0], [self.rootTLLGLLGR, 0.15, -1.0]]
 
         elif state == self.rootTLLGLLGR:
             if action == self.OPENLEFT:
-                #print("state: ", state, " action: ", action)
-                return [[self.rootTLOL, 1.0, -100.0]]
+                return [[self.rootTLLGLLGROL, 1.0, -100.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTLOR, 1.0, 10.0]]
+                return [[self.rootTLLGLLGROR, 1.0, 10.0]]
             elif action == self.LISTEN:
                 return [[self.rootTLLGRLGL, 0.85, -1.0], [self.rootTLLGRLGR, 0.15, -1.0]]
 
         elif state == self.rootTLLGRLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTLOL, 1.0, -100.0]]
+                return [[self.rootTLLGRLGLOL, 1.0, -100.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTLOR, 1.0, 10.0]]
+                return [[self.rootTLLGRLGLOR, 1.0, 10.0]]
             elif action == self.LISTEN:
                 return [[self.rootTLLGLLGL, 0.85, -1.0], [self.rootTLLGLLGR, 0.15, -1.0]]
 
         elif state == self.rootTLLGRLGR:
             if action == self.OPENLEFT:
-                #print("state: ", state, " action: ", action)
-                return [[self.rootTLOL, 1.0, -100.0]]
+                return [[self.rootTLLGRLGROL, 1.0, -100.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTLOR, 1.0, 10.0]]
+                return [[self.rootTLLGRLGROR, 1.0, 10.0]]
             elif action == self.LISTEN:
                 return [[self.rootTLLGRLGL, 0.85, -1.0], [self.rootTLLGRLGR, 0.15, -1.0]]
 
         # Tiger on right
         elif state == self.rootTRLGLLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 10.0]]
+                return [[self.rootTRLGLLGLOL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, -100.0]]
+                return [[self.rootTRLGLLGLOR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGLLGL, 0.15, -1.0], [self.rootTRLGLLGR, 0.85, -1.0]]
 
         elif state == self.rootTRLGLLGR:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 10.0]]
+                return [[self.rootTRLGLLGROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, -100.0]]
+                return [[self.rootTRLGLLGROR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGRLGL, 0.15, -1.0], [self.rootTRLGRLGR, 0.85, -1.0]]
 
         elif state == self.rootTRLGRLGL:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 10.0]]
+                return [[self.rootTRLGRLGLOL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, -100.0]]
+                return [[self.rootTRLGRLGLOR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGLLGL, 0.15, -1.0], [self.rootTRLGLLGR, 0.85, -1.0]]
 
         elif state == self.rootTRLGRLGR:
             if action == self.OPENLEFT:
-                return [[self.rootTROL, 1.0, 10.0]]
+                return [[self.rootTRLGRLGROL, 1.0, 10.0]]
             elif action == self.OPENRIGHT:
-                return [[self.rootTROR, 1.0, -100.0]]
+                return [[self.rootTRLGRLGROR, 1.0, -100.0]]
             elif action == self.LISTEN:
                 return [[self.rootTRLGRLGL, 0.15, -1.0], [self.rootTRLGRLGR, 0.85, -1.0]]
 
         # No other states have actions
         else:
-
+            print("Missed: s: ", state, " a: ", action)
             return []
 
 
@@ -430,3 +861,11 @@ class TigerGame(MDP):
                 nspt.append(nsp)
             currentState = np.random.choice(nst, p=nspt)
         return currentState
+
+
+# TODO: Make each MDP seperate and feed both into LONR
+class TG(TigerGame):
+
+
+    def __init__(self, startState=None, TLProb=0.5, version=None):
+        super().__init__(startState=startState, version=version)
