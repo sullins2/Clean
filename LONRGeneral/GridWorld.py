@@ -33,8 +33,11 @@ class Grid(MDP):
         self.LEFT = 3
 
         # Dimensions
-        self.rows = 4
-        self.cols = 12
+        # self.rows = 4
+        # self.cols = 12
+
+        self.rows = 2
+        self.cols = 4
 
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
@@ -42,11 +45,13 @@ class Grid(MDP):
         # Non-determinism - this value is split between sideways moves
         self.noise = noise
 
-        self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
+        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
+        self.grid = [' ', ' ',  ' ', ' ',
+                     ' ',  0, 0, 1]
 
         # Q
         self.Q = {}
@@ -105,7 +110,7 @@ class Grid(MDP):
 
 
 
-        self.livingReward = -1.0
+        self.livingReward = 0.0#-1.0
 
         logSettings = True
         if logSettings:
@@ -125,7 +130,10 @@ class Grid(MDP):
             print("     Living reward: ", self.livingReward)
 
     def getActions(self, s, n):
-        return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
+        if self.isTerminal(s):
+            return ["exit"]
+        else:
+            return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
 
     def getStates(self):
         return list(range(self.rows * self.cols))
@@ -237,8 +245,8 @@ class Grid(MDP):
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([leftState,massLeft/2.0, self.getReward(state,action,0,0)])
-                successors.append([rightState,massLeft/2.0, self.getReward(state,action,0,0)])
+                successors.append([leftState,massLeft/2.0, self.getReward(state,self.LEFT,0,0)])
+                successors.append([rightState,massLeft/2.0, self.getReward(state,self.RIGHT,0,0)])
 
         if action == self.LEFT or action == self.RIGHT:
             if action == self.LEFT:
@@ -248,68 +256,69 @@ class Grid(MDP):
 
             massLeft = self.noise
             if massLeft > 0.0:
-                successors.append([upState,massLeft/2.0, self.getReward(state,action,0,0)])
-                successors.append([downState,massLeft/2.0, self.getReward(state,action,0,0)])
-
+                successors.append([upState,massLeft/2.0, self.getReward(state,self.UP,0,0)])
+                successors.append([downState,massLeft/2.0, self.getReward(state,self.DOWN,0,0)])
+        if np.random.randint(0, 1000) < 5: #reminder
+            print("NEXT STATES CHANGED")
         return successors
 
 
-    def getNextStatesAndProbsGrid(self, state, action, n_current):
-        """ Returns a list of [Action, resulting state, transition probability]
-        """
-
-        #convert to coordinates
-        x = state // self.cols
-        y = state % self.cols
-
-
-        successors = []
-
-        # UP
-        if self._isValidMove(x-1, y):
-            upState = self.XYToState(x-1, y)
-        else:
-            upState = state
-
-        # LEFT
-        if self._isValidMove(x, y-1):
-            leftState = self.XYToState(x, y-1)
-        else:
-            leftState = state
-
-        # DOWN
-        if self._isValidMove(x+1, y):
-            downState = self.XYToState(x+1, y)
-        else:
-            downState = state
-
-        # RIGHT
-        if self._isValidMove(x, y+1):
-            rightState = self.XYToState(x, y+1)
-        else:
-            rightState = state
-
-        # Return the correct one
-        if action == self.UP or action == self.DOWN:
-            if action == self.UP:
-                successors.append([upState,1.0-self.noise, self.getReward(state,action,0,0), self.UP])
-            else:
-                successors.append([downState,1.0-self.noise, self.getReward(state,action,0,0), self.DOWN])
-
-            massLeft = self.noise
-            if massLeft > 0.0:
-                successors.append([leftState,massLeft/2.0, self.getReward(state,self.LEFT,0,0), self.LEFT])
-                successors.append([rightState,massLeft/2.0, self.getReward(state,self.RIGHT,0,0), self.RIGHT])
-
-        if action == self.LEFT or action == self.RIGHT:
-            if action == self.LEFT:
-                successors.append([leftState,1.0-self.noise, self.getReward(state,action,0,0), self.LEFT])
-            else:
-                successors.append([rightState,1.0-self.noise, self.getReward(state,action,0,0), self.RIGHT])
-
-            massLeft = self.noise
-            if massLeft > 0.0:
-                successors.append([upState,massLeft/2.0, self.getReward(state,self.UP,0,0), self.UP])
-                successors.append([downState,massLeft/2.0, self.getReward(state,self.DOWN,0,0), self.DOWN])
-
-        return successors
+    # def getNextStatesAndProbsGrid(self, state, action, n_current):
+    #     """ Returns a list of [Action, resulting state, transition probability]
+    #     """
+    #
+    #     #convert to coordinates
+    #     x = state // self.cols
+    #     y = state % self.cols
+    #
+    #
+    #     successors = []
+    #
+    #     # UP
+    #     if self._isValidMove(x-1, y):
+    #         upState = self.XYToState(x-1, y)
+    #     else:
+    #         upState = state
+    #
+    #     # LEFT
+    #     if self._isValidMove(x, y-1):
+    #         leftState = self.XYToState(x, y-1)
+    #     else:
+    #         leftState = state
+    #
+    #     # DOWN
+    #     if self._isValidMove(x+1, y):
+    #         downState = self.XYToState(x+1, y)
+    #     else:
+    #         downState = state
+    #
+    #     # RIGHT
+    #     if self._isValidMove(x, y+1):
+    #         rightState = self.XYToState(x, y+1)
+    #     else:
+    #         rightState = state
+    #
+    #     # Return the correct one
+    #     if action == self.UP or action == self.DOWN:
+    #         if action == self.UP:
+    #             successors.append([upState,1.0-self.noise, self.getReward(state,action,0,0), self.UP])
+    #         else:
+    #             successors.append([downState,1.0-self.noise, self.getReward(state,action,0,0), self.DOWN])
+    #
+    #         massLeft = self.noise
+    #         if massLeft > 0.0:
+    #             successors.append([leftState,massLeft/2.0, self.getReward(state,self.LEFT,0,0), self.LEFT])
+    #             successors.append([rightState,massLeft/2.0, self.getReward(state,self.RIGHT,0,0), self.RIGHT])
+    #
+    #     if action == self.LEFT or action == self.RIGHT:
+    #         if action == self.LEFT:
+    #             successors.append([leftState,1.0-self.noise, self.getReward(state,action,0,0), self.LEFT])
+    #         else:
+    #             successors.append([rightState,1.0-self.noise, self.getReward(state,action,0,0), self.RIGHT])
+    #
+    #         massLeft = self.noise
+    #         if massLeft > 0.0:
+    #             successors.append([upState,massLeft/2.0, self.getReward(state,self.UP,0,0), self.UP])
+    #             successors.append([downState,massLeft/2.0, self.getReward(state,self.DOWN,0,0), self.DOWN])
+    #
+    #     return successors

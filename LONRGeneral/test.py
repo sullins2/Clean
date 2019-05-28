@@ -62,60 +62,61 @@ from LONRGeneral.TigerGame import *
 
 
 # All should be good with pi is good with epsilon=20, 13000 iterations
-print("Begin GridWorld VI with non-determinism")
-gridMDP = Grid(noise=0.20, startState=36)
-
-# Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
-parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
-regret_minimizers = {'RM': True, 'RMPlus': True, 'DCFR': False}
-lonrAgent = LONR_A(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
-
-# Train via VI
-iters = 2
-lonrAgent.lonr_train(iterations=iters, log=500)
-
-print("[North, East, South, West]")
-print("Note: these are Q, not QAvg")
-print("Q for: Bottom left (start state) (West opt = 170.23]")
-print(gridMDP.Q[0][36])
-
-print("Q for: State above bottom right terminal")
-print(gridMDP.Q[0][35])
-print("End GridWorld VI with non-determism")
-print("")
-print("Q Avg")
-for k in sorted(gridMDP.QSums[0].keys()):
-    tot = 0.0
-    print(k, ": ", end='')
-    for kk in gridMDP.QSums[0][k].keys():
-        touched = gridMDP.QTouched[0][k][kk]
-        if touched == 0: touched = 1.0
-        print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
-    print("")
-
-print("")
-print("Pi Sums")
-for k in sorted(gridMDP.pi_sums[0].keys()):
-    tot = 0.0
-    for kk in gridMDP.pi_sums[0][k].keys():
-        tot += gridMDP.pi_sums[0][k][kk]
-    if tot == 0: tot = 1.0
-    print(k, ": ", end='')
-    for kk in gridMDP.pi_sums[0][k].keys():
-        print(kk, ": ", gridMDP.pi_sums[0][k][kk] / tot, " ", end='')
-    print("")
-
-print("")
-print("Pi")
-for k in sorted(gridMDP.pi[0].keys()):
-    tot = 0.0
-    for kk in gridMDP.pi[0][k].keys():
-        tot += gridMDP.pi[0][k][kk]
-    if tot == 0: tot = 1.0
-    print(k, ": ", end='')
-    for kk in gridMDP.pi[0][k].keys():
-        print(kk, ": ", gridMDP.pi[0][k][kk], " ", end='')
-    print("")
+## 528 - these work with LONR_A and LONR_V, w/wo noise
+# print("Begin GridWorld VI with non-determinism")
+# gridMDP = Grid(noise=0.20, startState=36)
+#
+# # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
+# parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
+# regret_minimizers = {'RM': True, 'RMPlus': True, 'DCFR': False}
+# lonrAgent = LONR_A(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+#
+# # Train via VI
+# iters = 2
+# lonrAgent.lonr_train(iterations=iters, log=500)
+#
+# print("[North, East, South, West]")
+# print("Note: these are Q, not QAvg")
+# print("Q for: Bottom left (start state) (West opt = 170.23]")
+# print(gridMDP.Q[0][36])
+#
+# print("Q for: State above bottom right terminal")
+# print(gridMDP.Q[0][35])
+# print("End GridWorld VI with non-determism")
+# print("")
+# print("Q Avg")
+# for k in sorted(gridMDP.QSums[0].keys()):
+#     tot = 0.0
+#     print(k, ": ", end='')
+#     for kk in gridMDP.QSums[0][k].keys():
+#         touched = gridMDP.QTouched[0][k][kk]
+#         if touched == 0: touched = 1.0
+#         print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
+#     print("")
+#
+# print("")
+# print("Pi Sums")
+# for k in sorted(gridMDP.pi_sums[0].keys()):
+#     tot = 0.0
+#     for kk in gridMDP.pi_sums[0][k].keys():
+#         tot += gridMDP.pi_sums[0][k][kk]
+#     if tot == 0: tot = 1.0
+#     print(k, ": ", end='')
+#     for kk in gridMDP.pi_sums[0][k].keys():
+#         print(kk, ": ", gridMDP.pi_sums[0][k][kk] / tot, " ", end='')
+#     print("")
+#
+# print("")
+# print("Pi")
+# for k in sorted(gridMDP.pi[0].keys()):
+#     tot = 0.0
+#     for kk in gridMDP.pi[0][k].keys():
+#         tot += gridMDP.pi[0][k][kk]
+#     if tot == 0: tot = 1.0
+#     print(k, ": ", end='')
+#     for kk in gridMDP.pi[0][k].keys():
+#         print(kk, ": ", gridMDP.pi[0][k][kk], " ", end='')
+#     print("")
 # # # # # ###################################################
 # # # # #
 # # # # #
@@ -257,71 +258,71 @@ for k in sorted(gridMDP.pi[0].keys()):
 ######################################################################
 # Tiger Game AVI
 #####################################################################
-print("")
-tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
-
-
-# # # Create LONR Agent and feed in the Tiger game
-parameters = {'alpha': 1.0, 'epsilon': 10, 'gamma': 1.0}
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# print("")
+# tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
+#
+#
+# # # # Create LONR Agent and feed in the Tiger game
+# parameters = {'alpha': 1.0, 'epsilon': 10, 'gamma': 1.0}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # #
+# # #
+# lonrAgent = LONR_A(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers)
+#
+# iters = 100000
+# lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
+#
+# print("DONT FORGET START STATE")
 # #
+#
+#
+# print("")
+# print("Pi sums: ")
+# for k in sorted(tigerGame.pi_sums[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.pi_sums[0][k].keys()):
+#         print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
+#     print("")
 # #
-lonrAgent = LONR_A(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers)
-
-iters = 100000
-lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
-
-print("DONT FORGET START STATE")
+# print("")
+# print("Q: ")
+# for k in sorted(tigerGame.Q[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.Q[0][k].keys()):
+#         print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
+#     print("")
 #
-
-
-print("")
-print("Pi sums: ")
-for k in sorted(tigerGame.pi_sums[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.pi_sums[0][k].keys()):
-        print(kk, ": ", tigerGame.pi_sums[0][k][kk], " ", end="")
-    print("")
 #
-print("")
-print("Q: ")
-for k in sorted(tigerGame.Q[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.Q[0][k].keys()):
-        print(kk, ": ", tigerGame.Q[0][k][kk], " ", end="")
-    print("")
-
-
-print("")
-print("Pi : ")
-for k in sorted(tigerGame.pi[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.pi[0][k].keys()):
-        print(kk, ": ", tigerGame.pi[0][k][kk], " ", end="")
-    print("")
-
+# print("")
+# print("Pi : ")
+# for k in sorted(tigerGame.pi[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.pi[0][k].keys()):
+#         print(kk, ": ", tigerGame.pi[0][k][kk], " ", end="")
+#     print("")
 #
-print("")
-print("Q Avg")
-for k in sorted(tigerGame.QSums[0].keys()):
-    tot = 0.0
-    # for kk in agent.Qsums[k].keys():
-    #     tot += agent.Qsums[k][kk]
-    # if tot == 0:
-    #     tot = 1.0
-    print(k, ": ", end='')
-    for kk in tigerGame.QSums[0][k].keys():
-        print(kk, ": ", tigerGame.QSums[0][k][kk] / tigerGame.QTouched[0][k][kk], " ", end='')
-    print("")
-
-
-print("")
-print("Regret sums : ")
-for k in sorted(tigerGame.regret_sums[0].keys()):
-    print(k, ": ", end='')
-    for kk in sorted(tigerGame.regret_sums[0][k].keys()):
-        print(kk, ": ", tigerGame.regret_sums[0][k][kk], " ", end="")
-    print("")
+# #
+# print("")
+# print("Q Avg")
+# for k in sorted(tigerGame.QSums[0].keys()):
+#     tot = 0.0
+#     # for kk in agent.Qsums[k].keys():
+#     #     tot += agent.Qsums[k][kk]
+#     # if tot == 0:
+#     #     tot = 1.0
+#     print(k, ": ", end='')
+#     for kk in tigerGame.QSums[0][k].keys():
+#         print(kk, ": ", tigerGame.QSums[0][k][kk] / tigerGame.QTouched[0][k][kk], " ", end='')
+#     print("")
+#
+#
+# print("")
+# print("Regret sums : ")
+# for k in sorted(tigerGame.regret_sums[0].keys()):
+#     print(k, ": ", end='')
+#     for kk in sorted(tigerGame.regret_sums[0][k].keys()):
+#         print(kk, ": ", tigerGame.regret_sums[0][k][kk], " ", end="")
+#     print("")
 
 
 # print("----------------------------------------------")
@@ -536,7 +537,69 @@ for k in sorted(tigerGame.regret_sums[0].keys()):
 # print("End GridWorld O-LONR - deterministic")
 
 
+print("Begin GridWorld VI with non-determinism")
+gridMDP = Grid(noise=0.0, startState=4)
 
+# Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
+parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
+regret_minimizers = {'RM': True, 'RMPlus': True, 'DCFR': False}
+lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+
+# Train via VI
+iters = 33
+lonrAgent.lonr_train(iterations=iters, log=500)
+
+print("[North, East, South, West]")
+print("Note: these are Q, not QAvg")
+print("Q for: Bottom left (start state) (West opt = 170.23]")
+print(gridMDP.Q[0][4])
+
+print("Q for: State above bottom right terminal")
+print(gridMDP.Q[0][3])
+print("End GridWorld VI with non-determism")
+print("")
+print("Q Avg")
+for k in sorted(gridMDP.QSums[0].keys()):
+    tot = 0.0
+    print(k, ": ", end='')
+    for kk in gridMDP.QSums[0][k].keys():
+        touched = gridMDP.QTouched[0][k][kk]
+        if touched == 0: touched = 1.0
+        print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
+    print("")
+
+print("")
+print("Q")
+for k in sorted(gridMDP.Q_bu[0].keys()):
+    tot = 0.0
+    print(k, ": ", end='')
+    for kk in gridMDP.Q_bu[0][k].keys():
+        print(kk, ": ", gridMDP.Q_bu[0][k][kk], " ", end='')
+    print("")
+
+print("")
+print("Pi Sums")
+for k in sorted(gridMDP.pi_sums[0].keys()):
+    tot = 0.0
+    for kk in gridMDP.pi_sums[0][k].keys():
+        tot += gridMDP.pi_sums[0][k][kk]
+    if tot == 0: tot = 1.0
+    print(k, ": ", end='')
+    for kk in gridMDP.pi_sums[0][k].keys():
+        print(kk, ": ", gridMDP.pi_sums[0][k][kk] / tot, " ", end='')
+    print("")
+
+print("")
+print("Pi")
+for k in sorted(gridMDP.pi[0].keys()):
+    tot = 0.0
+    for kk in gridMDP.pi[0][k].keys():
+        tot += gridMDP.pi[0][k][kk]
+    if tot == 0: tot = 1.0
+    print(k, ": ", end='')
+    for kk in gridMDP.pi[0][k].keys():
+        print(kk, ": ", gridMDP.pi[0][k][kk], " ", end='')
+    print("")
 
 
 
