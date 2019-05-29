@@ -1122,25 +1122,28 @@ class LONR_B(LONR):
         done = False
         n = 0  # One player
 
+        nextAction = None
         # Episode loop - until terminal state is reached
         c = 0
         while done == False:
 
             print("")
-            print("Current State: ", currentState, " t=", t)
+            print("Current State: ", currentState, "  currentAction: ", nextAction, " t=", t)
 
-            nextAction = self.exp3(currentState, t)
-
-            if nextAction == None:
-                for a in self.M.Q[n][currentState].keys():
-                    self.M.Q[n][currentState][a] = self.M.getReward(currentState, nextAction, n, n) #nextAction, n, and n not used
+            if self.M.isTerminal(currentState):
+                for a in self.M.getActions(currentState, n):
+                    self.M.Q[n][currentState][a] = self.M.getReward(currentState, a,0,0)
+                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
+                    print("Final: set s: ", currentState, " to: ", self.M.getReward(currentState, a,0,0))
                 done = True
                 continue
+
+            nextAction = self.exp3(currentState, t)
 
             s_prime = self.M.getMove(currentState, nextAction)
 
             rew = self.M.getReward(currentState, nextAction, 0, 0)
-            #s_prime = self.M.getMove(currentState, randomAction)
+
             Value = 0.0
             for a_prime in self.M.getActions(s_prime, n):
                 Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
@@ -1161,13 +1164,13 @@ class LONR_B(LONR):
             nextState = self.M.getMove(currentState, nextAction)
             currentState = nextState
 
-            if self.M.isTerminal(currentState):
-                done = True
-                continue
-
-            if nextState == 7:
-                for i in range(100):
-                    print("JUST HIT 7777777777777777************************************************")
+            # if self.M.isTerminal(currentState):
+            #     done = True
+            #     continue
+            #
+            # if nextState == 1:
+            #     for i in range(100):
+            #         print("JUST HIT 7777777777777777************************************************")
 
             #def exp3Update(self, n, currentState, numActions, t, rewardMin=-100.0, rewardMax=200.0):
             # nextAction = self.exp3Update(n, currentState, 4, t)
@@ -1226,29 +1229,27 @@ class LONR_B(LONR):
 
     def exp3(self, currentState, t):
 
-        if self.M.isTerminal(currentState):
-            return None
-
         rewardMin = 0.0
         rewardMax = 1.0
 
         n = 0
-        gamma = 1.0#0.15
+        gamma = 0.15
 
         # get current weights for 0, 1, 2 ,3
         weights = []
+        print("Weights: ")
         for w in sorted(self.M.weights[n][currentState].keys()):
-            print(w, ": ", self.M.weights[n][currentState][w])
+            print("   ", w, ": ", self.M.weights[n][currentState][w])
             weights.append(self.M.weights[n][currentState][w])
 
-        print("Final weights list: ", weights) # 1.0, 1.0, 1.0, 1.0
+        print("Final weights list: ", weights) # init: 1.0, 1.0, 1.0, 1.0
 
         # Get probDist from weights
         pd = self.distr(weights, gamma)
 
-        print("ProbDist: ", pd) # 0.25, 0.25, 0.25, 0.25
+        print("ProbDist: ", pd) # init: 0.25, 0.25, 0.25, 0.25
 
-        # Dist without randomness
+        # Dist without randomness (for final pi sum calc)
         piSUMDist = self.distr(weights, gamma=0.0)
 
         # set pi as probDistbution
@@ -1268,6 +1269,7 @@ class LONR_B(LONR):
         for a_prime in self.M.getActions(s_prime, n):
             Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
 
+        # This is the entire "reward", taken from paper
         x = rew + self.gamma*Value
 
         # Scale the reward
@@ -1276,37 +1278,40 @@ class LONR_B(LONR):
         # Get expected reward
         estimatedReward = scaledReward / pd[randomAction]
 
+        # Add to running sum of rewards
         self.M.runningRewards[0][currentState][randomAction] += estimatedReward
         runningEstimatedReward = self.M.runningRewards[0][currentState][randomAction]
 
         # Find min reward
-        currentRunningRewards = []
-        for r in self.M.runningRewards[0][currentState].keys():
-            currentRunningRewards.append(self.M.runningRewards[0][currentState][r])
-
-        minRunningReward = min(currentRunningRewards)
-
-        for r in self.M.runningRewards[0][currentState].keys():
-            self.M.runningRewards[0][currentState][r] = self.M.runningRewards[0][currentState][r] - minRunningReward
-
-        runningEstimatedReward = runningEstimatedReward - minRunningReward
+        # currentRunningRewards = []
+        # for r in self.M.runningRewards[0][currentState].keys():
+        #     currentRunningRewards.append(self.M.runningRewards[0][currentState][r])
+        #
+        # minRunningReward = min(currentRunningRewards)
+        #
+        #
+        # for r in self.M.runningRewards[0][currentState].keys():
+        #     self.M.runningRewards[0][currentState][r] = self.M.runningRewards[0][currentState][r] - minRunningReward
+        #
+        # runningEstimatedReward = runningEstimatedReward - minRunningReward
 
 
         # Find min weight
-        currentRunningWeights = []
-        for r in self.M.weights[0][currentState].keys():
-            currentRunningWeights.append(self.M.weights[0][currentState][r])
+        # currentRunningWeights = []
+        # for r in self.M.weights[0][currentState].keys():
+        #     currentRunningWeights.append(self.M.weights[0][currentState][r])
+        #
+        # minWeight = min(currentRunningWeights)
+        # if minWeight > 1:
+        #     for r in self.M.weights[0][currentState].keys():
+        #         self.M.weights[0][currentState][r] = self.M.weights[0][currentState][r] + minWeight
 
-        minWeight = min(currentRunningWeights)
-        if minWeight > 1:
-            for r in self.M.weights[0][currentState].keys():
-                self.M.weights[0][currentState][r] = self.M.weights[0][currentState][r] + minWeight
+        # TODO: Cap of gap betwen max1 and max2
 
         # Set Weight for t+1
         numActions = 4.0
         print(runningEstimatedReward)
-        # if runningEstimatedReward > 1000:
-        #     runningEstimatedReward = 1000
+
         self.M.weights[n][currentState][randomAction] = math.exp(runningEstimatedReward * gamma / float(numActions))
         # if self.M.weights[n][currentState][randomAction] > 1000000:
         #     self.M.weights[n][currentState][randomAction] = 1000000

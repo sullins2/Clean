@@ -36,8 +36,8 @@ class Grid(MDP):
         # self.rows = 4
         # self.cols = 12
 
-        self.rows = 2
-        self.cols = 4
+        self.rows = 1
+        self.cols = 2
 
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
@@ -50,8 +50,7 @@ class Grid(MDP):
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
-        self.grid = [' ', ' ',  ' ', ' ',
-                     ' ',  0, 0, 1]
+        self.grid = [' ', 1]
 
         # Q
         self.Q = {}
@@ -110,7 +109,7 @@ class Grid(MDP):
 
 
 
-        self.livingReward = 0.0#-1.0
+        self.livingReward = 0.0 #-1.0
 
         logSettings = True
         if logSettings:
@@ -130,10 +129,7 @@ class Grid(MDP):
             print("     Living reward: ", self.livingReward)
 
     def getActions(self, s, n):
-        if self.isTerminal(s):
-            return ["exit"]
-        else:
-            return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
+        return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
 
     def getStates(self):
         return list(range(self.rows * self.cols))
@@ -166,6 +162,7 @@ class Grid(MDP):
             actionChoices.append(state)
             actionProbs.append(prob)
 
+        #print("S: ", s, " action: ", action, "ActionChoices: ", actionChoices)
         next_state = np.random.choice(actionChoices, p=actionProbs)
         return next_state
 

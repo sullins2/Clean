@@ -538,7 +538,7 @@ from LONRGeneral.TigerGame import *
 
 
 print("Begin GridWorld VI with non-determinism")
-gridMDP = Grid(noise=0.0, startState=4)
+gridMDP = Grid(noise=0.0, startState=0)
 
 # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
 parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
@@ -546,27 +546,27 @@ regret_minimizers = {'RM': True, 'RMPlus': True, 'DCFR': False}
 lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
 
 # Train via VI
-iters = 33
+iters = 3
 lonrAgent.lonr_train(iterations=iters, log=500)
 
 print("[North, East, South, West]")
 print("Note: these are Q, not QAvg")
 print("Q for: Bottom left (start state) (West opt = 170.23]")
-print(gridMDP.Q[0][4])
+print(gridMDP.Q[0][0])
 
 print("Q for: State above bottom right terminal")
-print(gridMDP.Q[0][3])
+print(gridMDP.Q[0][1])
 print("End GridWorld VI with non-determism")
 print("")
-print("Q Avg")
-for k in sorted(gridMDP.QSums[0].keys()):
-    tot = 0.0
-    print(k, ": ", end='')
-    for kk in gridMDP.QSums[0][k].keys():
-        touched = gridMDP.QTouched[0][k][kk]
-        if touched == 0: touched = 1.0
-        print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
-    print("")
+# print("Q Avg")
+# for k in sorted(gridMDP.QSums[0].keys()):
+#     tot = 0.0
+#     print(k, ": ", end='')
+#     for kk in gridMDP.QSums[0][k].keys():
+#         touched = gridMDP.QTouched[0][k][kk]
+#         if touched == 0: touched = 1.0
+#         print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
+#     print("")
 
 print("")
 print("Q")

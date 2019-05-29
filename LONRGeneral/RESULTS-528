@@ -26,14 +26,6 @@ Updated TigerGame:
 
 -------
 
-Update/review process for paper
-"Hey do you have code for exp3?" Can we say yes (if we do) and show that?
-    i.e. How much "more" can we add on as it gets reviewed?
-August?
-September?
-
--------
-
 Three versions of LONR-A to try and improve or make more accurate?
 Original is only one that works..
 
@@ -371,4 +363,431 @@ Results:
         We might have already talked about why this is incorrect, but here is one more big test.
 
 
-Tiger Game VI
+--------------------------------------------------------------------------------------------
+
+Grid Settings:
+     Grid:
+ *****  1
+     Noise:  0.0
+     Living reward:  0.0
+LONR initialized with:
+   gamma:  1.0
+   alpha:  1.0
+ epsilon:  20
+     rm+:  True
+    DCFR:  False
+    EXP3:  False
+exp3gama:  0.1
+Starting training..
+
+Current State:  0   currentAction:  None  t= 1
+Weights:
+    0 :  1.0
+    1 :  1.0
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.0, 1.0, 1.0]
+ProbDist:  [0.25, 0.25, 0.25, 0.25]
+Setting pi of s:  0  a:  0  :  0.25
+Setting pi of s:  0  a:  1  :  0.25
+Setting pi of s:  0  a:  2  :  0.25
+Setting pi of s:  0  a:  3  :  0.25
+Selected random action:  3
+0.0
+SET TO:  0.0
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 1
+Weights:
+    0 :  1.0
+    1 :  1.0
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.0, 1.0, 1.0]
+ProbDist:  [0.25, 0.25, 0.25, 0.25]
+Setting pi of s:  0  a:  0  :  0.25
+Setting pi of s:  0  a:  1  :  0.25
+Setting pi of s:  0  a:  2  :  0.25
+Setting pi of s:  0  a:  3  :  0.25
+Selected random action:  1
+0.0
+SET TO:  0.0
+X:  0.0
+
+Current State:  1   currentAction:  1  t= 1
+Final: set s:  1  to:  1.0
+Final: set s:  1  to:  1.0
+Final: set s:  1  to:  1.0
+Final: set s:  1  to:  1.0
+
+Current State:  0   currentAction:  None  t= 2
+Weights:
+    0 :  1.0
+    1 :  1.0
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.0, 1.0, 1.0]
+ProbDist:  [0.25, 0.25, 0.25, 0.25]
+Setting pi of s:  0  a:  0  :  0.25
+Setting pi of s:  0  a:  1  :  0.25
+Setting pi of s:  0  a:  2  :  0.25
+Setting pi of s:  0  a:  3  :  0.25
+Selected random action:  2
+0.0
+SET TO:  0.0
+X:  0.0
+NEXT STATES CHANGED
+
+Current State:  0   currentAction:  2  t= 2
+Weights:
+    0 :  1.0
+    1 :  1.0
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.0, 1.0, 1.0]
+ProbDist:  [0.25, 0.25, 0.25, 0.25]
+Setting pi of s:  0  a:  0  :  0.25
+Setting pi of s:  0  a:  1  :  0.25
+Setting pi of s:  0  a:  2  :  0.25
+Setting pi of s:  0  a:  3  :  0.25
+Selected random action:  3
+0.0
+SET TO:  0.0
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 2
+Weights:
+    0 :  1.0
+    1 :  1.0
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.0, 1.0, 1.0]
+ProbDist:  [0.25, 0.25, 0.25, 0.25]
+Setting pi of s:  0  a:  0  :  0.25
+Setting pi of s:  0  a:  1  :  0.25
+Setting pi of s:  0  a:  2  :  0.25
+Setting pi of s:  0  a:  3  :  0.25
+Selected random action:  0
+0.0
+SET TO:  0.0
+X:  0.0
+
+Current State:  0   currentAction:  0  t= 2
+Weights:
+    0 :  1.0
+    1 :  1.0
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.0, 1.0, 1.0]
+ProbDist:  [0.25, 0.25, 0.25, 0.25]
+Setting pi of s:  0  a:  0  :  0.25
+Setting pi of s:  0  a:  1  :  0.25
+Setting pi of s:  0  a:  2  :  0.25
+Setting pi of s:  0  a:  3  :  0.25
+Selected random action:  1
+4.0
+SET TO:  4.0
+X:  0.0
+
+Current State:  1   currentAction:  1  t= 2
+Final: set s:  1  to:  1.0
+Final: set s:  1  to:  1.0
+Final: set s:  1  to:  1.0
+Final: set s:  1  to:  1.0
+
+Current State:  0   currentAction:  None  t= 3
+Weights:
+    0 :  1.0
+    1 :  1.161834242728283
+    2 :  1.0
+    3 :  1.0
+Final weights list:  [1.0, 1.161834242728283, 1.0, 1.0]
+ProbDist:  [0.24173687019374998, 0.27478938941875014, 0.24173687019374998, 0.24173687019374998]
+Setting pi of s:  0  a:  0  :  0.24173687019374998
+Setting pi of s:  0  a:  1  :  0.27478938941875014
+Setting pi of s:  0  a:  2  :  0.24173687019374998
+Setting pi of s:  0  a:  3  :  0.24173687019374998
+Selected random action:  2
+4.546917302247007
+SET TO:  4.5469173022470075
+X:  0.0
+
+Current State:  0   currentAction:  2  t= 3
+Weights:
+    0 :  1.0
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  1.0
+Final weights list:  [1.0, 1.161834242728283, 1.1859087980416922, 1.0]
+ProbDist:  [0.23300373424310444, 0.2646429330248887, 0.2693495984889024, 0.23300373424310444]
+Setting pi of s:  0  a:  0  :  0.23300373424310444
+Setting pi of s:  0  a:  1  :  0.2646429330248887
+Setting pi of s:  0  a:  2  :  0.2693495984889024
+Setting pi of s:  0  a:  3  :  0.23300373424310444
+Selected random action:  0
+9.799336861441747
+SET TO:  9.799336861441747
+X:  0.0
+
+Current State:  0   currentAction:  0  t= 3
+Weights:
+    0 :  1.444083887044027
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  1.0
+Final weights list:  [1.444083887044027, 1.161834242728283, 1.1859087980416922, 1.0]
+ProbDist:  [0.29365935685460715, 0.24359239882742556, 0.2478628727666279, 0.2148853715513394]
+Setting pi of s:  0  a:  0  :  0.29365935685460715
+Setting pi of s:  0  a:  1  :  0.24359239882742556
+Setting pi of s:  0  a:  2  :  0.2478628727666279
+Setting pi of s:  0  a:  3  :  0.2148853715513394
+Selected random action:  3
+23.17071890219381
+SET TO:  23.170718902193805
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1.444083887044027
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  2.3842913655594042
+Final weights list:  [1.444083887044027, 1.161834242728283, 1.1859087980416922, 2.3842913655594042]
+ProbDist:  [0.23624478526494933, 0.1973996423657608, 0.20071294872492718, 0.36564262364436273]
+Setting pi of s:  0  a:  0  :  0.23624478526494933
+Setting pi of s:  0  a:  1  :  0.1973996423657608
+Setting pi of s:  0  a:  2  :  0.20071294872492718
+Setting pi of s:  0  a:  3  :  0.36564262364436273
+Selected random action:  0
+62.66597863087944
+SET TO:  52.86664176943769
+X:  0.0
+
+Current State:  0   currentAction:  0  t= 3
+Weights:
+    0 :  10.485299186446962
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  2.3842913655594042
+Final weights list:  [10.485299186446962, 1.161834242728283, 1.1859087980416922, 2.3842913655594042]
+ProbDist:  [0.6231810757379123, 0.10239698739257672, 0.10374172836783613, 0.1706802085016748]
+Setting pi of s:  0  a:  0  :  0.6231810757379123
+Setting pi of s:  0  a:  1  :  0.10239698739257672
+Setting pi of s:  0  a:  2  :  0.10374172836783613
+Setting pi of s:  0  a:  3  :  0.1706802085016748
+Selected random action:  0
+123.29292688408631
+SET TO:  60.62694825320686
+X:  0.0
+
+Current State:  0   currentAction:  0  t= 3
+Weights:
+    0 :  101.84833125035182
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  2.3842913655594042
+Final weights list:  [101.84833125035182, 1.161834242728283, 1.1859087980416922, 2.3842913655594042]
+ProbDist:  [0.8497610673119994, 0.046765863372060346, 0.04695786282609032, 0.05651520648984984]
+Setting pi of s:  0  a:  0  :  0.8497610673119994
+Setting pi of s:  0  a:  1  :  0.046765863372060346
+Setting pi of s:  0  a:  2  :  0.04695786282609032
+Setting pi of s:  0  a:  3  :  0.05651520648984984
+Selected random action:  0
+185.93229368823228
+SET TO:  62.63936680414597
+X:  0.0
+
+Current State:  0   currentAction:  0  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  2.3842913655594042
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 2.3842913655594042]
+ProbDist:  [0.8837464396329863, 0.03842159409507064, 0.038440690595416674, 0.039391275676526394]
+Setting pi of s:  0  a:  0  :  0.8837464396329863
+Setting pi of s:  0  a:  1  :  0.03842159409507064
+Setting pi of s:  0  a:  2  :  0.038440690595416674
+Setting pi of s:  0  a:  3  :  0.039391275676526394
+Selected random action:  3
+1459.9993977259858
+SET TO:  1436.828678823792
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  5.9925694446984224e+23
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 5.9925694446984224e+23]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+2899.8359477092026
+SET TO:  1439.836549983217
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  1.6859828177164092e+47
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 1.6859828177164092e+47]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+4342.680368851845
+SET TO:  1442.8444211426422
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  5.3098167397012707e+70
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 5.3098167397012707e+70]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+5788.532661153912
+SET TO:  1445.8522923020673
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  1.8719413582272213e+94
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 1.8719413582272213e+94]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+7237.392824615405
+SET TO:  1448.8601634614924
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  7.387394064320402e+117
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 7.387394064320402e+117]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+8689.260859236321
+SET TO:  1451.8680346209176
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  3.2634473605234935e+141
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 3.2634473605234935e+141]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+10144.136765016665
+SET TO:  1454.8759057803427
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  1.613794670716917e+165
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 1.613794670716917e+165]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+11602.020541956434
+SET TO:  1457.8837769397678
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  8.933183626544788e+188
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 8.933183626544788e+188]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+13062.912190055627
+SET TO:  1460.891648099193
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  5.535419824569817e+212
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 5.535419824569817e+212]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  3
+14526.811709314246
+SET TO:  1463.899519258618
+X:  0.0
+
+Current State:  0   currentAction:  3  t= 3
+Weights:
+    0 :  1066.8450423145673
+    1 :  1.161834242728283
+    2 :  1.1859087980416922
+    3 :  3.8395576040704054e+236
+Final weights list:  [1066.8450423145673, 1.161834242728283, 1.1859087980416922, 3.8395576040704054e+236]
+ProbDist:  [0.0375, 0.0375, 0.0375, 0.8875]
+Setting pi of s:  0  a:  0  :  0.0375
+Setting pi of s:  0  a:  1  :  0.0375
+Setting pi of s:  0  a:  2  :  0.0375
+Setting pi of s:  0  a:  3  :  0.8875
+Selected random action:  2
+34721.35515719594
+Traceback (most recent call last):
+  File "C:/Users/mike/Desktop/School/Thesis Stuff/Clean/LONRGeneral/test.py", line 550, in <module>
+    lonrAgent.lonr_train(iterations=iters, log=500)
+  File "C:\Users\mike\Desktop\School\Thesis Stuff\Clean\LONRGeneral\LONR.py", line 1099, in lonr_train
+    self._lonr_train(t=t)
+  File "C:\Users\mike\Desktop\School\Thesis Stuff\Clean\LONRGeneral\LONR.py", line 1141, in _lonr_train
+    nextAction = self.exp3(currentState, t)
+  File "C:\Users\mike\Desktop\School\Thesis Stuff\Clean\LONRGeneral\LONR.py", line 1315, in exp3
+    self.M.weights[n][currentState][randomAction] = math.exp(runningEstimatedReward * gamma / float(numActions))
+OverflowError: math range error
