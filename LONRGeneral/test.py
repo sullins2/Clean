@@ -202,25 +202,36 @@ from LONRGeneral.TigerGame import *
 # # ######################################################################
 # #
 # #
-# # ######################################################################
-# # # NoSDE
-# # #
-# # # SET GAMMA = 0.75 (THIS IS REQUIRED)
-# # # ALPHA works with 0.5, iterations 400k +
-# # # Better results when alpha is decayed
-# # #
-# #
-# print("Begin NoSDE VI")
+######################################################################
+# NoSDE
+# 5/30
+# SET GAMMA = 0.75 (THIS IS REQUIRED)
+# ALPHA works with 0.5, iterations 400k +
+# Better results when alpha is decayed
+#
+#
+# # print("Begin NoSDE VI")
 # noSDE = NoSDE()
 #
 # # Create LONR agent, feed in soccer (gamma should be 0.75 here)
 # # DCFR had to be added here, as it is the only one that converges!
-# lonrAgent = LONR(M=noSDE, gamma=0.75, alpha=0.5, alphaDecay=0.9999, DCFR=True, VI=True)
+# parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 0.75}
+# # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
 #
 # print(" - Training with 50000 iterations")
-# lonrAgent.lonr_value_iteration(iterations=20000, log=5000)
+# iters = 40000
+# lonrAgent.lonr_train(iterations=iters, log=5000)
 #
 #
+# print("")
+# print("Pi:")
+# for n in range(2):
+#     for k in sorted(noSDE.pi[n].keys()):
+#        print(k, ": ", noSDE.pi[n][k])
 # print("")
 # print("Pi Sums:")
 # for n in range(2):
@@ -398,7 +409,7 @@ from LONRGeneral.TigerGame import *
 
 
 
-## END OF EXP3
+
 #######################################################################################
 
 #
@@ -537,25 +548,57 @@ from LONRGeneral.TigerGame import *
 # print("End GridWorld O-LONR - deterministic")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# print("lala")
+# regrets = [12.0, 2.0, 2.0, 1.0]
+# gamma = 0.15
+# pi = [0, 0, 0, 0]
+#
+# regretSum = sum(regrets)
+# for r in range(4):
+#     if regretSum > 0:
+#         pi[r] = (1.0 - gamma)*(max(regrets[r], 0.0) / regretSum) + (gamma / len(regrets))
+#     else:
+#         pi[r] = 1.0 / len(regrets)
+#
+# print("pi")
+# print(pi)
+# print("Sum of pi: ", sum(pi))
+
+####################################################################
+# CONTINUE HERE WITH LONR-B 5/30
+#
 print("Begin GridWorld VI with non-determinism")
-gridMDP = Grid(noise=0.0, startState=0)
+gridMDP = Grid(noise=0.0, startState=8)
 
 # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
 parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
-regret_minimizers = {'RM': True, 'RMPlus': True, 'DCFR': False}
-lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+lonrAgent = LONR_B2(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
 
 # Train via VI
-iters = 3
-lonrAgent.lonr_train(iterations=iters, log=500)
+iters = 174888
+lonrAgent.lonr_train(iterations=iters, log=2500)
 
 print("[North, East, South, West]")
 print("Note: these are Q, not QAvg")
 print("Q for: Bottom left (start state) (West opt = 170.23]")
-print(gridMDP.Q[0][0])
+print(gridMDP.Q[0][8])
 
 print("Q for: State above bottom right terminal")
-print(gridMDP.Q[0][1])
+print(gridMDP.Q[0][7])
 print("End GridWorld VI with non-determism")
 print("")
 # print("Q Avg")
@@ -601,6 +644,17 @@ for k in sorted(gridMDP.pi[0].keys()):
         print(kk, ": ", gridMDP.pi[0][k][kk], " ", end='')
     print("")
 
+print("")
+print("Regret Sums")
+for k in sorted(gridMDP.regret_sums[0].keys()):
+    tot = 0.0
+    # for kk in gridMDP.pi[0][k].keys():
+    #     tot += gridMDP.pi[0][k][kk]
+    if tot == 0: tot = 1.0
+    print(k, ": ", end='')
+    for kk in gridMDP.regret_sums[0][k].keys():
+        print(kk, ": ", gridMDP.regret_sums[0][k][kk], " ", end='')
+    print("")
 
 
 

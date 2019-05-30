@@ -12,6 +12,9 @@ class NoSDE(MDP):
         # Two player MG
         self.N = 2
 
+        for i in range(10):
+            print("SET GAMMA=0.75")
+
         self.total_states = [1, 2]
 
         self.Q = {}
@@ -20,10 +23,13 @@ class NoSDE(MDP):
         self.pi = {}
         self.pi_sums = {}
         self.regret_sums = {}
+        self.QTouched = {}
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
             self.QSums[n] = {}
+            self.QTouched[n] = {}
+
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
@@ -31,6 +37,7 @@ class NoSDE(MDP):
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
                 self.QSums[n][s] = {}
+                self.QTouched[n][s] = {}
                 self.pi[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
@@ -38,6 +45,7 @@ class NoSDE(MDP):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
                     self.QSums[n][s][a] = 0.0
+                    self.QTouched[n][s][a] = 0.0
                     self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
                     self.regret_sums[n][s][a] = 0.0
                     self.pi_sums[n][s][a] = 0.0

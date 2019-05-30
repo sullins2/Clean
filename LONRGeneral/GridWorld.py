@@ -33,11 +33,11 @@ class Grid(MDP):
         self.LEFT = 3
 
         # Dimensions
-        # self.rows = 4
-        # self.cols = 12
+        self.rows = 3
+        self.cols = 4
 
-        self.rows = 1
-        self.cols = 2
+        # self.rows = 1
+        # self.cols = 2
 
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
@@ -50,7 +50,11 @@ class Grid(MDP):
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
-        self.grid = [' ', 1]
+        self.grid = [' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ',
+                     ' ', -100, -100, 20000]
+
+        # self.grid = [' ', 1]
 
         # Q
         self.Q = {}
@@ -109,7 +113,7 @@ class Grid(MDP):
 
 
 
-        self.livingReward = 0.0 #-1.0
+        self.livingReward = -1.0
 
         logSettings = True
         if logSettings:
@@ -129,6 +133,9 @@ class Grid(MDP):
             print("     Living reward: ", self.livingReward)
 
     def getActions(self, s, n):
+        # if self.isTerminal(s):
+        #     return ["exit"]
+        # else:
         return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
 
     def getStates(self):
@@ -255,8 +262,8 @@ class Grid(MDP):
             if massLeft > 0.0:
                 successors.append([upState,massLeft/2.0, self.getReward(state,self.UP,0,0)])
                 successors.append([downState,massLeft/2.0, self.getReward(state,self.DOWN,0,0)])
-        if np.random.randint(0, 1000) < 5: #reminder
-            print("NEXT STATES CHANGED")
+        # if np.random.randint(0, 1000) < 5: #reminder
+        #     print("NEXT STATES CHANGED")
         return successors
 
 

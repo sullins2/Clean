@@ -16,6 +16,8 @@ class TigerGame(MDP):
         # One player MG
         self.N = 1
 
+
+
         # Start with Tiger on Left
         self.version = 1
 
