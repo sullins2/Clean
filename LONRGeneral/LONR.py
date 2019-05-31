@@ -312,7 +312,7 @@ class LONR(object):
                 self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
 
 
-    def regretUpdate2(self, n, currentState, t):
+    def regretUpdate2(self, n, currentState, t, action):
 
         iters = t + 1
         alphaR = 3.0 / 2.0  # accum pos regrets
@@ -348,6 +348,8 @@ class LONR(object):
 
             # RMPLUS = False
             # if self.RMPLUS:
+            if a != action: continue
+
             self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
             # else:
             # self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret * gammaWeight
@@ -1476,7 +1478,7 @@ class LONR_B(LONR):
 
         currentState = self.M.startState
 
-        currentState = np.random.randint(0, 12)
+        #currentState = np.random.randint(0, 48)
         done = False
         n = 0  # One player
 
@@ -1485,7 +1487,7 @@ class LONR_B(LONR):
         c = 0
         while done == False:
 
-            if t % 50 == 0:
+            if t % 500 == 0:
                 verbose = True
             else:
                 verbose = False
@@ -1495,8 +1497,15 @@ class LONR_B(LONR):
 
             if self.M.isTerminal(currentState):
                 for a in self.M.getActions(currentState, n):
-                    self.M.Q[n][currentState][a] = self.M.getReward(currentState, a,0,0)
-                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
+                    #self.M.Q[n][currentState][a] = self.M.getReward(currentState, a,0,0)
+                    if a == nextAction:
+                        self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
+                        self.M.Q[n][currentState][a] = self.M.Q_bu[n][currentState][a]
+                        self.M.QSums[0][currentState][a] += self.M.Q[0][currentState][a]
+                        self.M.QTouched[0][currentState][a] += 1.0
+                    else:
+                        self.M.Q_bu[n][currentState][a] = 0.0
+                        self.M.Q[n][currentState][a] = 0.0
                     #print("Final: set s: ", currentState, " to: ", self.M.getReward(currentState, a,0,0))
                 done = True
                 continue
@@ -1513,46 +1522,26 @@ class LONR_B(LONR):
 
             x = rew + self.gamma * Value
 
-            self.M.Q_bu[0][currentState][nextAction] = x #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
+            self.M.Q_bu[0][currentState][nextAction] = x#self.alpha*x + (1.0 - self.alpha)*self.M.Q[0][currentState][nextAction] #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
 
             for aa in self.M.Q[0][currentState].keys():
 
                 if aa == nextAction:
-                    self.M.Q[0][currentState][nextAction] = self.M.Q_bu[0][currentState][nextAction]
+                    self.M.Q[0][currentState][aa] = self.M.Q_bu[0][currentState][aa]
+                    self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
+                    self.M.QTouched[0][currentState][aa] += 1.0
                 else:
-                    self.M.Q[0][currentState][nextAction] = 0.0
+                   self.M.Q[0][currentState][aa] = 0.0
 
             nextState = self.M.getMove(currentState, nextAction)
             currentState = nextState
 
-            done = False
-            # if self.M.isTerminal(currentState):
-            #     done = True
-            #     continue
-            #
-            # if nextState == 1:
-            #     for i in range(100):
-            #         print("JUST HIT 7777777777777777************************************************")
 
-            #def exp3Update(self, n, currentState, numActions, t, rewardMin=-100.0, rewardMax=200.0):
-            # nextAction = self.exp3Update(n, currentState, 4, t)
-            #
-            # self.regretUpdate(n, self.M.getStateRep(currentState), t)
-            #
-            # for n in range(self.M.N):
-            #     for s in range(len(self.M.getStates())):
-            #         for a in range(len(self.M.getActions(s,n))):
-            #             self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
-            #
-            # nextState = self.M.getMove(currentState, nextAction)
-            #
-            # currentState = nextState
-            #
             # if self.M.isTerminal(currentState):
             #     done = True
-            #     # for a in self.M.getActions(currentState, n):
-            #     #     self.M.Q[n][currentState][a] = self.M.getReward(currentState,a,0,0)
             #     continue
+
+
 
 
     def draw(self, weights):
@@ -1576,23 +1565,32 @@ class LONR_B(LONR):
         #
         #     choiceIndex += 1
 
-    def distr(self, weights, gamma=0.0):
+    def distr(self, weights, currentState, gamma=0.0):
 
         theSum = 0.0
         outweighed = False
         wIsHighest = None
+
+        above700 = False
         for w in weights:
-            # if w > 200:
-            #     outweighed = True
-            #     wIsHighest = w
-            #     break
-            #print("W: ", w)
-            if w > 100:
-                theSum += math.exp(100)
-            elif w < -100:
-                theSum += math.exp(-100)
-            else:
-                theSum += math.exp(w)
+            if w > 700.0:
+                above700 = True
+
+        if above700:
+
+            for w in range(len(weights)):
+                weights[w] = weights[w] / 700.0
+                self.M.weights[0][currentState][w] = max(self.M.weights[0][currentState][w] / 700.0, 1.0)
+
+        for w in weights:
+            # if w > 100:
+            #     theSum += math.exp(100)
+            # elif w < -100:
+            #     theSum += math.exp(-100)
+            # else:
+            if w > 700:
+                w = 700
+            theSum += math.exp(w)
 
         # if outweighed:
         #     theSum = float(sum(weights))
@@ -1607,10 +1605,12 @@ class LONR_B(LONR):
 
         lp = []
         for w in weights:
-            if w > 100:
-                ww = 100
-            else:
-                ww = w
+            # if w > 1000:
+            #     ww = 100
+            # else:
+            ww = w
+            if ww > 700:
+                ww = 700
             lp.append((1.0 - gamma) * (math.exp(ww) / theSum) + (gamma / len(weights)))
 
         lpSum = sum(lp)
@@ -1629,17 +1629,17 @@ class LONR_B(LONR):
 
     def exp3(self, currentState, t):
 
-        if t % 50 == 0:
+        if t % 500 == 0:
             verbose = True
         else:
             verbose = False
 
-        rewardMin = -100.0
+        rewardMin = -101.0
         rewardMax = 200.0
 
         numActions = 4.0
         n = 0
-        gamma = 0.15
+        gamma = 0.65
 
         # get current weights for 0, 1, 2 ,3
         weights = []
@@ -1651,12 +1651,12 @@ class LONR_B(LONR):
         if verbose: print("Final weights list: ", weights) # init: 1.0, 1.0, 1.0, 1.0
 
         # Get probDist from weights
-        pd = self.distr(weights, gamma)
+        pd = self.distr(weights, currentState, gamma)
 
         if verbose: print("ProbDist: ", pd) # init: 0.25, 0.25, 0.25, 0.25
 
         # Dist without randomness (for final pi sum calc)
-        piSUMDist = self.distr(weights, gamma=0.0)
+        piSUMDist = self.distr(weights, currentState, gamma=0.0)
 
         # set pi as probDistbution
         for a in sorted(self.M.pi[n][currentState].keys()):
@@ -1684,24 +1684,24 @@ class LONR_B(LONR):
         scaledReward = (x - rewardMin) / (rewardMax - rewardMin)
 
         # Get expected reward
-        estimatedReward = scaledReward / pd[randomAction]
+        estimatedReward = scaledReward
 
         # Add to running sum of rewards
         self.M.runningRewards[0][currentState][randomAction] += estimatedReward
         runningEstimatedReward = self.M.runningRewards[0][currentState][randomAction]
 
         # Find min reward
-        # currentRunningRewards = []
-        # for r in self.M.runningRewards[0][currentState].keys():
-        #     currentRunningRewards.append(self.M.runningRewards[0][currentState][r])
-        #
-        # minRunningReward = min(currentRunningRewards)
-        #
-        #
-        # for r in self.M.runningRewards[0][currentState].keys():
-        #     self.M.runningRewards[0][currentState][r] = self.M.runningRewards[0][currentState][r] - minRunningReward
-        #
-        # runningEstimatedReward = runningEstimatedReward - minRunningReward
+        currentRunningRewards = []
+        for r in self.M.runningRewards[0][currentState].keys():
+            currentRunningRewards.append(self.M.runningRewards[0][currentState][r])
+
+        minRunningReward = min(currentRunningRewards)
+
+
+        for r in self.M.runningRewards[0][currentState].keys():
+            self.M.runningRewards[0][currentState][r] = self.M.runningRewards[0][currentState][r] - minRunningReward
+
+        runningEstimatedReward = (runningEstimatedReward - minRunningReward) / pd[randomAction]
 
 
         # Find min weight
@@ -1710,9 +1710,11 @@ class LONR_B(LONR):
         #     currentRunningWeights.append(self.M.weights[0][currentState][r])
         #
         # minWeight = min(currentRunningWeights)
+        # currentRunningWeights.remove(minWeight)
+        # secondMinWeight = min(currentRunningWeights)
         # if minWeight > 1:
         #     for r in self.M.weights[0][currentState].keys():
-        #         self.M.weights[0][currentState][r] = self.M.weights[0][currentState][r] + minWeight
+        #         self.M.weights[0][currentState][r] = self.M.weights[0][currentState][r] - secondMinWeight#minWeight
 
         # TODO: Cap of gap betwen max1 and max2
 
@@ -1874,7 +1876,7 @@ class LONR_B2(LONR):
     def lonr_train(self, iterations=-1, log=-1, randomize=False):
 
         if log != -1: print("Starting training..")
-        gamma = 1.0
+        gamma = 0.2#1.0
         for t in range(1, iterations + 1):
 
             if (t + 0) % log == 0:
@@ -1883,7 +1885,7 @@ class LONR_B2(LONR):
             # Call one full update via LONR-V
             self._lonr_train(t=t, gamma=gamma)
             #gamma *= 0.99999
-            gamma = max(1.0 - (float(t) / float(iterations)), 0.0)
+            #gamma = max(1.0 - (float((1.0/2.0)*t) / float(iterations )), 0.0)
         if log != -1: print("Finish Training")
 
     ######################################
@@ -1892,9 +1894,9 @@ class LONR_B2(LONR):
     def _lonr_train(self, t, gamma=0.0):
 
 
-        #currentState = self.M.startState
+        currentState = self.M.startState
 
-        currentState = np.random.randint(0, 12)
+        #currentState = np.random.randint(0, 12)
         done = False
         n = 0  # One player
 
@@ -1906,8 +1908,11 @@ class LONR_B2(LONR):
         nextAction = None
         # Episode loop - until terminal state is reached
         c = 0
+        visited = []
         while done == False:
 
+            if currentState not in visited:
+                visited.append(currentState)
             if t % 3500 == 0:
                 verbose = True
             else:
@@ -1936,14 +1941,25 @@ class LONR_B2(LONR):
 
             x = rew + self.gamma * Value
 
-            self.M.Q_bu[0][currentState][nextAction] = x#(1 - self.alpha) * x + self.alpha* self.M.Q[0][currentState][nextAction] #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
-            self.M.Q[0][currentState][nextAction] = self.M.Q_bu[0][currentState][nextAction]
+            self.M.Q_bu[0][currentState][nextAction] = (self.alpha * x ) + ((1 - self.alpha) * self.M.Q[0][currentState][nextAction]) #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
+            #self.M.Q[0][currentState][nextAction] = self.M.Q_bu[0][currentState][nextAction]
 
-            self.regretUpdate2(0, currentState, t)
+            #self.regretUpdate2(0, currentState, t)
 
             nextState = self.M.getMove(currentState, nextAction)
             currentState = nextState
 
+
+        for s in visited:
+            for a in self.M.getActions(s, 0):
+                self.M.Q[0][s][a] = self.M.Q_bu[0][s][a]
+                self.M.QSums[0][s][a] += self.M.Q[0][s][a]
+                self.M.QTouched[0][s][a] += 1.0
+
+        for s in visited:
+            for a in self.M.getActions(s, 0):
+                self.regretUpdate2(0, s, t, a)
+        visited = []
             #done = False
             # if self.M.isTerminal(currentState):
             #     done = True
@@ -1976,13 +1992,13 @@ class LONR_B2(LONR):
 
 
 
-    def exp3(self, currentState, t, gamma=0):
+    def exp3(self, currentState, t, gamma=0.0):
 
         regrets = {}
         regretSum = 0.0
         for r in sorted(self.M.regret_sums[0][currentState].keys()):
             # print("Regret for action: ", r)
-            regrets[r] = (self.M.regret_sums[0][currentState][r])
+            regrets[r] = self.M.regret_sums[0][currentState][r]
             regretSum += self.M.regret_sums[0][currentState][r]
 
         # print("RegretSum: ", regretSum)

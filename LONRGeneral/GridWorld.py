@@ -33,8 +33,8 @@ class Grid(MDP):
         self.LEFT = 3
 
         # Dimensions
-        self.rows = 3
-        self.cols = 4
+        self.rows = 4
+        self.cols = 12
 
         # self.rows = 1
         # self.cols = 2
@@ -45,14 +45,14 @@ class Grid(MDP):
         # Non-determinism - this value is split between sideways moves
         self.noise = noise
 
-        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
+        self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
-        self.grid = [' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ',
-                     ' ', -100, -100, 20000]
+        # self.grid = [' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ',
+        #              ' ', -100, -100, 2000]
 
         # self.grid = [' ', 1]
 
@@ -113,7 +113,7 @@ class Grid(MDP):
 
 
 
-        self.livingReward = -1.0
+        self.livingReward = 0.0
 
         logSettings = True
         if logSettings:

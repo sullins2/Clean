@@ -581,38 +581,38 @@ from LONRGeneral.TigerGame import *
 # CONTINUE HERE WITH LONR-B 5/30
 #
 print("Begin GridWorld VI with non-determinism")
-gridMDP = Grid(noise=0.0, startState=8)
+gridMDP = Grid(noise=0.0, startState=36)
 
 # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
-parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
+parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 0.99999}
 regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-lonrAgent = LONR_B2(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
 
 # Train via VI
-iters = 174888
+iters = 13000
 lonrAgent.lonr_train(iterations=iters, log=2500)
 
 print("[North, East, South, West]")
 print("Note: these are Q, not QAvg")
 print("Q for: Bottom left (start state) (West opt = 170.23]")
-print(gridMDP.Q[0][8])
+print(gridMDP.Q[0][36])
 
 print("Q for: State above bottom right terminal")
-print(gridMDP.Q[0][7])
+print(gridMDP.Q[0][35])
 print("End GridWorld VI with non-determism")
 print("")
-# print("Q Avg")
-# for k in sorted(gridMDP.QSums[0].keys()):
-#     tot = 0.0
-#     print(k, ": ", end='')
-#     for kk in gridMDP.QSums[0][k].keys():
-#         touched = gridMDP.QTouched[0][k][kk]
-#         if touched == 0: touched = 1.0
-#         print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
-#     print("")
+print("Q Avg")
+for k in sorted(gridMDP.QSums[0].keys()):
+    tot = 0.0
+    print(k, ": ", end='')
+    for kk in gridMDP.QSums[0][k].keys():
+        touched = gridMDP.QTouched[0][k][kk]
+        if touched == 0: touched = 1.0
+        print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
+    print("")
 
 print("")
-print("Q")
+print("Q_bu")
 for k in sorted(gridMDP.Q_bu[0].keys()):
     tot = 0.0
     print(k, ": ", end='')
@@ -645,16 +645,26 @@ for k in sorted(gridMDP.pi[0].keys()):
     print("")
 
 print("")
-print("Regret Sums")
-for k in sorted(gridMDP.regret_sums[0].keys()):
+
+print("Weights")
+for k in sorted(gridMDP.weights[0].keys()):
     tot = 0.0
-    # for kk in gridMDP.pi[0][k].keys():
-    #     tot += gridMDP.pi[0][k][kk]
     if tot == 0: tot = 1.0
     print(k, ": ", end='')
-    for kk in gridMDP.regret_sums[0][k].keys():
-        print(kk, ": ", gridMDP.regret_sums[0][k][kk], " ", end='')
+    for kk in gridMDP.weights[0][k].keys():
+        print(kk, ": ", gridMDP.weights[0][k][kk], " ", end='')
     print("")
+
+# print("Regret Sums")
+# for k in sorted(gridMDP.regret_sums[0].keys()):
+#     tot = 0.0
+#     # for kk in gridMDP.pi[0][k].keys():
+#     #     tot += gridMDP.pi[0][k][kk]
+#     if tot == 0: tot = 1.0
+#     print(k, ": ", end='')
+#     for kk in gridMDP.regret_sums[0][k].keys():
+#         print(kk, ": ", gridMDP.regret_sums[0][k][kk], " ", end='')
+#     print("")
 
 
 
