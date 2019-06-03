@@ -36,8 +36,8 @@ class Grid(MDP):
         self.rows = 4
         self.cols = 12
 
-        # self.rows = 1
-        # self.cols = 2
+        self.rows = 4  #THIS IS EXP3
+        self.cols = 12
 
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
@@ -50,8 +50,25 @@ class Grid(MDP):
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
+        self.grid = [' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ',
+                     ' ', -1, -1,  10]
+
+        self.grid = [' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ',
+                     ' ', -1, -1, -1, 10]
+
+        self.grid = [' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ',
+                     ' ', -1, -1, -1, 10]
+
+        self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10]
+
         # self.grid = [' ', ' ', ' ', ' ',
-        #              ' ', ' ', ' ', ' ',
         #              ' ', -100, -100, 2000]
 
         # self.grid = [' ', 1]
@@ -113,7 +130,7 @@ class Grid(MDP):
 
 
 
-        self.livingReward = 0.0
+        self.livingReward = 0.0 #-1.0 #0.0
 
         logSettings = True
         if logSettings:
@@ -133,10 +150,10 @@ class Grid(MDP):
             print("     Living reward: ", self.livingReward)
 
     def getActions(self, s, n):
-        # if self.isTerminal(s):
-        #     return ["exit"]
-        # else:
-        return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
+        if self.isTerminal(s):
+            return ["exit"]
+        else:
+            return [self.UP, self.RIGHT, self.DOWN, self.LEFT]
 
     def getStates(self):
         return list(range(self.rows * self.cols))
@@ -326,3 +343,15 @@ class Grid(MDP):
     #             successors.append([downState,massLeft/2.0, self.getReward(state,self.DOWN,0,0), self.DOWN])
     #
     #     return successors
+
+
+    def printGrid(self):
+        gcell = 0
+        for x in range(self.rows):
+            for y in range(self.cols):
+                g = self.grid[x * self.cols + y]
+                g = " ***** " if g == ' ' else g
+                if type(g) == int:
+                    g = " " + str(g) + " "
+                print(g, end='')
+            print("")
