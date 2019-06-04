@@ -584,12 +584,12 @@ print("Begin GridWorld VI with non-determinism")
 gridMDP = Grid(noise=0.0, startState=36)
 
 # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
-parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.995}
+parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.99999999}
 regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
 
 # Train via VI
-iters = 150000
+iters = 40000
 lonrAgent.lonr_train(iterations=iters, log=1500)
 
 print("[North, East, South, West]")

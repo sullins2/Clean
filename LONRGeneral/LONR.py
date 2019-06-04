@@ -1561,32 +1561,34 @@ class LONR_B(LONR):
 
 
 
-    def draw(self, weights, gamma=0.0):
-
-        # Sum up the (exponential) weights and sum
-        theSum = 0.0
-        theWeights = []
-        for w in weights:
-            theSum += math.exp(w * gamma / 4.0)
-            theWeights.append(math.exp(w * gamma / 4.0))
-
-        # Normalize
-        for i in range(len(theWeights)):
-            theWeights[i] = theWeights[i] / theSum
-
-        # Draw action from prob dist
-        c = np.random.choice([0,1,2,3], p=theWeights)
-        return c
+    # def draw(self, weights, gamma=0.0):
+    #
+    #     # Sum up the (exponential) weights and sum
+    #     theSum = 0.0
+    #     theWeights = []
+    #     for w in weights:
+    #         theSum += math.exp(w)# * gamma / 4.0)
+    #         theWeights.append(math.exp(w))# * gamma / 4.0))
+    #
+    #     # Normalize
+    #     for i in range(len(theWeights)):
+    #         theWeights[i] = theWeights[i] / theSum
+    #
+    #     # Draw action from prob dist
+    #     c = np.random.choice([0,1,2,3], p=theWeights)
+    #     return c
 
     def distr(self, weights, gamma=0.0):
 
         theSum = 0.0
         theWeights = []
         for w in weights:
-            theSum += math.exp(w * gamma / 4.0)
-            theWeights.append(math.exp(w * gamma / 4.0))
+            theSum += math.exp(w)# * gamma / 4.0)
+            theWeights.append(math.exp(w))# * gamma / 4.0))
         # theSum = float(sum(weights))
         rl = []
+        if theSum <= 0:
+            theSum = 1.0
         for w in theWeights:
             value = (1.0 - gamma) * (w / theSum) + (gamma / len(weights))
             rl.append(value)
@@ -1611,7 +1613,7 @@ class LONR_B(LONR):
         numActions = 4.0
         n = 0
         gamma = 0.2
-        maxGap = 150.0
+        maxGap = 20.0
 
 
 
@@ -1700,11 +1702,13 @@ class LONR_B(LONR):
 
 
         # Set Weight for t+1
+        # w_t+1() = w_t()e^(x_hat * gamma / K) = 1.0 ^ e^A * e^b
+        # Keep sum of weights and put in exponent when calculating prob dist above
         if verbose: print(runningEstimatedReward)
         for j in sorted(self.M.weights[0][currentState].keys()):
             if j == randomAction:
-                self.M.weights[0][currentState][j] += self.M.Q_bu[0][currentState][j] #*= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
-
+                self.M.weights[0][currentState][j] += self.M.Q_bu[0][currentState][j] * gamma / float(numActions) #*= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
+                #self.M.weights[0][currentState][j] *= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
 
         if verbose: print(self.M.weights[0][4])
 

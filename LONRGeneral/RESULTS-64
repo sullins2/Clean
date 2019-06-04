@@ -1,0 +1,229 @@
+
+
+LONR_B
+
+    Grid: 4x12, no living cost, gamma super high (0.99999)
+
+        self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+                     '24', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '35',
+                     '36', -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10]
+
+
+    After iterations = 40,000
+
+    Pi Sums
+        24 : 0 :  0.20906699299452047  1 :  0.26364433566849316  2 :  0.26364433566849316  3 :  0.26364433566849316
+        25 : 0 :  0.24992540628708965  1 :  0.41339504167302094  2 :  0.028590941339504166  3 :  0.30808861070038523
+        26 : 0 :  0.20850500994376303  1 :  0.4469650112759418  2 :  0.041288026567451064  3 :  0.3032419522128441
+        27 : 0 :  0.18654567664252683  1 :  0.5221621149986913  2 :  0.06279265916295844  3 :  0.22849954919582352
+        28 : 0 :  0.17615574527430694  1 :  0.5701927969695256  2 :  0.0757053202917397  3 :  0.17794613746442772
+        29 : 0 :  0.13246500777604978  1 :  0.6318040435458787  2 :  0.0672239502332815  3 :  0.16850699844479006
+        30 : 0 :  0.09082204241872935  1 :  0.6844927466845406  2 :  0.058624982046248865  3 :  0.16606022885048116
+        31 : 0 :  0.07674052816026933  1 :  0.7438395099202517  2 :  0.04699357046276111  3 :  0.1324263914567179
+        32 : 0 :  0.05150396812436722  1 :  0.8020836735360397  2 :  0.03732976256572716  3 :  0.1090825957738659
+        33 : 0 :  0.037434420732909944  1 :  0.863989586209617  2 :  0.0301763244053489  3 :  0.06839966865212417
+        34 : 0 :  0.029540865595645685  1 :  0.8752523922394874  2 :  0.023878500570625932  3 :  0.07132824159424107
+        35 : 0 :  0.027217366088073243  1 :  0.060690169435353575  2 :  0.8729856249223249  3 :  0.03910683955424831
+        36 : 0 :  0.3333566774155554  1 :  0.013910950815079853  2 :  0.3333566774155554  3 :  0.3193756943538093
+
+        Pi
+        24 : 0 :  0.05000000164889875  1 :  0.8499882813631257  2 :  0.05000043978482724  3 :  0.05001127720314847
+        25 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        26 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        27 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        28 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        29 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        30 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        31 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        32 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        33 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        34 : 0 :  0.05000000164892289  1 :  0.8499999950532314  2 :  0.05000000164892289  3 :  0.05000000164892289
+        35 : 0 :  0.05000000164892289  1 :  0.05000000164892289  2 :  0.8499999950532314  3 :  0.05000000164892289
+        36 : 0 :  0.8499999821808022  1 :  0.05000000164892286  2 :  0.050000014521352096  3 :  0.05000000164892286
+
+        Weights - highest on opt action, 1 on actions into negative terminals
+        24 : 0 :  488.94809823211796  1 :  542.5487654360386  2 :  528.1293852590126  3 :  531.3736382272003
+        25 : 0 :  283.76694517589203  1 :  357.07755231678476  2 :  1.0182512752940038  3 :  322.040859962444
+        26 : 0 :  229.0667540395818  1 :  308.47748258959786  2 :  1.0182506659562218  3 :  274.35070314734264
+        27 : 0 :  203.09098422218943  1 :  282.97109213676697  2 :  1.0183168527904964  3 :  236.08373745502067
+        28 : 0 :  202.17563067578988  1 :  289.06479892777014  2 :  1.0182498565440787  3 :  230.82018363242014
+        29 : 0 :  245.11638084697927  1 :  374.0498838844854  2 :  1.0183167778699131  3 :  276.7749506275228
+        30 : 0 :  153.17133344751042  1 :  415.1568282043711  2 :  1.018183102187467  3 :  298.55855041757496
+        31 : 0 :  196.63465242891493  1 :  489.09209298100734  2 :  1.0181830027988752  3 :  366.6184541609042
+        32 : 0 :  188.86941471320011  1 :  572.5817034645329  2 :  1.0181829223443368  3 :  393.0658444303404
+        33 : 0 :  282.600772760117  1 :  672.4665926591232  2 :  1.0184504457508725  3 :  456.23989887097684
+        34 : 0 :  336.16347186680395  1 :  815.4081205377772  2 :  1.018182736077667  3 :  512.0488084792395
+        35 : 0 :  512.900602231961  1 :  822.0984749368312  2 :  1050.2117342333513  3 :  714.5331073511443
+        36 : 0 :  523.2770344805032  1 :  1.00000472052998  2 :  505.4471814789766  3 :  499.8192178170176
+
+
+
+
+Algorithm:
+
+    ######################################
+    ## LONR Bandit
+    ######################################
+    def _lonr_train(self, t):
+
+        # Set start state or randomize start state
+        currentState = self.M.startState
+
+
+        # Settings
+        done = False
+
+        # Episode loop - until terminal state is reached
+        while done == False:
+
+
+            # Force terminal to be correct value based on reward
+            if self.M.isTerminal(currentState):
+                for a in self.M.getActions(currentState, n):
+                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
+                    self.M.Q[n][currentState][a] = self.M.Q_bu[n][currentState][a]
+                done = True
+                continue
+
+            # everything done in exp3, just get the action it used
+            # Note: return action and state for non-determinism (might be different here)
+            nextAction = self.exp3(currentState, t)
+
+            # This is "safe" for now since determnism
+            s_prime = self.M.getMove(currentState, nextAction)
+
+            rew = self.M.getReward(currentState, nextAction, 0, 0)
+
+            Value = 0.0
+            for a_prime in self.M.getActions(s_prime, n):
+                Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
+
+            x = rew + self.gamma * Value
+
+            # Doing the division by pi in exp3 so not here as well
+            self.M.Q_bu[0][currentState][nextAction] = self.alpha*x + (1.0 - self.alpha)*self.M.Q[0][currentState][nextAction]
+
+            # Update Q for currentState, nextAction
+            #  - Set to 0 for all other actions
+            for aa in self.M.Q[0][currentState].keys():
+
+                if aa == nextAction:
+                    self.M.Q[0][currentState][aa] = self.M.Q_bu[0][currentState][aa]
+                else:
+                    self.M.Q[0][currentState][aa] = 0.0
+                    self.M.Q_bu[0][currentState][aa] = 0.0
+
+            # Actually move to the next state
+            nextState = self.M.getMove(currentState, nextAction)
+            currentState = nextState
+
+
+    # This is getting the probability distribution based on the weights
+    # exponents of weights stored only to prevent overflow
+    def distr(self, weights, gamma=0.0):
+
+        theSum = 0.0
+        theWeights = []
+        for w in weights:
+            theSum += math.exp(w)
+            theWeights.append(math.exp(w))
+
+        rl = []
+
+        for w in theWeights:
+            value = (1.0 - gamma) * (w / theSum) + (gamma / len(weights))
+            rl.append(value)
+        return rl
+
+
+    def exp3(self, currentState, t):
+
+        rewardMin = -1.0
+        rewardMax = 10.0
+
+        numActions = 4.0
+        n = 0
+        gamma = 0.2 #exp3gamma
+        maxGap = 20.0
+
+
+        # Find max weight
+        weights = []
+        maxWeight = -10000000
+        for w in sorted(self.M.weights[n][currentState].keys()):
+            if self.M.weights[n][currentState][w] > maxWeight:
+                maxWeight = self.M.weights[n][currentState][w]
+
+        # Find the cutoff
+        maxWeightGap = maxWeight - maxGap
+
+        # Only consider those above the cutoff
+        # - also only use the difference between weight and cutoff (max exponent will be maxGap=20)
+        for w in sorted(self.M.weights[n][currentState].keys()):
+            if self.M.weights[n][currentState][w] > maxWeightGap:
+                weights.append(self.M.weights[n][currentState][w] - maxWeightGap)
+            else:
+                weights.append(0.0)
+
+
+        # Get probDist from weights
+        pd = self.distr(weights, gamma)
+
+
+
+        # Dist without randomness (for final pi sum calc)
+        piSUMDist = self.distr(weights, gamma=1.0)
+
+        # set pi as probDistbution
+        probActions = []
+        for a in sorted(self.M.pi[n][currentState].keys()):
+            if self.M.weights[n][currentState][a] > maxWeightGap:
+                self.M.pi[n][currentState][a] = pd[a]
+                self.M.pi_sums[n][currentState][a] += piSUMDist[int(a)] #adding l.h.s of equation to pi_sums
+            else:
+                self.M.pi[n][currentState][a] = pd[a]
+
+        # Select a random action from pd
+        randomAction = np.random.choice([0,1,2,3], p=pd)
+
+
+        #Observe reward for action randomAction
+        rew = self.M.getReward(currentState, randomAction, 0, 0)
+        s_prime = self.M.getMove(currentState, randomAction)
+        Value = 0.0
+        for a_prime in sorted(self.M.getActions(s_prime, n)):
+            Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
+
+        # This is the entire "reward", taken from paper
+        x = rew + self.gamma*Value
+
+        # Scale the reward
+        scaledReward = (x - rewardMin) / (rewardMax - rewardMin)
+        if scaledReward > 1.0 and t % 2000 == 0:
+            print("SCALED REWARD: ",scaledReward, " currentState: ", currentState)
+        if scaledReward < 0 and t % 2000 == 0:
+            print("SCALED REWARD: ", scaledReward, " currentState: ", currentState)
+
+
+        # Get expected reward
+        runningEstimatedReward = scaledReward / pd[randomAction]
+
+
+        for r in sorted(self.M.runningRewards[0][currentState].keys()):
+            if r == randomAction:
+                self.M.Q_bu[0][currentState][r] = runningEstimatedReward# / self.M.pi[n][currentState][r]
+            else:
+                self.M.Q_bu[0][currentState][r] = 0.0
+
+
+
+        # Set Weight for t+1
+        # w_t+1() = w_t()e^(x_hat * gamma / K) = 1.0 ^ e^A * e^b
+        # Keep sum of weights and put in exponent when calculating prob dist above
+        for j in sorted(self.M.weights[0][currentState].keys()):
+            if j == randomAction:
+                self.M.weights[0][currentState][j] += self.M.Q_bu[0][currentState][j] * gamma / float(numActions)
+
+
+        return randomAction
