@@ -218,7 +218,7 @@ class LONR(object):
                     Value += prob * (reww + self.gamma * tempValue)
 
             self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha) * Value
-            print("Q: ", self.M.Q_bu[n][s][a_current], " VALUE: ", Value)
+            # print("Q: ", self.M.Q_bu[n][s][a_current], " VALUE: ", Value)
 
     def QBackup(self, n, WW=None):
 
@@ -226,7 +226,7 @@ class LONR(object):
         #
         for s in self.M.getStates():
             for a in self.M.getActions(s, n):
-                print("QQ: ",  self.M.Q[n][s][a], " QQBU: ", self.M.Q_bu[n][s][a])
+                #print("QQ: ",  self.M.Q[n][s][a], " QQBU: ", self.M.Q_bu[n][s][a])
                 self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
 
                 self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
@@ -296,13 +296,16 @@ class LONR(object):
             rgrt_sum = 0.0
             for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
                 rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
-
+                # if np.random.randint(0, 100) < 5:
+                #     print("REGRET SUM REMINDER")
             # Check if this is a "trick"
             # Check if this can go here or not
             if rgrt_sum > 0:
                 self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
             else:
+                #print("REG SUMS: ", rgrt_sum)
                 self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(self.M.getStateRep(currentState), n))
+                #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
 
             # Add to policy sum
             if self.DCFR or self.RMPLUS:
@@ -1550,6 +1553,9 @@ class LONR_B(LONR):
                     self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
                     self.M.QTouched[0][currentState][aa] += 1.0
                 else:
+                    ddd = 3
+                    # self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
+                    # self.M.QTouched[0][currentState][aa] += 1.0
                     self.M.Q[0][currentState][aa] = 0.0
                     self.M.Q_bu[0][currentState][aa] = 0.0
 
@@ -1607,13 +1613,13 @@ class LONR_B(LONR):
         else:
             verbose = False
 
-        rewardMin = -1.0
-        rewardMax = 10.0
+        rewardMin = -11.0# -1.0
+        rewardMax = 100.0
 
         numActions = 4.0
         n = 0
-        gamma = 0.2
-        maxGap = 20.0
+        gamma = 0.1
+        maxGap = 10.0
 
 
 
@@ -1677,9 +1683,9 @@ class LONR_B(LONR):
 
         # Scale the reward
         scaledReward = (x - rewardMin) / (rewardMax - rewardMin)
-        if scaledReward > 1.0 and t % 2000 == 0:
+        if scaledReward > 1.0:# and t % 2000 == 0:
             print("SCALED REWARD: ",scaledReward, " currentState: ", currentState)
-        if scaledReward < 0 and t % 2000 == 0:
+        if scaledReward < 0:# and t % 2000 == 0:
             print("SCALED REWARD: ", scaledReward, " currentState: ", currentState)
         # x = max(x, 0.0)
         # x = min(x, 1.0)

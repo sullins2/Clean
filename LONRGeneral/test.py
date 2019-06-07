@@ -18,10 +18,11 @@ from LONRGeneral.TigerGame import *
 # parameters = {'alpha': 1.0, 'epsilon': None, 'gamma': 1.0}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
 #
-# lonrAgent = LONR_V(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+# lonrAgent = LONR_V(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
 # # Train via VI
-# lonrAgent.lonr_train(iterations=550, log=150)
+# iters=4000
+# lonrAgent.lonr_train(iterations=iters, log=1250)
 # print("[North, East, South, West]")
 # print("Note: these are Q, not QAvg")
 # print("Q for: Bottom left (start state)")
@@ -30,6 +31,17 @@ from LONRGeneral.TigerGame import *
 # print("Q for: State above bottom right terminal")
 # print(gridMDP.Q[0][35])
 # print("End GridWorld VI with determism")
+#
+# print("Q Avg")
+# for k in sorted(gridMDP.QSums[0].keys()):
+#     tot = 0.0
+#     print(k, ": ", end='')
+#     for kk in gridMDP.QSums[0][k].keys():
+#         touched = iters #gridMDP.QTouched[0][k][kk]
+#         #if touched == 0: touched = 1.0
+#         print(kk, ": ", gridMDP.QSums[0][k][kk] / touched, " ", end='')
+#     print("")
+#
 
 #########################################################################
 # print("")
@@ -581,17 +593,18 @@ from LONRGeneral.TigerGame import *
 # CONTINUE HERE WITH LONR-B 5/30
 #
 print("Begin GridWorld VI with non-determinism")
-gridMDP = Grid(noise=0.0, startState=36)
+gridMDP = Grid(noise=0.0, startState=15)
 
 # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
-parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.99999999}
+parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.99999}
 regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
 
 # Train via VI
-iters = 40000
+iters = 30000#4400
 lonrAgent.lonr_train(iterations=iters, log=1500)
-
+#49 83
+# 66 93
 print("[North, East, South, West]")
 print("Note: these are Q, not QAvg")
 print("Q for: Bottom left (start state) (West opt = 170.23]")
