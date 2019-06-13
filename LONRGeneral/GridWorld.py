@@ -34,10 +34,10 @@ class Grid(MDP):
 
         # Dimensions
         self.rows = 4
-        self.cols = 5
+        self.cols = 12
 
         # self.rows = 3  #THIS IS EXP3
-        # self.cols = 4
+        # self.cols = 5
 
         self.numberOfStates = self.rows * self.cols
         self.numberOfActions = 4
@@ -58,10 +58,10 @@ class Grid(MDP):
         #              ' ', ' ', ' ', ' ', ' ',
         #              ' ', -1, -1, -1, 10]
         #
-        self.grid = [' ', ' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ', ' ',
-                     ' ', ' ', ' ', ' ', ' ',
-                     ' ', -1, -1, -1, 100]
+        # self.grid = [' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ',
+        #              ' ', -1, -1, -1, 100]
         #
         # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
@@ -75,6 +75,16 @@ class Grid(MDP):
 
         # Q
         self.Q = {}
+
+        self.QA = {}
+        self.QB = {}
+        self.QA_bu = {}
+        self.QB_bu = {}
+        self.QASums = {}
+        self.QBSums = {}
+        self.QATouched = {}
+        self.QBTouched = {}
+
         self.Q_bu = {}
         self.QSums = {}
         self.QSum = []
@@ -95,6 +105,17 @@ class Grid(MDP):
 
         for n in range(self.N):
             self.Q[n] = {}
+
+            # Double Q Learning
+            self.QA[n] = {}
+            self.QB[n] = {}
+            self.QA_bu[n] = {}
+            self.QB_bu[n] = {}
+            self.QASums[n] = {}
+            self.QATouched[n] = {}
+            self.QBSums[n] = {}
+            self.QBTouched[n] = {}
+
             self.Q_bu[n] = {}
             self.QSums[n] = {}
             self.QTouched[n] = {}
@@ -110,6 +131,16 @@ class Grid(MDP):
                 self.QSums[n][s] = {}
                 self.QTouched[n][s] = {}
 
+                # Double Q Learning
+                self.QA[n][s] = {}
+                self.QB[n][s] = {}
+                self.QA_bu[n][s] = {}
+                self.QB_bu[n][s] = {}
+                self.QASums[n][s] = {}
+                self.QATouched[n][s] = {}
+                self.QBSums[n][s] = {}
+                self.QBTouched[n][s] = {}
+
                 self.pi[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
@@ -120,6 +151,16 @@ class Grid(MDP):
                     self.Q_bu[n][s][a] = 0.0
                     self.QSums[n][s][a] = 0.0
                     self.QTouched[n][s][a] = 0.0
+
+                    # Double Q
+                    self.QA[n][s][a] = 0.0
+                    self.QB[n][s][a] = 0.0
+                    self.QA_bu[n][s][a] = 0.0
+                    self.QB_bu[n][s][a] = 0.0
+                    self.QASums[n][s][a] = 0.0
+                    self.QATouched[n][s][a] = 0.0
+                    self.QBSums[n][s][a] = 0.0
+                    self.QBTouched[n][s][a] = 0.0
 
                     self.pi[n][s][a] = 1.0 / len(self.getActions(s, 0)) # uniform init
                     self.regret_sums[n][s][a] = 0.0

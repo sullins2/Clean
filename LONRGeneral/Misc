@@ -1129,3 +1129,63 @@ Plotting stuff:
 #                     nextStates.append(ns)
 #                     nextStateProbs.append(nsp)
 #                 currentState = np.random.choice(nextStates, p=nextStateProbs)
+
+
+
+
+##########################################################################################
+
+# NOSDE LP
+# A = [[0, 1.5], [3, 1], [1, 0], [1, 1]]
+# def ce(A, solver=None):
+#     num_vars = len(A)
+#     # maximize matrix c
+#     c = [sum(i) for i in A] # sum of payoffs for both players
+#     c = np.array(c, dtype="float")
+#     c = matrix(c)
+#     c *= -1 # cvxopt minimizes so *-1 to maximize
+#     # constraints G*x <= h
+#     G = build_ce_constraints(A=A)
+#     G = np.vstack([G, np.eye(num_vars) * -1]) # > 0 constraint for all vars
+#     h_size = len(G)
+#     G = matrix(G)
+#     h = [0 for i in range(h_size)]
+#     h = np.array(h, dtype="float")
+#     h = matrix(h)
+#     # contraints Ax = b
+#     A = [1 for i in range(num_vars)]
+#     A = np.matrix(A, dtype="float")
+#     A = matrix(A)
+#     b = np.matrix(1, dtype="float")
+#     b = matrix(b)
+#     sol = solvers.lp(c=c, G=G, h=h, A=A, b=b, solver=solver)
+#     return sol
+#
+# def build_ce_constraints(A):
+#     num_vars = int(len(A) ** (1/2))
+#     G = []
+#     # row player
+#     for i in range(num_vars): # action row i
+#         for j in range(num_vars): # action row j
+#             if i != j:
+#                 constraints = [0 for i in A]
+#                 base_idx = i * num_vars
+#                 comp_idx = j * num_vars
+#                 for k in range(num_vars):
+#                     constraints[base_idx+k] = (- A[base_idx+k][0] + A[comp_idx+k][0])
+#                 G += [constraints]
+#     # col player
+#     for i in range(num_vars): # action column i
+#         for j in range(num_vars): # action column j
+#             if i != j:
+#                 constraints = [0 for i in A]
+#                 for k in range(num_vars):
+#                     constraints[i + (k * num_vars)] = (
+#                         - A[i + (k * num_vars)][1]
+#                         + A[j + (k * num_vars)][1])
+#                 G += [constraints]
+#     return np.matrix(G, dtype="float")
+#
+# sol = ce(A=A, solver="glpk")
+# probs = sol["x"]
+# print(probs)

@@ -6,8 +6,8 @@ import numpy as np
 
 class NoSDE(MDP):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, startState=1):
+        super().__init__(startState=startState)
 
         # Two player MG
         self.N = 2
@@ -24,11 +24,15 @@ class NoSDE(MDP):
         self.pi_sums = {}
         self.regret_sums = {}
         self.QTouched = {}
+
+        self.weights = {}
+
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
             self.QSums[n] = {}
             self.QTouched[n] = {}
+            self.weights[n] = {}
 
             self.pi[n] = {}
             self.pi_sums[n] = {}
@@ -41,6 +45,7 @@ class NoSDE(MDP):
                 self.pi[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
+                self.weights[n][s] = {}
                 for a in self.getActions(s, n):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
@@ -49,6 +54,7 @@ class NoSDE(MDP):
                     self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
                     self.regret_sums[n][s][a] = 0.0
                     self.pi_sums[n][s][a] = 0.0
+                    self.weights[n][s][a] = 1.0
 
     def getActions(self, s, n):
         # Left state
@@ -76,37 +82,40 @@ class NoSDE(MDP):
     # Need to fix this entire function here and in general.
     def getReward(self, s, a_current, n, a_notN):
 
-        return None
         #return 0.0
         #Left state
-        # if s == 1:
-        #     # Player0
-        #     if n == 0:
-        #         if a_current == "KEEP":
-        #             return 1.0
-        #         elif a_current == "SEND":
-        #             return 0.0
-        #
-        #     if n == 1:
-        #         if a_current == "KEEP":
-        #             return 0.0
-        #         elif a_current == "SEND":
-        #             return 3.0
-        # # Right state
-        # elif s == 2:
-        #     # Player0
-        #     if n == 0:
-        #         if a_current == "KEEP":
-        #             return 3.0
-        #         elif a_current == "SEND":
-        #             return 0.0
-        #     # Player1
-        #     elif n == 1:
-        #         if a_current == "KEEP":
-        #             return 1.0
-        #         elif a_current == "SEND":
-        #             return 0.0
-        #
+        if s == 1:
+            # Player0
+            if n == 0:
+                if a_current == "KEEP":
+                    return 1.0
+                elif a_current == "SEND":
+                    return 0.0
+
+            if n == 1:
+                if a_current == "KEEP":
+                    return 0.0
+                elif a_current == "SEND":
+                    return 3.0
+        # Right state
+        elif s == 2:
+            # Player0
+            if n == 0:
+                if a_current == "KEEP":
+                    return 3.0
+                elif a_current == "SEND":
+                    return 0.0
+            # Player1
+            elif n == 1:
+                if a_current == "KEEP":
+                    return 1.0
+                elif a_current == "SEND":
+                    return 0.0
+
+        elif a_current == "NOOP":
+            return 0.0
+
+        print("GETREWARD missed: n: ", n, " s: ", s, " a_current: ", a_current)
         # #Left State
         # if n == 0:
         #     notN = 1
@@ -184,3 +193,18 @@ class NoSDE(MDP):
 
     def isTerminal(self, s):
         return False
+
+    def getMove(self, s, action):
+        if s == 1 and action == "KEEP":
+            return 1
+        elif s == 1 and action == "SEND":
+            return 2
+        elif s == 2 and action == "NOOP":
+           return 2
+        elif s == 2 and action == "KEEP":
+            return 2
+        elif s == 2 and action == "SEND":
+            return 1
+        elif s == 1 and action == "NOOP":
+           return 1
+        print("GETMOVE() missed:  s: ", s, "  action: ",action)

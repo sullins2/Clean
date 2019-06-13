@@ -178,6 +178,183 @@ class LONR(object):
     def _lonr_train(self, t):
         raise NotImplementedError("Please implement _lonr_train method")
 
+
+    def normalize_pi_sums(self, takeMax=False):
+        if takeMax == False:
+            for k in sorted(self.M.pi_sums[0].keys()):
+                tot = 0.0
+                for kk in self.M.pi_sums[0][k].keys():
+                    tot += self.M.pi_sums[0][k][kk]
+                if tot == 0: tot = 1.0
+                for kk in self.M.pi_sums[0][k].keys():
+                    self.M.pi_sums[0][k][kk] = self.M.pi_sums[0][k][kk] / tot
+        # Make max = 1.0, else 0.0
+        else:
+            for k in sorted(self.M.pi_sums[0].keys()):
+                maxPi = 0.0
+                maxAction = 0
+
+                for kk in self.M.pi_sums[0][k].keys():
+                    if self.M.pi_sums[0][k][kk] > maxPi:
+                        maxPi = self.M.pi_sums[0][k][kk]
+                        maxAction = kk
+                #if tot == 0: tot = 1.0
+                for kk in self.M.pi_sums[0][k].keys():
+                    if kk == maxAction:
+                        self.M.pi_sums[0][k][kk] = 1.0
+                    else:
+                        self.M.pi_sums[0][k][kk] = 0.0
+                        # self.M.pi_sums[0][k][kk] = self.M.pi_sums[0][k][kk] / tot
+
+
+    def DoubleQUpdate(self, n, s, a_current2, randomS=None):
+
+        # print("IN:  s: ", s, " RANDOMS: ", randomS)
+        qID = np.random.randint(0,2)
+        for a_current in a_current2:
+
+            if self.M.isTerminal(s):
+
+                # Value iteration
+                reward = self.M.getReward(s, a_current, 0, 0)
+                # if reward == None:
+                #     reward = 0.0
+                if qID == 0:
+                    self.M.QA_bu[n][s][a_current] = reward
+                else:
+                    self.M.QB_bu[n][s][a_current] = reward
+                # self.M.Q_bu[n][s][a_current] = reward
+                continue
+
+
+            # Get next states and transition probs for MDP
+            # Get next states and other players policy for MG
+            succs = self.M.getNextStatesAndProbs(s, a_current, n)
+            # print("s: ", s, " a:", a_current, "   succs: ", succs)
+
+            # print("  SUCCS: ", succs)
+            Value = 0.0
+
+            # Loop thru each next state and prob
+            for s_prime, prob, reward in succs:
+                # print(" - s_prime: ", s_prime, "  prob: ", prob, "  reward: ", reward)
+                tempValue = 0.0
+
+                # Loop thru actions in s_prime for player n
+                for a_current_prime in self.M.getActions(s_prime, n):
+                    if qID == 0:
+                        tempValue += self.M.QB[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
+                    else:
+                        tempValue += self.M.QA[n][self.M.getStateRep(s_prime)][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
+
+                reww = self.M.getReward(s, a_current, n, 0)
+
+                if reww is None:
+                    Value += prob * (reward + self.gamma * tempValue)
+                else:
+                    Value += prob * (reww + self.gamma * tempValue)
+
+            if qID == 0:
+                self.M.QA_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.QA[n][self.M.getStateRep(s)][a_current] + (self.alpha) * Value
+            else:
+                self.M.QB_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.QB[n][self.M.getStateRep(s)][a_current] + (self.alpha) * Value
+            self.M.QASums[n][self.M.getStateRep(s)][a_current] += self.M.QA[n][self.M.getStateRep(s)][a_current]
+            self.M.QBSums[n][self.M.getStateRep(s)][a_current] += self.M.QB[n][self.M.getStateRep(s)][a_current]
+            self.M.QATouched[n][self.M.getStateRep(s)][a_current] += 1.0
+            self.M.QBTouched[n][self.M.getStateRep(s)][a_current] += 1.0
+
+    def DoubleQBackup(self, n, WW=None):
+
+        # def QBackup(self, n, WW=None):
+        #
+        for s in self.M.getStates():
+            for a in self.M.getActions(s, n):
+                #print("QQ: ",  self.M.Q[n][s][a], " QQBU: ", self.M.Q_bu[n][s][a])
+                self.M.QA[n][s][a] = self.M.QA_bu[n][s][a]
+                self.M.QB[n][s][a] = self.M.QB_bu[n][s][a]
+
+                # self.M.QASums[n][self.M.getStateRep(s)][a] += self.M.QA[n][self.M.getStateRep(s)][a]
+                # self.M.QBSums[n][self.M.getStateRep(s)][a] += self.M.QB[n][self.M.getStateRep(s)][a]
+
+
+    def DoubleQregretUpdate(self, n, currentState, t):
+
+        qID = np.random.randint(0, 2)
+        iters = t + 1
+        alphaR = 3.0 / 2.0  # accum pos regrets
+        betaR = 0.0  # accum neg regrets
+        gammaR = 2.0  # contribution to avg strategy
+
+        alphaW = pow(iters, self.alphaDCFR)
+        alphaWeight = (alphaW / (alphaW + 1))
+
+        betaW = pow(iters, self.betaDCFR)
+        betaWeight = (betaW / (betaW + 1))
+
+        gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
+
+        # Calculate regret - this variable name needs a better name
+        target = 0.0
+
+        # Skip terminal states
+        if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+            return
+
+        for a in self.M.getActions(currentState, n):
+            if qID == 0:
+                target += self.M.QA[n][self.M.getStateRep(currentState)][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+            else:
+                target += self.M.QB[n][self.M.getStateRep(currentState)][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+        for a in self.M.getActions(currentState, n):
+            if qID == 0:
+                action_regret = self.M.QA[n][self.M.getStateRep(currentState)][a] - target
+            else:
+                action_regret = self.M.QB[n][self.M.getStateRep(currentState)][a] - target
+
+            if self.DCFR or self.RMPLUS:
+                if action_regret > 0:
+                    action_regret *= alphaWeight
+                else:
+                    action_regret *= betaWeight
+
+            # RMPLUS = False
+            if self.RMPLUS:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            else:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+
+        # Skip terminal states
+        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+        #     continue
+
+        for a in self.M.getActions(self.M.getStateRep(currentState), n):
+
+            if self.M.isTerminal(currentState):
+                continue
+            # Sum up total regret
+            rgrt_sum = 0.0
+            for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+                rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+                # if np.random.randint(0, 100) < 5:
+                #     print("REGRET SUM REMINDER")
+            # Check if this is a "trick"
+            # Check if this can go here or not
+            if rgrt_sum > 0:
+                self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+            else:
+                #print("REG SUMS: ", rgrt_sum)
+                self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(self.M.getStateRep(currentState), n))
+                #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
+
+            # Add to policy sum
+            if self.DCFR or self.RMPLUS:
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
+            else:
+
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+
     def QUpdate(self, n, s, a_current2, randomS=None):
 
         # print("IN:  s: ", s, " RANDOMS: ", randomS)
@@ -219,6 +396,10 @@ class LONR(object):
 
             self.M.Q_bu[n][self.M.getStateRep(s)][a_current] = (1.0 - self.alpha) * self.M.Q[n][self.M.getStateRep(s)][a_current] + (self.alpha) * Value
             # print("Q: ", self.M.Q_bu[n][s][a_current], " VALUE: ", Value)
+            self.M.QSums[n][self.M.getStateRep(s)][a_current] += self.M.Q[n][self.M.getStateRep(s)][a_current]
+            # self.M.QBSums[n][self.M.getStateRep(s)][a_current] += self.M.QB[n][self.M.getStateRep(s)][a_current]
+            self.M.QTouched[n][self.M.getStateRep(s)][a_current] += 1.0
+            #self.M.QBTouched[n][self.M.getStateRep(s)][a_current] += 1.0
 
     def QBackup(self, n, WW=None):
 
@@ -229,7 +410,7 @@ class LONR(object):
                 #print("QQ: ",  self.M.Q[n][s][a], " QQBU: ", self.M.Q_bu[n][s][a])
                 self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
 
-                self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
+                # self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
 
         # if WW is None:
         #     for s in self.M.getStates():
@@ -353,7 +534,13 @@ class LONR(object):
             # if self.RMPLUS:
             if a != action: continue
 
-            self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            if action_regret > 0:
+                action_regret *= alphaWeight
+            else:
+                action_regret *= betaWeight
+
+            # self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret
             # else:
             # self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret * gammaWeight
 
@@ -550,6 +737,72 @@ class LONR(object):
 
 
 
+class LONR_DOUBLEQ(LONR):
+    def __init__(self, M=None, parameters=None, regret_minimizers=None, dcfr=None, randomize=True):
+        super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+
+    ################################################################
+    # LONR Value Iteration
+    ################################################################
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+        if log != -1: print("Starting training..")
+
+        for t in range(1, iterations + 1):
+
+            if (t + 0) % log == 0:
+                print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma)
+
+            # Call one full update via LONR-V
+            self._lonr_train(t=t)
+
+            # No-op unless alphaDecay is not 1.0
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
+
+            if randomize:
+                if self.M.version == 1:
+                    self.M.version = 2
+                else:
+                    self.M.version = 1
+
+        if log != -1: print("Finish Training")
+
+    ######################################
+    ## Double q train
+    ######################################
+    def _lonr_train(self, t):
+        """ One full update via LONR-V
+        """
+
+        # Q Update
+
+        for n in range(self.M.N):
+
+            # Loop through all states
+            for s in self.M.getStates():
+
+                if self.M.isTerminal(s):
+                    a = self.M.getActions(s, 0)
+                    self.DoubleQUpdate(n, s, a, randomS=s)
+
+                    continue
+
+                # Loop through actions of current player n
+                # for a in self.M.getActions(s, n):
+                a = self.M.getActions(self.M.getStateRep(s), n)
+                # if self.randomize == False:
+                self.DoubleQUpdate(n, s, a, randomS=None)
+                # else:
+                #    self.QUpdate(n, s=s, a_current2=a, randomS=s)
+
+        # Q Backup
+        for n in range(self.M.N):
+            self.DoubleQBackup(n)
+
+        for n in range(self.M.N):
+            for s in self.M.getStates():
+                self.DoubleQregretUpdate(n, s, t)
 
 ################################################################
 # LONR Value Iteration
@@ -1467,12 +1720,16 @@ class LONR_B(LONR):
         # 1. Set all weights to 1.0 (done in GridWorld MDP)
 
 
-    ################################################################
-    # LONR Bandit
-    ################################################################
-    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+    def lonr_policy_eval(self, iterations=-1, log=-1, randomize=False):
+        if log != -1: print("Starting eval..")
 
-        if log != -1: print("Starting training..")
+        for n in range(self.M.N):
+            for s in self.M.getStates():
+                for a in self.M.getActions(s, n):
+                    self.M.Q[n][s][a] = 0.0
+                    self.M.Q_bu[n][s][a] = 0.0
+                    self.M.QSums[n][s][a] = 0.0
+                    self.M.QTouched[n][s][a] = 0.0
 
         self.totalIterations = iterations
 
@@ -1482,8 +1739,151 @@ class LONR_B(LONR):
                 print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma)
 
             # Call one full update via LONR-V
+            self._lonr_policy_eval(t=t)
+
+            # print("Q    : ", self.M.Q)
+            # print("QBU  : ", self.M.Q_bu)
+            # print("QSums: ", self.M.QSums)
+
+            # No-op unless alphaDecay is not 1.0
+            # self.alpha *= self.alphaDecay
+            # self.alpha = max(0.0, self.alpha)
+            #
+            # if randomize:
+            #     if self.M.version == 1:
+            #         self.M.version = 2
+            #     else:
+            #         self.M.version = 1
+
+        if log != -1: print("Finish Training")
+
+
+    def _lonr_policy_eval(self, t):
+
+
+        # Set start state or randomize start state
+        currentState = self.M.startState
+
+        # Settings
+        done = False
+        n = 0  # One player
+        nextAction = None
+
+        # Episode loop - until terminal state is reached
+        while done == False:
+
+            #print("Current state: ", currentState, " nextAction: ", nextAction, " t: ", t)
+
+            # Periodic output
+            if t % 12500 == 0:
+                verbose = True
+            else:
+                verbose = False
+
+            # Force terminal to be correct value based on reward
+            if self.M.isTerminal(currentState):
+                for a in self.M.getActions(currentState, n):
+                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
+                    self.M.Q[n][currentState][a] = self.M.Q_bu[n][currentState][a]
+                    self.M.QSums[0][currentState][a] += self.M.Q[0][currentState][a]
+                    self.M.QTouched[0][currentState][a] += 1.0
+                done = True
+                continue
+
+            # everything done in exp3, just get the action it used
+            # Note: return action and state for non-determinism (might be different here)
+            probList = []
+            for gg in self.M.getActions(currentState, n):
+                probList.append(self.M.pi_sums[n][currentState][gg])
+
+
+            if len(self.M.getActions(currentState, n)) > 1:
+                nextAction = np.random.choice([0,1,2,3], p=probList)
+                #nextAction = np.argmax(probList)
+            else:
+                nextAction = "exit"
+
+
+            #nextAction = self.exp3(currentState, t)
+
+            s_prime = self.M.getMove(currentState, nextAction)
+            # print("Current state: ", currentState, " looking at ", s_prime)
+
+            rew = self.M.getReward(currentState, nextAction, 0, 0)
+
+            Value = 0.0
+            for a_prime in self.M.getActions(s_prime, n):
+                # print("  Qvalue: ", self.M.Q[n][s_prime][a_prime], " a_prime: ", a_prime)
+                # print("  pisums: ", self.M.pi_sums[n][s_prime][a_prime], " a_prime: ", a_prime)
+                Value += self.M.pi_sums[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
+
+            # print("     rew: ", rew)
+            # print("     Val: ", Value)
+            x = rew + self.gamma * Value
+
+
+            self.M.Q_bu[0][currentState][nextAction] = self.alpha * x + (1.0 - self.alpha) * self.M.Q[0][currentState][nextAction]  # (rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
+
+            # print("X  : ", x)
+            # print("Q  : ", self.M.Q[0][currentState][nextAction])
+            # print("QBU: ", self.M.Q_bu[0][currentState][nextAction])
+
+            for aa in self.M.Q[0][currentState].keys():
+
+                # if aa == nextAction:
+                self.M.Q[0][currentState][aa] = self.M.Q_bu[0][currentState][aa]
+                self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
+                #print("QSUMS: ", self.M.QSums[0][currentState][aa] )
+                self.M.QTouched[0][currentState][aa] += 1.0
+                # else:
+                #     ddd = 3
+                #     # self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
+                #     # self.M.QTouched[0][currentState][aa] += 1.0
+                #     self.M.Q[0][currentState][aa] = 0.0
+                #     self.M.Q_bu[0][currentState][aa] = 0.0
+
+            if verbose: print("")
+            if verbose: print("Current State: ", currentState, "  currentAction: ", nextAction, " t=", t)
+
+            nextState = self.M.getMove(currentState, nextAction)
+            currentState = nextState
+
+    ################################################################
+    # LONR Bandit
+    ################################################################
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+        if log != -1: print("Starting training..")
+
+        self.totalIterations = iterations
+
+        self.exp3gamma = 1.0
+
+        for t in range(1, iterations + 1):
+
+            if (t + 0) % log == 0:
+                print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma, " exp3gamma: ", self.exp3gamma)
+
+            # Call one full update via LONR-V
             self._lonr_train(t=t)
 
+            self.exp3gamma = np.around(1.0 - (t / self.totalIterations), decimals=1)
+            self.exp3gamma = max(self.exp3gamma, 0.14)
+            self.exp3gamma = 0.1270268496
+            self.alpha = 0.99#1.0 - (t / self.totalIterations)
+
+            # cc = np.random.randint(0, 3)
+            # if t < (self.totalIterations / 2):
+            #     if cc == 0:
+            #         self.exp3gamma = 0.9
+            #     elif cc == 1:
+            #         self.exp3gamma = 0.05
+            #     else:
+            #         self.exp3gamma = 0.1270268496
+            # else:
+            #     self.exp3gamma = 0.1270268496
+
+            # self.exp3gamma = max(self.exp3gamma, 0.1)
             # No-op unless alphaDecay is not 1.0
             # self.alpha *= self.alphaDecay
             # self.alpha = max(0.0, self.alpha)
@@ -1510,29 +1910,30 @@ class LONR_B(LONR):
         done = False
         n = 0  # One player
         nextAction = None
-
+        ttt = 0
         # Episode loop - until terminal state is reached
         while done == False:
 
             # Periodic output
-            if t % 12500 == 0:
-                verbose = True
-            else:
-                verbose = False
+            # if t % 32500 == 0:
+            verbose = True
+            # else:
+            #     verbose = False
 
             # Force terminal to be correct value based on reward
             if self.M.isTerminal(currentState):
                 for a in self.M.getActions(currentState, n):
                     self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
                     self.M.Q[n][currentState][a] = self.M.Q_bu[n][currentState][a]
-                    self.M.QSums[0][currentState][a] += self.M.Q[0][currentState][a]
-                    self.M.QTouched[0][currentState][a] += 1.0
+                    self.M.QSums[n][currentState][a] += self.M.Q[n][currentState][a]
+                    self.M.QTouched[n][currentState][a] += 1.0
+                    self.M.pi_sums[n][currentState][a] += self.M.pi[n][currentState][a]
                 done = True
                 continue
 
             # everything done in exp3, just get the action it used
             # Note: return action and state for non-determinism (might be different here)
-            nextAction = self.exp3(currentState, t)
+            nextAction = self.exp3(currentState,n, t)
 
             s_prime = self.M.getMove(currentState, nextAction)
 
@@ -1544,26 +1945,33 @@ class LONR_B(LONR):
 
             x = rew + self.gamma * Value
 
-            self.M.Q_bu[0][currentState][nextAction] = self.alpha*x + (1.0 - self.alpha)*self.M.Q[0][currentState][nextAction] #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
+            self.M.Q_bu[n][currentState][nextAction] = self.alpha*x + (1.0 - self.alpha)*self.M.Q[n][currentState][nextAction] #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
 
-            for aa in self.M.Q[0][currentState].keys():
+            for aa in self.M.Q[n][currentState].keys():
 
                 if aa == nextAction:
-                    self.M.Q[0][currentState][aa] = self.M.Q_bu[0][currentState][aa]
-                    self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
-                    self.M.QTouched[0][currentState][aa] += 1.0
+                    self.M.Q[n][currentState][aa] = self.M.Q_bu[n][currentState][aa]
+                    self.M.QSums[n][currentState][aa] += self.M.Q[n][currentState][aa]
+                    self.M.QTouched[n][currentState][aa] += 1.0
                 else:
                     ddd = 3
                     # self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
                     # self.M.QTouched[0][currentState][aa] += 1.0
-                    self.M.Q[0][currentState][aa] = 0.0
-                    self.M.Q_bu[0][currentState][aa] = 0.0
+                    self.M.Q[n][currentState][aa] = 0.0
+                    self.M.Q_bu[n][currentState][aa] = 0.0
 
             if verbose: print("")
             if verbose: print("Current State: ", currentState, "  currentAction: ", nextAction, " t=", t)
 
             nextState = self.M.getMove(currentState, nextAction)
             currentState = nextState
+            if currentState == 1:
+                n = 0
+            else:
+                n = 1
+            ttt += 1
+            if ttt > 1:
+                done = True
 
 
 
@@ -1602,24 +2010,24 @@ class LONR_B(LONR):
         # return list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
 
 
-    def exp3(self, currentState, t):
+    def exp3(self, currentState, n, t):
 
         # Keep around for decaying exp3 gamma
         #gamma = max(1.0 - (float(float(4.0/2.0)*t) / float(self.totalIterations)), 0.1)
 
         # Show occasional printout
-        if t % 12500 == 0:
-            verbose = True
-        else:
-            verbose = False
+        # if t % 12500 == 0:
+        verbose = True
+        # else:
+        #     verbose = False
 
-        rewardMin = -11.0# -1.0
-        rewardMax = 100.0
+        rewardMin = 0.0# -1.0
+        rewardMax = 3.0
 
-        numActions = 4.0
-        n = 0
-        gamma = 0.1
-        maxGap = 10.0
+        numActions = 2.0
+        #n = 0
+        gamma = self.exp3gamma#0.1
+        maxGap = 5.0
 
 
 
@@ -1628,6 +2036,7 @@ class LONR_B(LONR):
         weights = []
         maxWeight = -10000000
         if verbose: print("Weights: ")
+        print("N: ", n, " CS: ", currentState, " M: ", self.M.weights)
         for w in sorted(self.M.weights[n][currentState].keys()):
             if verbose: print("   ", w, ": ", self.M.weights[n][currentState][w])
             if self.M.weights[n][currentState][w] > maxWeight:
@@ -1658,27 +2067,35 @@ class LONR_B(LONR):
 
         # set pi as probDistbution
         probActions = []
+        aa = 0
         for a in sorted(self.M.pi[n][currentState].keys()):
-            if verbose: print("Setting pi of s: ", currentState, " a: ", a, " : ", pd[a])
+            if verbose: print("Setting pi of s: ", currentState, " a: ", a, " : ", pd[aa])
+            self.M.pi_sums[n][currentState][a] += piSUMDist2[aa]
             if self.M.weights[n][currentState][a] > maxWeightGap:
-                self.M.pi[n][currentState][a] = pd[a]
-                self.M.pi_sums[n][currentState][a] += piSUMDist[int(a)]
+                self.M.pi[n][currentState][a] = pd[aa]
+
             else:
-                self.M.pi[n][currentState][a] = pd[a]
+                self.M.pi[n][currentState][a] = pd[aa]
+            aa += 1
                 #self.M.pi_sums[n][currentState][a] += piSUMDist2[int(a)]
 
         # Select a random action from pd
-        randomAction = np.random.choice([0,1,2,3], p=pd)
+        acts = range(len(self.M.getActions(currentState, n)))
+        randomAction = np.random.choice(acts, p=pd)
         if verbose: print("Selected random action: ", randomAction)
 
+        randomActionIndex = randomAction
+        randomAction = self.M.getActions(currentState, n)[randomAction]
         #Observe reward for action randomAction
-        rew = self.M.getReward(currentState, randomAction, 0, 0)
+        rew = self.M.getReward(currentState, randomAction, n, n)
         s_prime = self.M.getMove(currentState, randomAction)
         Value = 0.0
+        print("THIS: ", self.M.getActions(s_prime, n), " sprime: ", s_prime)
         for a_prime in sorted(self.M.getActions(s_prime, n)):
             Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
 
         # This is the entire "reward", taken from paper
+        print(rew, Value)
         x = rew + self.gamma*Value
 
         # Scale the reward
@@ -1694,16 +2111,20 @@ class LONR_B(LONR):
         estimatedReward = scaledReward
 
 
-        runningEstimatedReward = estimatedReward / pd[randomAction]
+
+        runningEstimatedReward = estimatedReward / pd[randomActionIndex]
 
         # Find min weight
         # currentRunningWeights = []
-        for r in sorted(self.M.runningRewards[0][currentState].keys()):
+        for r in sorted(self.M.Q_bu[n][currentState].keys()):
             if r == randomAction:
-                self.M.runningRewards[0][currentState][r] += runningEstimatedReward# / self.M.pi[n][currentState][r]
-                self.M.Q_bu[0][currentState][r] = runningEstimatedReward# / self.M.pi[n][currentState][r]
+                # self.M.runningRewards[n][currentState][r] += runningEstimatedReward# / self.M.pi[n][currentState][r]
+
+                #avgReward = self.M.runningRewards[0][currentState][r] / t
+
+                self.M.Q_bu[n][currentState][r] = runningEstimatedReward# / self.M.pi[n][currentState][r]
             else:
-                self.M.Q_bu[0][currentState][r] = 0.0
+                self.M.Q_bu[n][currentState][r] = 0.0
 
 
 
@@ -1713,10 +2134,10 @@ class LONR_B(LONR):
         if verbose: print(runningEstimatedReward)
         for j in sorted(self.M.weights[0][currentState].keys()):
             if j == randomAction:
-                self.M.weights[0][currentState][j] += self.M.Q_bu[0][currentState][j] * gamma / float(numActions) #*= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
+                self.M.weights[n][currentState][j] += self.M.Q_bu[n][currentState][j] * gamma / float(numActions) #*= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
                 #self.M.weights[0][currentState][j] *= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
 
-        if verbose: print(self.M.weights[0][4])
+        # if verbose: print(self.M.weights[0][4])
 
         return randomAction
 
@@ -2017,6 +2438,296 @@ class LONR_B2(LONR):
 
         #return randomAction
 
+
+
+
+class LONR_RM(LONR):
+
+    def __init__(self, M=None, parameters=None, regret_minimizers=None):
+        super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers)
+
+    ################################################################
+    # LONR Bandit
+    ################################################################
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+        if log != -1: print("Starting training..")
+
+        self.totalIterations = iterations
+
+        self.exp3gamma = 1.0
+
+        for t in range(1, iterations + 1):
+
+            if (t + 0) % log == 0:
+                print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma, " exp3gamma: ",
+                      self.exp3gamma)
+
+            # Call one full update via LONR-V
+            self._lonr_train(t=t)
+
+            # self.alpha = 0.99  # 1.0 - (t / self.totalIterations)
+
+        if log != -1: print("Finish Training")
+
+    ######################################
+    ## LONR Bandit RM
+    ######################################
+    def _lonr_train(self, t):
+
+        # Set start state or randomize start state
+        currentState = self.M.startState
+        # currentState = np.random.randint(0, 37)
+
+        # Settings
+        done = False
+        n = 0  # One player
+        nextAction = None
+
+        # Episode loop - until terminal state is reached
+        while done == False:
+
+            # Periodic output
+            if t % 32500 == 0:
+                verbose = True
+            else:
+                verbose = False
+
+            # Force terminal to be correct value based on reward
+            if self.M.isTerminal(currentState):
+                for a in self.M.getActions(currentState, n):
+                    self.M.Q_bu[n][currentState][a] = self.M.getReward(currentState, a, 0, 0)
+                    self.M.Q[n][currentState][a] = self.M.Q_bu[n][currentState][a]
+                    self.M.QSums[0][currentState][a] += self.M.Q[0][currentState][a]
+                    self.M.QTouched[0][currentState][a] += 1.0
+                    self.M.pi_sums[n][currentState][a] += self.M.pi[n][currentState][a]
+                done = True
+                continue
+
+            # everything done in exp3, just get the action it used
+            # Note: return action and state for non-determinism (might be different here)
+            nextAction = self.RM_E(currentState, t)
+
+            s_prime = self.M.getMove(currentState, nextAction)
+
+            rew = self.M.getReward(currentState, nextAction, 0, 0)
+
+            Value = 0.0
+            for a_prime in self.M.getActions(s_prime, n):
+                Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
+
+            x = rew + self.gamma * Value
+
+            self.M.Q_bu[0][currentState][nextAction] = self.alpha * x + (1.0 - self.alpha) * self.M.Q[0][currentState][nextAction]  # (rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
+
+            for aa in self.M.Q[0][currentState].keys():
+
+                if aa == nextAction:
+                    self.M.Q[0][currentState][aa] = self.M.Q_bu[0][currentState][aa]
+                    self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
+                    self.M.QTouched[0][currentState][aa] += 1.0
+                else:
+                    ddd = 3
+                    # self.M.QSums[0][currentState][aa] += self.M.Q[0][currentState][aa]
+                    # self.M.QTouched[0][currentState][aa] += 1.0
+                    # self.M.Q[0][currentState][aa] = 0.0
+                    # self.M.Q_bu[0][currentState][aa] = 0.0
+
+            if verbose: print("")
+            if verbose: print("Current State: ", currentState, "  currentAction: ", nextAction, " t=", t)
+
+            self.regretUpdate2(n, currentState, t, nextAction)
+            #regretUpdate2(self, n, currentState, t, action)
+            nextState = self.M.getMove(currentState, nextAction)
+            currentState = nextState
+
+
+    def distr(self, weights, gamma=0.0):
+
+        rl = []
+        theSum = 0.0
+        theWeights = []
+        for w in weights:
+            theSum += w #max(w,0)  # math.exp(w)# * gamma / 4.0)
+
+        if theSum == 0:
+            for w in range(len(weights)):
+                value = 1.0 / 4.0
+                rl.append(value)
+                if np.random.randint(0, 20000) < 2:
+                    print("Returning uniform")
+            return rl
+
+        tempPi = []
+        leftOver = 0.0
+        for w in weights:
+            tempPi.append((1.0-gamma)*(max(w,0) / theSum))
+            leftOver += gamma * (max(w,0) / theSum)
+
+
+        for w in range(len(weights)):
+            value = (tempPi[w] / theSum) + (gamma / 4.0)
+            rl.append(value)
+
+        rl_norm = []
+        tot = 0.0
+        for w in range(len(rl)):
+            tot += rl[w]
+        if tot == 0:
+            tot = 1.0
+
+        for w in range(len(rl)):
+            rl_norm.append(rl[w] / tot)
+        if rl_norm == []:
+            print("Returning empty: ", rl_norm)
+        return rl_norm
+        # theSum = 0.0
+        # theWeights = []
+        # for w in weights:
+        #     theSum += max(w, 0.0)  #math.exp(w)# * gamma / 4.0)
+        #     theWeights.append(w)#math.exp(w))# * gamma / 4.0))
+        # # theSum = float(sum(weights))
+        # rl = []
+        # if theSum <= 0:
+        #     theSum = 1.0
+        # for w in theWeights:
+        #     value = (1.0 - gamma) * (w / theSum) + (gamma / len(weights))
+        #     rl.append(value)
+
+        # return list((1.0 - gamma) * (w / theSum) + (gamma / len(weights)) for w in weights)
+
+
+    def RM_E(self, currentState, t):
+
+        # Show occasional printout
+        if t % 12500 == 0:
+            verbose = True
+        else:
+            verbose = False
+
+        rewardMin = -101.0# -1.0
+        rewardMax = 200.0
+
+        numActions = 4.0
+        n = 0
+        if t < (self.totalIterations / 2):
+            gamma = 1.0 * (1.0 - ((2.0*t) / self.totalIterations))
+        else:
+            gamma = 0.0
+        # gamma = 0.2
+        maxGap = 100.0
+
+
+
+        # Get current weights for 0, 1, 2 ,3
+        # Only for weights above
+        weights = []
+        # maxWeight = -10000000
+        # if verbose: print("Weights: ")
+        # for w in sorted(self.M.regret_sums[n][currentState].keys()):
+        #     if verbose: print("   ", w, ": ", self.M.regret_sums[n][currentState][w])
+        #     if self.M.regret_sums[n][currentState][w] > maxWeight:
+        #         maxWeight = self.M.regret_sums[n][currentState][w]
+
+        # if verbose: print("Max Weight: ", maxWeight)
+
+        # maxWeightGap = maxWeight - maxGap
+        # if verbose: print("Only considering those above maxWeightGap: ", maxWeightGap, ", else 0")
+        for w in sorted(self.M.regret_sums[n][currentState].keys()):
+            # if self.M.weights[n][currentState][w] > maxWeightGap:
+            # print("ADDING TO WEIGHTS: CURRENT STATE: ", currentState, " KEY: ", w)
+            weights.append(self.M.regret_sums[n][currentState][w])# - maxWeightGap)
+            # else:
+            #     weights.append(0.0)
+
+
+
+        if verbose: print("Final weights list: ", weights) # init: 1.0, 1.0, 1.0, 1.0
+
+        # Get probDist from weights
+        pd = self.distr(weights, gamma)
+
+        if pd == []:
+            print("PD is empty: weights: ", weights)
+        if verbose: print("ProbDist: ", pd) # init: 0.25, 0.25, 0.25, 0.25
+
+        # Dist without randomness (for final pi sum calc)
+        # piSUMDist = self.distr(weights, gamma=1.0)
+        piSUMDist2 = self.distr(weights, gamma=0.0)
+
+        # set pi as probDistbution
+        probActions = []
+        for a in sorted(self.M.pi[n][currentState].keys()):
+            # print("KEYS: ", self.M.pi[n][currentState].keys())
+            # print("PD: ", pd)
+            # print("Setting pi of s: ", currentState)
+            # print(" a: ", a, " : ", pd[a])
+
+            self.M.pi_sums[n][currentState][a] += piSUMDist2[a]
+            #if self.M.weights[n][currentState][a] > maxWeightGap:
+            self.M.pi[n][currentState][a] = pd[a]
+
+            # else:
+            #     self.M.pi[n][currentState][a] = pd[a]
+            #     #self.M.pi_sums[n][currentState][a] += piSUMDist2[int(a)]
+
+        # Select a random action from pd
+        #print("PD: ", pd)
+        randomAction = np.random.choice([0,1,2,3], p=pd)
+        if verbose: print("Selected random action: ", randomAction)
+
+        #Observe reward for action randomAction
+        rew = self.M.getReward(currentState, randomAction, 0, 0)
+        s_prime = self.M.getMove(currentState, randomAction)
+        Value = 0.0
+        for a_prime in sorted(self.M.getActions(s_prime, n)):
+            Value += self.M.pi[n][s_prime][a_prime] * self.M.Q[n][s_prime][a_prime]
+
+        # This is the entire "reward", taken from paper
+        x = rew + self.gamma*Value
+
+        # Scale the reward
+        # scaledReward = (x - rewardMin) / (rewardMax - rewardMin)
+        # if scaledReward > 1.0:# and t % 2000 == 0:
+        #     print("SCALED REWARD: ",scaledReward, " currentState: ", currentState)
+        # if scaledReward < 0:# and t % 2000 == 0:
+        #     print("SCALED REWARD: ", scaledReward, " currentState: ", currentState)
+        # x = max(x, 0.0)
+        # x = min(x, 1.0)
+
+        # Get expected reward
+        # estimatedReward = scaledReward
+
+
+
+        # runningEstimatedReward = estimatedReward / pd[randomAction]
+
+        # Find min weight
+        # currentRunningWeights = []
+        # for r in sorted(self.M.runningRewards[0][currentState].keys()):
+        #     if r == randomAction:
+        #         self.M.runningRewards[0][currentState][r] += runningEstimatedReward# / self.M.pi[n][currentState][r]
+
+                #avgReward = self.M.runningRewards[0][currentState][r] / t
+
+                #self.M.Q_bu[0][currentState][r] = x# runningEstimatedReward# / self.M.pi[n][currentState][r]
+            # else:
+            #     self.M.Q_bu[0][currentState][r] = 0.0
+
+
+
+        # Set Weight for t+1
+        # w_t+1() = w_t()e^(x_hat * gamma / K) = 1.0 ^ e^A * e^b
+        # Keep sum of weights and put in exponent when calculating prob dist above
+        # if verbose: print(runningEstimatedReward)
+        # for j in sorted(self.M.weights[0][currentState].keys()):
+        #     if j == randomAction:
+        #         self.M.weights[0][currentState][j] += self.M.Q_bu[0][currentState][j] * gamma / float(numActions) #*= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
+        #         #self.M.weights[0][currentState][j] *= math.exp(self.M.runningRewards[0][currentState][j] * gamma / float(numActions))
+        #
+        # if verbose: print(self.M.weights[0][4])
+
+        return randomAction
 
 
  # if maxWeight - maxWeight2 > thresh:
