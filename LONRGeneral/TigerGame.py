@@ -16,8 +16,6 @@ class TigerGame(MDP):
         # One player MG
         self.N = 1
 
-
-
         # Start with Tiger on Left
         self.version = 1
 
@@ -46,28 +44,6 @@ class TigerGame(MDP):
             self.LEFT,self.RIGHT,
             self.LEFTLEFT, self.LEFTRIGHT, self.RIGHTLEFT, self.RIGHTRIGHT]
 
-        # depth = 1
-        # self.rootTL = "rootTL"  # MDP with Tiger on left
-        #
-        # # depth = 2
-        # self.rootTLOL = "rootTLOL"  # Tiger on LEFT, OL
-        # self.rootTLOR = "rootTLOR"  # Tiger on LEFT, OR
-        #
-        # # depth = 3
-        # self.rootTLLGL = "rootTLLGL"  # Tiger on LEFT, LISTEN, GL
-        # self.rootTLLGR = "rootTLLGR"  # Tiger on LEFT, LISTEN, GR
-        #
-        #
-        # # depth = 4
-        # self.rootTLLGLLGL = "rootTLLGLLGL"  # Tiger on left, Listen, Growl Left, Listen, Growl Left
-        # self.rootTLLGLLGR = "rootTLLGLLGR"
-        # self.rootTLLGRLGL = "rootTLLGRLGL"
-        # self.rootTLLGRLGR = "rootTLLGRLGR"
-
-
-        # self.totalStates = [self.rootTL,
-        #                         self.rootTLLGL, self.rootTLLGR,
-        #                         self.rootTLLGLLGL, self.rootTLLGLLGR, self.rootTLLGRLGL, self.rootTLLGRLGR]
 
 
         self.Q = {}
@@ -110,33 +86,12 @@ class TigerGame(MDP):
     def getStateRep(self, s):
 
         return s
-        #return self.stateIDtoIS(s)
 
     def stateIDtoIS(self, state):
         """Returns the information set of state
 
         """
         return state
-        # if state == self.rootTL:
-        #     return self.rootTL
-        # elif state == self.rootTLLGL:# or state == self.rootTRLGL:
-        #     return self.rootTLLGL
-        # elif state == self.rootTLLGR:# or state == self.rootTRLGR:
-        #     return self.rootTLLGR
-        # elif state == self.rootTLLGLLGL:# or state == self.rootTRLGLLGL:
-        #     return self.rootTLLGLLGL
-        # elif state == self.rootTLLGLLGR:# or state == self.rootTRLGLLGR:
-        #     return self.rootTLLGLLGR
-        # elif state == self.rootTLLGRLGL:# or state == self.rootTRLGRLGL:
-        #     return self.rootTLLGRLGL
-        # elif state == self.rootTLLGRLGR:# or state == self.rootTRLGRLGR:
-        #     return self.rootTLLGRLGR
-        # elif state == self.rootTLOL or state == self.rootTLOR:# or state == self.rootTROL or state == self.rootTROR:
-        #     return state
-        # else:
-        #     for i in range(100):
-        #         print("Tiger game tiger left constructor - missed")
-        #     return None
 
     def getActions(self, state, n):
         return [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
@@ -146,7 +101,30 @@ class TigerGame(MDP):
 
     def getReward(self, s, a_current, n, a_notN):
 
-        return 0.0
+        # self.START,
+        # self.LEFT, self.RIGHT,
+        # self.LEFTLEFT, self.LEFTRIGHT, self.RIGHTLEFT, self.RIGHTRIGHT
+
+        # Tiger on left
+        return None
+        # return 0.0
+        # if self.version == 1:
+        #     if a_current == self.OPENLEFT:
+        #         return -100.0
+        #     elif a_current == self.OPENRIGHT:
+        #         return 10.0
+        #     else:
+        #         return -1.0
+        # if self.version == 2:
+        #     if a_current == self.OPENLEFT:
+        #         return 10.0
+        #     elif a_current == self.OPENRIGHT:
+        #         return -100.0
+        #     else:
+        #         return -1.0
+        # print("MISSED REWARD")
+
+        # return 0.0
         # if a_current == self.LISTEN:
         #     return -1.0
         # else:
@@ -188,7 +166,6 @@ class TigerGame(MDP):
         #   return False
 
     def getNextStatesAndProbs(self, state, action, n_current):
-
         # Top root of Tiger on left
         if self.version == 1:
 

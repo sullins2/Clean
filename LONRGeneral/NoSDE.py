@@ -112,43 +112,9 @@ class NoSDE(MDP):
                 elif a_current == "SEND":
                     return 0.0
 
-        elif a_current == "NOOP":
+        else:
             return 0.0
 
-        print("GETREWARD missed: n: ", n, " s: ", s, " a_current: ", a_current)
-        # #Left State
-        # if n == 0:
-        #     notN = 1
-        # elif n == 1:
-        #     notN = 0
-        # # if s == 1:
-        # #     if n == 0 and n
-        # # print("Reward called: ")
-        # if s == 1:
-        #     if n == 0:
-        #         if a_current == "KEEP" and a_notN == "NOOP":
-        #             return 1.0
-        #         if a_current == "SEND" and a_notN == "NOOP":
-        #             return 0.0
-        #     elif n == 1:
-        #         if a_current == "NOOP" and a_notN == "KEEP":
-        #             return 0.0
-        #         if a_current == "NOOP" and a_notN == "SEND":
-        #             return 3.0
-        # elif s == 2:
-        #     if n == 0:
-        #         if a_current == "NOOP" and a_notN == "KEEP":
-        #             return 3.0
-        #         if a_current == "NOOP" and a_notN == "SEND":
-        #             return 0.0
-        #     elif n == 1:
-        #         if a_current == "KEEP" and a_notN == "NOOP":
-        #             return 1.0
-        #         if a_current == "SEND" and a_notN == "NOOP":
-        #             return 0.0
-
-        #self.getReward(s, actions_A, n_current, actions_B)
-        # print("Reward missed: ", "s: ", s, " a_current: ", a_current, " n: ", n, " a_notN: ", a_notN)
 
 
     def getNextStatesAndProbs(self, s, a_current, n_current):
