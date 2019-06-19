@@ -21,6 +21,8 @@ class AbsentDriver(MDP):
         # Non-determinism - this value is split between sideways moves
         self.noise = noise
 
+        self.version = 0
+        self.TLProb = 0.5
 
         self.Q = {}
 
@@ -129,9 +131,15 @@ class AbsentDriver(MDP):
         return ["No"]
 
     def getStates(self):
-        ls = [0,1,2,3,4]
-        shuffle(ls)
-        return ls#[0,1,2,3,4]
+        # ls = [0,1,2,3,4]
+        # shuffle(ls)
+        if self.version == 0:
+            return [0,1,2,3,4]
+        if self.version == 1:
+            return [0, 1, 2]
+        else:
+            return [1, 3, 4]
+        #return [0,1,2,3,4]
 
     def getStateRep(self, s):
         if s == 0 or s == 1:
@@ -143,6 +151,16 @@ class AbsentDriver(MDP):
 
             Not dependent on action or s'
         """
+        # if s == 0 and a_current == self.EXIT:
+        #     return 0.0
+        # if s == 0 and a_current == self.CONT:
+        #     return 0.0
+        # if s == 1 and a_current == self.EXIT:
+        #     return 4.0
+        # if s == 1 and a_current == self.CONT:
+        #     return 1.0
+
+
         if self.isTerminal(s):
             if s == 2:
                 return 0.0
@@ -167,14 +185,14 @@ class AbsentDriver(MDP):
             actionChoices.append(state)
             actionProbs.append(prob)
 
-        #print("S: ", s, " action: ", action, "ActionChoices: ", actionChoices)
+        # print("S: ", s, " action: ", action, "ActionChoices: ", actionChoices)
         next_state = np.random.choice(actionChoices, p=actionProbs)
         return next_state
 
     def isTerminal(self, s):
         """Returns True if s is a terminal state.
         """
-        if s == 3 or s == 4 or s == 5:
+        if s == 2 or s == 3 or s == 4:
             return True
         else:
             return False

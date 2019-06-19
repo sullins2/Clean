@@ -53,6 +53,7 @@ class TigerGame(MDP):
         self.pi = {}
         self.pi_sums = {}
         self.regret_sums = {}
+        self.weights = {}
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
@@ -61,6 +62,7 @@ class TigerGame(MDP):
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
+            self.weights[n] = {}
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -72,6 +74,7 @@ class TigerGame(MDP):
                 self.pi[n][s] = {}
                 self.pi_sums[n][s] = {}
                 self.regret_sums[n][s] = {}
+                self.weights[n][s] = {}
 
                 for a in self.getActions(s, n):
                     self.Q[n][s][a] = 0.0
@@ -81,6 +84,8 @@ class TigerGame(MDP):
                     self.pi[n][s][a] = 1.0 / len(self.getActions(s, 0))
                     self.pi_sums[n][s][a] = 0.0
                     self.regret_sums[n][s][a] = 0.0
+
+                    self.weights[n][s][a] = 1.0
 
 
     def getStateRep(self, s):
@@ -101,12 +106,149 @@ class TigerGame(MDP):
 
     def getReward(self, s, a_current, n, a_notN):
 
-        # self.START,
-        # self.LEFT, self.RIGHT,
-        # self.LEFTLEFT, self.LEFTRIGHT, self.RIGHTLEFT, self.RIGHTRIGHT
+        state = s
+        action = a_current
+        if self.version == 1:
 
-        # Tiger on left
-        return None
+            # If at start
+            if state == self.START:
+
+                if action == self.OPENLEFT:
+                    return -100.0#[[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0#[[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0#[[self.LEFT, 0.85, -1.0], [self.RIGHT, 0.15, -1.0]]
+
+
+            # Tiger on left, Listen, GL
+            elif state == self.LEFT:
+                if action == self.OPENLEFT:
+                    return -100.0#[[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0 #[[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0 # [[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+            # Tiger on left, LISTEN, GR
+            elif state == self.RIGHT:
+                if action == self.OPENLEFT:
+                    return -100.0# [[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0 #[[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0#[[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
+
+
+            ## Bottom depth
+            # Tiger on left
+            elif state == self.LEFTLEFT:
+                if action == self.OPENLEFT:
+                    return -100.0#[[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0#[[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0#[[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+            elif state == self.LEFTRIGHT:
+                if action == self.OPENLEFT:
+                    return -100.0 #[[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0# [[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
+
+            elif state == self.RIGHTLEFT:
+                if action == self.OPENLEFT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0 #[[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+            elif state == self.RIGHTRIGHT:
+                if action == self.OPENLEFT:
+                    # print("state: ", state, " action: ", action)
+                    return -100.0 #[[None, 1.0, -100.0]]
+                elif action == self.OPENRIGHT:
+                    return 10.0 #[[None, 1.0, 10.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
+##################################
+        # Top root of Tiger on right
+        if self.version == 2:
+
+            # If at start
+            if state == self.START:
+
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.LEFT, 0.15, -1.0], [self.RIGHT, 0.85, -1.0]]
+
+
+            # Tiger on right, Listen, GL
+            elif state == self.LEFT:
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
+
+            # Tiger on right, LISTEN, GR
+            elif state == self.RIGHT:
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+
+
+            ## Bottom depth
+            # Tiger on right
+            elif state == self.LEFTLEFT:
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
+
+            elif state == self.LEFTRIGHT:
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+            elif state == self.RIGHTLEFT:
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
+
+            elif state == self.RIGHTRIGHT:
+                if action == self.OPENLEFT:
+                    return 10.0 ##[[None, 1.0, 10.0]]
+                elif action == self.OPENRIGHT:
+                    return -100.0 ##[[None, 1.0, -100.0]]
+                elif action == self.LISTEN:
+                    return -1.0 ##[[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+
+        ##return None
+
         # return 0.0
         # if self.version == 1:
         #     if a_current == self.OPENLEFT:
@@ -295,6 +437,16 @@ class TigerGame(MDP):
                 elif action == self.LISTEN:
                     return [[self.LEFTLEFT, 0.15, -1.0], [self.LEFTRIGHT, 0.85, -1.0]]
 
+
+            # elif state == self.RIGHTLEFT:
+            #     if action == self.OPENLEFT:
+            #         return [[None, 1.0, -100.0]]
+            #     elif action == self.OPENRIGHT:
+            #         return [[None, 1.0, 10.0]]
+            #     elif action == self.LISTEN:
+            #         return [[self.LEFTLEFT, 0.85, -1.0], [self.LEFTRIGHT, 0.15, -1.0]]
+
+
             elif state == self.RIGHTRIGHT:
                 if action == self.OPENLEFT:
                     return [[None, 1.0, 10.0]]
@@ -302,6 +454,16 @@ class TigerGame(MDP):
                     return [[None, 1.0, -100.0]]
                 elif action == self.LISTEN:
                     return [[self.RIGHTLEFT, 0.15, -1.0], [self.RIGHTRIGHT, 0.85, -1.0]]
+
+            # elif state == self.RIGHTRIGHT:
+            #     if action == self.OPENLEFT:
+            #         # print("state: ", state, " action: ", action)
+            #         return [[None, 1.0, -100.0]]
+            #     elif action == self.OPENRIGHT:
+            #         return [[None, 1.0, 10.0]]
+            #     elif action == self.LISTEN:
+            #         return [[self.RIGHTLEFT, 0.85, -1.0], [self.RIGHTRIGHT, 0.15, -1.0]]
+
 
         # No other states have actions
         else:

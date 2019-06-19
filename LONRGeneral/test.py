@@ -5,7 +5,7 @@ from LONRGeneral.NoSDE import *
 from LONRGeneral.TigerGame import *
 from LONRGeneral.TwoState import *
 from LONRGeneral.AbsentDriver import *
-
+from cvxopt import *
 
 
 # TODO: CLEAN UP
@@ -16,16 +16,16 @@ from LONRGeneral.AbsentDriver import *
 ####################################################
 # ABSENT MINDED DRIVER
 ####################################################
-# absDriver = AbsentDriver(startState=0)
-# gamma = 1.0
-# parameters = {'alpha': 0.99, 'epsilon': 30, 'gamma': gamma}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
-# lonrAgent = LONR_V(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-#
-# iters= 140000
-# lonrAgent.lonr_train(iterations=iters, log=10000)
-#
-# lonrAgent.printOut()
+absDriver = AbsentDriver(startState=0)
+gamma = 1.0
+parameters = {'alpha': 1.0, 'epsilon': 10, 'gamma': gamma}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
+lonrAgent = LONR_B(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+
+iters= 130000
+lonrAgent.lonr_train(iterations=iters, log=10000, randomize=True)
+
+lonrAgent.printOut()
 
 
 
@@ -71,7 +71,7 @@ from LONRGeneral.AbsentDriver import *
 # GridWorld MDP - A
 ####################################################
 
-# # Create GridWorld (inherits from MDP class)
+# Create GridWorld (inherits from MDP class)
 # print("Begin LONR-A tests on GridWorld")
 #
 # gridMDP = Grid(noise=0.0, startState=36)
@@ -79,11 +79,11 @@ from LONRGeneral.AbsentDriver import *
 # # Create LONR Agent and feed in gridMDP (alpha should be 1.0 here)
 # parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 1.0}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# lonrAgent = LONR_A(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+# lonrAgent = LONR_AV(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
 #
 # # Train via VI
-# iters = 2000
-# lonrAgent.lonr_train(iterations=iters, log=500)
+# iters = 120000
+# lonrAgent.lonr_train(iterations=iters, log=2500)
 #
 # lonrAgent.printOut()
 
@@ -97,32 +97,92 @@ from LONRGeneral.AbsentDriver import *
 #
 # parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 0.75}
 #
-# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 # dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
 # lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
 #
-# iters = 140000
+# iters = 236000
 # lonrAgent.lonr_train(iterations=iters, log=5000)
 #
 # lonrAgent.printOut()
+
+
+
+####################################################
+# Correlated Equilibrium - Linear Program
+####################################################
+# A = [[0, (3.0*0.75)/ 0.4375], [9, 4], [4, 0], [4, 4]]
+# def ce(A, solver=None):
+#     num_vars = len(A)
+#     # maximize matrix c
+#     c = [sum(i) for i in A] # sum of payoffs for both players
+#     c = np.array(c, dtype="float")
+#     c = matrix(c)
+#     c *= -1 # cvxopt minimizes so *-1 to maximize
+#     # constraints G*x <= h
+#     G = build_ce_constraints(A=A)
+#     G = np.vstack([G, np.eye(num_vars) * -1]) # > 0 constraint for all vars
+#     h_size = len(G)
+#     G = matrix(G)
+#     h = [0 for i in range(h_size)]
+#     h = np.array(h, dtype="float")
+#     h = matrix(h)
+#     # contraints Ax = b
+#     A = [1 for i in range(num_vars)]
+#     A = np.matrix(A, dtype="float")
+#     A = matrix(A)
+#     b = np.matrix(1, dtype="float")
+#     b = matrix(b)
+#     sol = solvers.lp(c=c, G=G, h=h, A=A, b=b, solver=solver)
+#     return sol
+#
+# def build_ce_constraints(A):
+#     num_vars = int(len(A) ** (1/2))
+#     G = []
+#     # row player
+#     for i in range(num_vars): # action row i
+#         for j in range(num_vars): # action row j
+#             if i != j:
+#                 constraints = [0 for i in A]
+#                 base_idx = i * num_vars
+#                 comp_idx = j * num_vars
+#                 for k in range(num_vars):
+#                     constraints[base_idx+k] = (- A[base_idx+k][0] + A[comp_idx+k][0])
+#                 G += [constraints]
+#     # col player
+#     for i in range(num_vars): # action column i
+#         for j in range(num_vars): # action column j
+#             if i != j:
+#                 constraints = [0 for i in A]
+#                 for k in range(num_vars):
+#                     constraints[i + (k * num_vars)] = (
+#                         - A[i + (k * num_vars)][1]
+#                         + A[j + (k * num_vars)][1])
+#                 G += [constraints]
+#     return np.matrix(G, dtype="float")
+#
+# sol = ce(A=A, solver="glpk")
+# probs = sol["x"]
+# print(probs)
+
 
 
 #######################################################
 # Tiger Game AVI
 #######################################################
 
-tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
-
-# Create LONR Agent and feed in the Tiger game
-parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.99}
-regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
-
-lonrAgent = LONR_V(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-
-iters = 50000
-lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
-
-lonrAgent.printOut()
+# tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
+#
+# # Create LONR Agent and feed in the Tiger game
+# parameters = {'alpha': 0.01, 'epsilon': 10, 'gamma': 0.99}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+#
+# lonrAgent = LONR_AV(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+#
+# iters = 280000
+# lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
+#
+# lonrAgent.printOut()
 
 
 
@@ -147,12 +207,12 @@ lonrAgent.printOut()
 #######################################################
 # GridWorld LONR-B
 #######################################################
-# iters = 3000
-# gridMDP = Grid(startState=8)
-# parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.99}
+# iters = 40000
+# gridMDP = Grid(startState=36)
+# parameters = {'alpha': 0.99, 'epsilon': 20, 'gamma': 0.999}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers) #JUST SWITCH BACK TO B
-# lonrAgent.lonr_train(iterations=iters, log=100)
+# lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+# lonrAgent.lonr_train(iterations=iters, log=1100)
 # lonrAgent.printOut()
 
 

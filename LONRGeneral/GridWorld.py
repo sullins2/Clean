@@ -36,6 +36,7 @@ class Grid(MDP):
         self.rows = 4
         self.cols = 12
 
+        self.version = 1
         # self.rows = 3  #THIS IS EXP3
         # self.cols = 4
 
@@ -171,7 +172,7 @@ class Grid(MDP):
 
 
 
-        self.livingReward = 0.0 #-1.0 #0.0
+        self.livingReward = -1.0 #0.0
 
         logSettings = True
         if logSettings:

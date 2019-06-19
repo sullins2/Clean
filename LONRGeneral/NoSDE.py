@@ -12,6 +12,8 @@ class NoSDE(MDP):
         # Two player MG
         self.N = 2
 
+        self.version = 1
+
         for i in range(10):
             print("SET GAMMA=0.75")
 
