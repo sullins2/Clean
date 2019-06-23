@@ -17,7 +17,7 @@ class TigerGame(MDP):
         self.N = 1
 
         # Start with Tiger on Left
-        self.version = 1
+        self.version = 0
 
         # Actions
         self.OPENLEFT = "OL"
@@ -54,6 +54,7 @@ class TigerGame(MDP):
         self.pi_sums = {}
         self.regret_sums = {}
         self.weights = {}
+        self.elig = {}
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
@@ -63,6 +64,7 @@ class TigerGame(MDP):
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
             self.weights[n] = {}
+            self.elig[n] = {}
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -75,6 +77,7 @@ class TigerGame(MDP):
                 self.pi_sums[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.weights[n][s] = {}
+                self.elig[n][s] = {}
 
                 for a in self.getActions(s, n):
                     self.Q[n][s][a] = 0.0
@@ -86,10 +89,10 @@ class TigerGame(MDP):
                     self.regret_sums[n][s][a] = 0.0
 
                     self.weights[n][s][a] = 1.0
+                    self.elig[n][s][a] = 0.0
 
 
     def getStateRep(self, s):
-
         return s
 
     def stateIDtoIS(self, state):
@@ -102,7 +105,33 @@ class TigerGame(MDP):
         return [self.OPENLEFT, self.LISTEN, self.OPENRIGHT]
 
     def getStates(self, init=False):
+        # i = np.random.randint(0, 6)
+        # self.START = "START"
+        # self.LEFT = "LEFT"
+        # self.RIGHT = "RIGHT"
+        # self.LEFTLEFT = "LEFTLEFT"
+        # self.LEFTRIGHT = "LEFTRIGHT"
+        # self.RIGHTLEFT = "RIGHTLEFT"
+        # self.RIGHTRIGHT = "RIGHTRIGHT"
+
+        # For dict init
+        # if self.version == 0:
         return self.totalStates
+        #
+        # if i == 0:
+        #     return [self.START, self.LEFT, self.LEFTLEFT]
+        # elif i == 1:
+        #     return [self.START, self.LEFT, self.LEFTRIGHT]
+        # elif i == 2:
+        #     return [self.START, self.RIGHT, self.RIGHTRIGHT]
+        # elif i == 3:
+        #     return [self.START, self.RIGHT, self.RIGHTLEFT]
+        # elif i == 4:
+        #     return [self.START, self.RIGHT, self.RIGHTLEFT, self.RIGHTRIGHT]
+        # elif i == 5:
+        #     return [self.START, self.LEFT, self.LEFTRIGHT, self.LEFTLEFT]
+
+        #return self.totalStates
 
     def getReward(self, s, a_current, n, a_notN):
 

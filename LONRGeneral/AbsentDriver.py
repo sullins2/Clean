@@ -50,6 +50,7 @@ class AbsentDriver(MDP):
         self.weights = {}
         self.runningRewards = {}
 
+        self.elig = {}
         # Initialize everything
         # Ex: Q[player][state][action] -> Q[n][s][a]
 
@@ -75,6 +76,8 @@ class AbsentDriver(MDP):
             self.regret_sums[n] = {}
             self.weights[n] = {}
             self.runningRewards[n] = {}
+            self.elig[n] = {}
+
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -96,6 +99,9 @@ class AbsentDriver(MDP):
                 self.pi_sums[n][s] = {}
                 self.weights[n][s] = {}
                 self.runningRewards[n][s] = {}
+
+                self.elig[n][s] = {}
+
                 for a in self.getActions(s,0):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
@@ -118,7 +124,7 @@ class AbsentDriver(MDP):
                     self.weights[n][s][a] = 1.0
                     self.runningRewards[n][s][a] = 0.0
 
-
+                    self.elig[n][s][a] = 0.0
 
 
         self.livingReward = 0.0
@@ -192,6 +198,7 @@ class AbsentDriver(MDP):
     def isTerminal(self, s):
         """Returns True if s is a terminal state.
         """
+
         if s == 2 or s == 3 or s == 4:
             return True
         else:

@@ -51,6 +51,14 @@ class Grid(MDP):
                      ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
                      ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
 
+        # self.grid = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        #              ' ', -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 200]
+
         # self.grid = [' ', ' ', ' ', ' ',
         #              ' ', ' ', ' ', ' ',
         #              ' ', -1, -1,  10]
@@ -101,6 +109,9 @@ class Grid(MDP):
         self.weights = {}
         self.runningRewards = {}
 
+        #Eligability trace - TD-LAMBDA
+        self.elig = {}
+
         # Initialize everything
         # Ex: Q[player][state][action] -> Q[n][s][a]
 
@@ -126,6 +137,9 @@ class Grid(MDP):
             self.regret_sums[n] = {}
             self.weights[n] = {}
             self.runningRewards[n] = {}
+
+            self.elig[n] = {}
+
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -147,6 +161,9 @@ class Grid(MDP):
                 self.pi_sums[n][s] = {}
                 self.weights[n][s] = {}
                 self.runningRewards[n][s] = {}
+
+                self.elig[n][s] = {}
+
                 for a in self.getActions(s,0):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
@@ -169,7 +186,7 @@ class Grid(MDP):
                     self.weights[n][s][a] = 1.0
                     self.runningRewards[n][s][a] = 0.0
 
-
+                    self.elig[n][s][a] = 0.0
 
 
         self.livingReward = -1.0 #0.0
