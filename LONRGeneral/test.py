@@ -234,13 +234,13 @@ from cvxopt import *
 #######################################################
 # GridWorld LONR-TD
 #######################################################
-# iters = 7000
-# gridMDP = Grid(startState=36)
-# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 1.0}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
-# lonrAgent.lonr_train(iterations=iters, log=500)
-# lonrAgent.printOut()
+iters = 6000
+gridMDP = Grid(startState=36)
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+lonrAgent.lonr_train(iterations=iters, log=111)
+lonrAgent.printOut()
 
 #######################################################
 # Tiger Game LONR-TD
@@ -263,16 +263,16 @@ from cvxopt import *
 ####################################################
 # ABSENT MINDED DRIVER - LONR-TD
 ####################################################
-absDriver = AbsentDriver(startState=0)
-gamma = 0.99
-parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
-lonrAgent = LONR_TD(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-
-iters= 6000
-lonrAgent.lonr_train(iterations=iters, log=1000, randomize=True)
-
-lonrAgent.printOut()
+# absDriver = AbsentDriver(startState=0)
+# gamma = 0.99
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
+# lonrAgent = LONR_TD(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+#
+# iters= 6000
+# lonrAgent.lonr_train(iterations=iters, log=1000, randomize=True)
+#
+# lonrAgent.printOut()
 
 
 

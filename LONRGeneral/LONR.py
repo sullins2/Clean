@@ -347,9 +347,9 @@ class LONR(object):
 
         # def QBackup(self, n, WW=None):
         #
-        # for s in self.M.getStates():
-        totalStates = [0,1,2,3,4]
-        for s in totalStates:
+        for s in self.M.getStates():
+        # totalStates = [0,1,2,3,4]
+        # for s in totalStates:
             for a in self.M.getActions(s, n):
                 #print("QQ: ",  self.M.Q[n][s][a], " QQBU: ", self.M.Q_bu[n][s][a])
                 self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
@@ -1119,7 +1119,7 @@ class LONR_TD(LONR):
                 self.M.version = 1
 
             if (t+1) % log == 0:
-                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon)
+                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon, " pi: ", self.M.pi[0][36])
 
             self._lonr_train(t=t)
 
@@ -1142,15 +1142,22 @@ class LONR_TD(LONR):
     ################################################################
     def _lonr_train(self, t):
 
-
-        currentState = self.M.startState
-        # currentState = np.random.randint(0,2)
-        done = False
         n = 0  # One player
+        for s in self.M.getStates():
+            for a in self.M.getActions(s, n):
+                self.M.elig[n][s][a] = 0.0
+
+
+        #currentState = self.M.startState
+        currentState = np.random.randint(0,48)
+        done = False
+
+
 
         # Episode loop - until terminal state is reached
         visitedList = []
         # print("")
+        randomAct = False
         while done == False:
 
 
@@ -1168,6 +1175,7 @@ class LONR_TD(LONR):
                 totalActions = self.M.getActions(currentState, 0)
                 randomAction = np.random.randint(0, len(totalActions))
                 randomAction = totalActions[randomAction]
+                randomAct = True
 
             else:
 
@@ -1181,6 +1189,7 @@ class LONR_TD(LONR):
                 # print("Current state: ", currentState)
                 # print("totProb: ", totalActionsProbs)
                 randomAction = np.random.choice(totalActions, p=totalActionsProbs)
+                randomAct = False
 
             nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
             if nextPossStates == []:
@@ -1206,7 +1215,8 @@ class LONR_TD(LONR):
 
             if nextState == None:
                 reward = self.M.getReward(currentState, randomAction, n, n)
-                Value = reward
+                Value = 0.0 #reward
+
             else:
                 reward = self.M.getReward(currentState, randomAction, n, n)
                 Value = 0.0
@@ -1217,17 +1227,39 @@ class LONR_TD(LONR):
             tot = reward + self.gamma*Value
 
             #print(randomAction)
-            self.M.elig[n][currentState][randomAction] += 1.0
+
+
+            if randomAct:
+                blank = 0
+                # for s in self.M.getStates():
+                #     for a in self.M.getActions(s, n):
+                #         self.M.elig[n][s][a] = 0.0
+
+            if randomAct == False:
+                self.M.elig[n][currentState][randomAction] = 1.0
+            else:
+                self.M.elig[n][currentState][randomAction] = 0.0
 
             lamda = 0.01
+            alpha = 0.01 # / float(t)
+            if t < int((2.0 * self.totalIterations) / 3.0):
+                lamda = 0.01
+                self.RMPLUS = True
+                self.RM = False
+            else:
+                lamda = 0.0
+                self.RMPLUS = False
+                self.RM = True
+            # alpha = max(0.0, 0.3 - (float(t) / float(self.totalIterations)))
             for s in self.M.getStates():
                 for a in self.M.getActions(s, n):
-                    self.M.Q[n][s][a] = self.M.Q[n][s][a] + lamda*tot*self.M.elig[n][s][a]
+                    self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]
                     self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda
+                    self.M.QSums[n][s][a] += self.M.Q[n][s][a]
                     self.M.QTouched[n][s][a] += 1.0
 
-            self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]#self.M.Q_bu[n][currentState][aa]
-            self.M.QTouched[n][currentState][randomAction] += 1.0
+            # self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]#self.M.Q_bu[n][currentState][aa]
+            # self.M.QTouched[n][currentState][randomAction] += 1.0
 
             self.regretUpdate(n, currentState, t)
             # self.regretUpdate2(n, currentState, t, randomAction)
@@ -1241,9 +1273,10 @@ class LONR_TD(LONR):
                 # self.QUpdate(n, self.M.getStateRep(currentState), a, self.M.getStateRep(currentState))
                 for aa in a:
                     # s, a_current, n, a_notN):
+                    self.M.Q_bu[n][currentState][aa] = self.M.getReward(currentState, aa, n, n)
                     self.M.Q[n][currentState][aa] = self.M.getReward(currentState, aa, n, n)
                     self.M.QSums[n][currentState][aa] += self.M.Q[n][currentState][aa]
-                    self.M.QTouched[n][currentState][aa] += 1.0
+                    #self.M.QTouched[n][currentState][aa] += 1.0
 
                 done = True
                 continue
@@ -1262,14 +1295,15 @@ class LONR_TD(LONR):
             # self.regretUpdate(n, self.M.getStateRep(currentState), t)
 
             # done = True
+            # if randomAct:
+            #     done = True
 
 
+        # for n in range(self.M.N):
+        #     self.QBackup(n)
 
         # for s in visitedList:
         #     self.regretUpdate(n, s, t)
-
-
-
 
 
 

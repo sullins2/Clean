@@ -165,7 +165,7 @@ class Grid(MDP):
                 self.elig[n][s] = {}
 
                 for a in self.getActions(s,0):
-                    self.Q[n][s][a] = 0.0
+                    self.Q[n][s][a] = 0.0#np.random.uniform(0.0, 1.0)#0.0
                     self.Q_bu[n][s][a] = 0.0
                     self.QSums[n][s][a] = 0.0
                     self.QTouched[n][s][a] = 0.0
