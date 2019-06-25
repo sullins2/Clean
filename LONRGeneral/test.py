@@ -234,30 +234,30 @@ from cvxopt import *
 #######################################################
 # GridWorld LONR-TD
 #######################################################
-iters = 6000
-gridMDP = Grid(startState=36)
-parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-lonrAgent.lonr_train(iterations=iters, log=111)
-lonrAgent.printOut()
+# iters = 16000
+# gridMDP = Grid(startState=36)
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+# lonrAgent.lonr_train(iterations=iters, log=111)
+# lonrAgent.printOut()
 
 #######################################################
 # Tiger Game LONR-TD
 #######################################################
 
-# tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
-#
-# # Create LONR Agent and feed in the Tiger game
-# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-#
-# lonrAgent = LONR_TD(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-#
-# iters = 2000
-# lonrAgent.lonr_train(iterations=iters, log=12500, randomize=True)
-#
-# lonrAgent.printOut()
+tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
+
+# Create LONR Agent and feed in the Tiger game
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+
+lonrAgent = LONR_TD(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+
+iters = 2000
+lonrAgent.lonr_train(iterations=iters, log=12500, randomize=True)
+
+lonrAgent.printOut()
 
 
 ####################################################

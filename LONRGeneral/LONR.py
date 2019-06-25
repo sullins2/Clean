@@ -1148,8 +1148,8 @@ class LONR_TD(LONR):
                 self.M.elig[n][s][a] = 0.0
 
 
-        #currentState = self.M.startState
-        currentState = np.random.randint(0,48)
+        currentState = self.M.startState
+        #currentState = np.random.randint(0,48)
         done = False
 
 
@@ -1242,27 +1242,28 @@ class LONR_TD(LONR):
 
             lamda = 0.01
             alpha = 0.01 # / float(t)
-            if t < int((2.0 * self.totalIterations) / 3.0):
-                lamda = 0.01
-                self.RMPLUS = True
-                self.RM = False
-            else:
-                lamda = 0.0
-                self.RMPLUS = False
-                self.RM = True
+            # if t < int((2.0 * self.totalIterations) / 3.0):
+            #     lamda = 0.01
+            #     self.RMPLUS = True
+            #     self.RM = False
+            # else:
+            #     lamda = 0.0
+            #     self.RMPLUS = False
+            #     self.RM = True
             # alpha = max(0.0, 0.3 - (float(t) / float(self.totalIterations)))
-            for s in self.M.getStates():
-                for a in self.M.getActions(s, n):
-                    self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]
-                    self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda
-                    self.M.QSums[n][s][a] += self.M.Q[n][s][a]
-                    self.M.QTouched[n][s][a] += 1.0
+            if randomAct == False:
+                for s in self.M.getStates():
+                    for a in self.M.getActions(s, n):
+                        self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]
+                        self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda
+                        self.M.QSums[n][s][a] += self.M.Q[n][s][a]
+                        self.M.QTouched[n][s][a] += 1.0
 
-            # self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]#self.M.Q_bu[n][currentState][aa]
-            # self.M.QTouched[n][currentState][randomAction] += 1.0
+                # self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]#self.M.Q_bu[n][currentState][aa]
+                # self.M.QTouched[n][currentState][randomAction] += 1.0
 
-            self.regretUpdate(n, currentState, t)
-            # self.regretUpdate2(n, currentState, t, randomAction)
+                self.regretUpdate(n, currentState, t)
+                # self.regretUpdate2(n, currentState, t, randomAction)
 
             currentState = nextState
 
