@@ -1119,7 +1119,7 @@ class LONR_TD(LONR):
                 self.M.version = 1
 
             if (t+1) % log == 0:
-                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon, " pi: ", self.M.pi[0][36])
+                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon, " pi: ", self.M.pi[0][self.M.startState])
 
             self._lonr_train(t=t)
 
@@ -1149,7 +1149,7 @@ class LONR_TD(LONR):
 
 
         currentState = self.M.startState
-        #currentState = np.random.randint(0,48)
+        #currentState = np.random.randint(0,2)
         done = False
 
 
@@ -1166,9 +1166,9 @@ class LONR_TD(LONR):
                 done = True
                 continue
 
-            if self.M.isTerminal(currentState) == False:
-                if currentState not in visitedList:
-                    visitedList.append(currentState)
+            # if self.M.isTerminal(currentState) == False:
+            #     if currentState not in visitedList:
+            #         visitedList.append(currentState)
 
             # Epsilon Greedy action selection
             if np.random.randint(0, 100) < int(self.epsilon):
@@ -1190,6 +1190,10 @@ class LONR_TD(LONR):
                 # print("totProb: ", totalActionsProbs)
                 randomAction = np.random.choice(totalActions, p=totalActionsProbs)
                 randomAct = False
+
+            if self.M.isTerminal(currentState) == False:
+                if currentState not in visitedList:
+                    visitedList.append([currentState,randomAction])
 
             nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
             if nextPossStates == []:
@@ -1235,13 +1239,14 @@ class LONR_TD(LONR):
                 #     for a in self.M.getActions(s, n):
                 #         self.M.elig[n][s][a] = 0.0
 
-            if randomAct == False:
-                self.M.elig[n][currentState][randomAction] = 1.0
-            else:
-                self.M.elig[n][currentState][randomAction] = 0.0
+            self.M.elig[n][currentState][randomAction] += 1.0
+            # if randomAct == False:
+            #     self.M.elig[n][currentState][randomAction] = 1.0
+            # else:
+            #     self.M.elig[n][currentState][randomAction] = 0.0
 
             lamda = 0.01
-            alpha = 0.01 # / float(t)
+            alpha = 0.001 # / float(t)
             # if t < int((2.0 * self.totalIterations) / 3.0):
             #     lamda = 0.01
             #     self.RMPLUS = True
@@ -1251,18 +1256,23 @@ class LONR_TD(LONR):
             #     self.RMPLUS = False
             #     self.RM = True
             # alpha = max(0.0, 0.3 - (float(t) / float(self.totalIterations)))
-            if randomAct == False:
-                for s in self.M.getStates():
-                    for a in self.M.getActions(s, n):
-                        self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]
-                        self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda
-                        self.M.QSums[n][s][a] += self.M.Q[n][s][a]
-                        self.M.QTouched[n][s][a] += 1.0
+            # if randomAct == False:
+                #TODO This can be visited list
+
+            # self.M.Q[n][currentState][randomAction] = (1.0 - alpha)*self.M.Q[n][currentState][randomAction] + alpha * tot
+            for s in self.M.getStates():
+                for a in self.M.getActions(s, n):
+            # for s,a in visitedList:
+                    self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]#-self.M.Q[n][s][a])
+                    # self.M.Q[n][s][a] =  (1.0-alpha)*self.M.Q[n][s][a] + alpha * tot * self.M.elig[n][s][a]
+                    self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda
+                    self.M.QSums[n][s][a] += self.M.Q[n][s][a]
+                    self.M.QTouched[n][s][a] += 1.0
 
                 # self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]#self.M.Q_bu[n][currentState][aa]
                 # self.M.QTouched[n][currentState][randomAction] += 1.0
-
-                self.regretUpdate(n, currentState, t)
+            #visitedList = []
+            self.regretUpdate(n, currentState, t)
                 # self.regretUpdate2(n, currentState, t, randomAction)
 
             currentState = nextState
