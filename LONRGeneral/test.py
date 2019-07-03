@@ -56,12 +56,12 @@ from cvxopt import *
 ####################################################
 # gridMDP = Grid(noise=0.0)
 #
-# parameters = {'alpha': 1.0, 'epsilon': None, 'gamma': 1.0}
+# parameters = {'alpha': 0.99, 'epsilon': None, 'gamma': 1.0}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
 #
 # lonrAgent = LONR_V(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters=1000
+# iters=4111
 # lonrAgent.lonr_train(iterations=iters, log=1250)
 #
 # lonrAgent.printOut()
@@ -234,7 +234,8 @@ from cvxopt import *
 #######################################################
 # GridWorld LONR-TD
 #######################################################
-iters = 3000
+# print("HERE")
+iters = 1#4000
 gridMDP = Grid(startState=36)#168 for big one
 parameters = {'alpha': 0.01, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
 regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
@@ -254,7 +255,7 @@ lonrAgent.printOut()
 #
 # lonrAgent = LONR_TD(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters = 20000
+# iters = 60000
 # lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
 #
 # lonrAgent.printOut()
@@ -263,16 +264,16 @@ lonrAgent.printOut()
 ####################################################
 # ABSENT MINDED DRIVER - LONR-TD
 ####################################################
-# absDriver = AbsentDriver(startState=0)
-# gamma = 0.99
-# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
-# lonrAgent = LONR_TD(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-#
-# iters= 6000
-# lonrAgent.lonr_train(iterations=iters, log=1000, randomize=True)
-#
-# lonrAgent.printOut()
+absDriver = AbsentDriver(startState=0)
+gamma = 1.0#0.99
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
+lonrAgent = LONR_TD(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+
+iters= 100000
+lonrAgent.lonr_train(iterations=iters, log=100, randomize=True)
+
+lonrAgent.printOut()
 
 
 
