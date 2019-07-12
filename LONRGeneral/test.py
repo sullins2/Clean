@@ -222,26 +222,26 @@ from cvxopt import *
 #######################################################
 # GridWorld LONR-B
 #######################################################
-# iters = 1250000
-# gridMDP = Grid(startState=36)
-# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 1.0}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
-# lonrAgent.lonr_train(iterations=iters, log=1500)
-# lonrAgent.printOut()
+iters = 20000
+gridMDP = Grid(startState=36)
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 1.0}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+lonrAgent = LONR_B(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers)
+lonrAgent.lonr_train(iterations=iters, log=1500)
+lonrAgent.printOut()
 
 
 #######################################################
 # GridWorld LONR-TD
 #######################################################
-print("HERE")
-iters = 20000
-gridMDP = Grid(startState=36)#168 for big one
-parameters = {'alpha': 0.01, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-lonrAgent.lonr_train(iterations=iters, log=511)
-lonrAgent.printOut()
+# print("HERE")
+# iters = 10000
+# gridMDP = Grid(startState=36)#168 for big one
+# parameters = {'alpha': 0.01, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+# lonrAgent.lonr_train(iterations=iters, log=511)
+# lonrAgent.printOut()
 
 #######################################################
 # Tiger Game LONR-TD
