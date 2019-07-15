@@ -1107,6 +1107,98 @@ class LONR_AV(LONR):
                 self.regretUpdate(n, s, t)
 
 
+################################################################
+# LONR-VCF - LONR with counterfactual reach updates
+###############################################################
+
+class LONR_VCF(LONR):
+
+    def __init__(self, M=None, parameters=None, regret_minimizers=None, dcfr=None, randomize=True):
+        super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+        self.randomize = False
+
+    ################################################################
+    # LONR Value Iteration with cfr
+    ################################################################
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+        if log != -1: print("Starting training..")
+
+        print("self.M.version: ", self.M.version)
+
+        if self.M.version == 0:
+            self.M.version = 1
+
+        for t in range(1, iterations + 1):
+            # print("Version: ", self.M.version)
+            # self.M.version = 2
+            if (t + 0) % log == 0:
+                print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma)
+
+            # Call one full update via LONR-V
+            self._lonr_train(t=t)
+
+            # No-op unless alphaDecay is not 1.0
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
+
+            # self.randomize = True
+
+            # if randomize:
+            #     TigerOnLeftProb = self.M.TLProb
+            #     v = np.random.choice([1, 2], p=[TigerOnLeftProb, 1.0 - TigerOnLeftProb])
+            #     self.M.version = v
+            #     if self.M.version == 1:
+            #         self.M.version = 2
+            #     else:
+            #         self.M.version = 1
+                # self.M.version = v
+
+
+        if log != -1: print("Finish Training")
+
+
+    ######################################
+    ## LONR VALUE ITERATION WITH COUNTERFACTUAL REACH UPDATES
+    ######################################
+    def _lonr_train(self, t):
+        """ One full update via LONR-V
+        """
+
+        # Q Update
+
+        for n in range(self.M.N):
+
+            # Loop through all states
+            for s in self.M.getStates():
+
+                if self.M.isTerminal(s):
+                    a = self.M.getActions(s, 0)
+                    self.QUpdate(n, s, a, randomS=s)
+
+                    continue
+
+                # Loop through actions of current player n
+                # for a in self.M.getActions(s, n):
+                a = self.M.getActions(self.M.getStateRep(s), n)
+                #if self.randomize == False:
+
+
+                self.QUpdate(n, s, a, randomS=None)
+
+                for aa in a:
+                    self.M.QSums[n][s][aa] += self.M.Q_bu[n][s][aa]
+                    self.M.QTouched[n][s][aa] += 1.0
+
+
+        # Q Backup
+        for n in range(self.M.N):
+            self.QBackup(n)
+
+
+        for n in range(self.M.N):
+            for s in self.M.getStates():
+                self.regretUpdate(n, s, t)
 
 
 ####################################################################################
@@ -1279,7 +1371,7 @@ class LONR_TD(LONR):
 
             # self.M.elig[n][currentState][randomAction] = 1.0
             if randomAct == False:
-                self.M.elig[n][currentState][randomAction] = 1.0
+                self.M.elig[n][currentState][randomAction] += 1.0
             else:
                 for s,a in visitedList:
                     self.M.elig[n][s][a] = 0.0
@@ -1288,7 +1380,7 @@ class LONR_TD(LONR):
                 currentState = nextState
                 continue
 
-            lamda = 0.0#1.0#0.90
+            lamda = 0.50#1.0#0.90
             alpha = 0.01
 
             # target = 0.0
@@ -1356,7 +1448,7 @@ class LONR_TD(LONR):
             if self.M.getStateRep(currentState) == None:
                 done = True
                 continue
-            # done = True
+            #done = True
 
 
         # for n in range(self.M.N):
@@ -1496,6 +1588,7 @@ class LONR_B(LONR):
                 Value += self.M.pi[n][self.M.getStateRep(s_prime)][a_prime] * self.M.Q[n][s_prime][a_prime]
 
             x = rew + self.gamma * Value
+            # x = self.M.Q_bu[n][currentState][nextAction]
 
             self.M.Q_bu[n][currentState][nextAction] = self.alpha*x + (1.0 - self.alpha)*self.M.Q[n][currentState][nextAction] #(rew + self.gamma * Value)(1.0 / self.M.pi[0][currentState][nextAction]) *
 
