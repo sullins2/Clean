@@ -486,35 +486,61 @@ class LONR(object):
         target = 0.0
 
         # Skip terminal states
-        if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+        if self.M.isTerminal(currentState) == True:
             return
 
         for a in self.M.getActions(currentState, n):
             target += self.M.Q[n][currentState][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
 
         for a in self.M.getActions(currentState, n):
+
+            if a != action:
+                continue
+
             action_regret = self.M.Q[n][currentState][a] - target
-
-
-            # if self.DCFR or self.RMPLUS:
-            # if action_regret > 0:
-            #     action_regret *= alphaWeight
-            # else:
-            #     action_regret *= betaWeight
+            if self.DCFR or self.RMPLUS:
+                if action_regret > 0:
+                    action_regret *= alphaWeight
+                else:
+                    action_regret *= betaWeight
 
             # RMPLUS = False
-            # if self.RMPLUS:
-            if a != action: continue
-
-            if action_regret > 0:
-                action_regret *= alphaWeight
+            if self.RMPLUS:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
             else:
-                action_regret *= betaWeight
+                # self.M.regret_sums[n][currentState][a] += action_regret
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
 
-            # self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret
-            # else:
-            # self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret * gammaWeight
+        # Skip terminal states
+        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+        #     continue
+
+        for a in self.M.getActions(currentState, n):
+
+            # if a != action:
+            #     continue
+
+            if self.M.isTerminal(currentState):
+                continue
+            # # Sum up total regret
+            rgrt_sum = 0.0
+            for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+                rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+            if rgrt_sum > 0:
+                self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+            else:
+                # print("REG SUMS: ", rgrt_sum)
+                self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
+                # print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
+
+            # Add to policy sum
+            if self.DCFR or self.RMPLUS:
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += \
+                self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
+            else:
+
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += \
+                self.M.pi[n][self.M.getStateRep(currentState)][a]
 
 
 
@@ -1267,7 +1293,7 @@ class LONR_TD(LONR):
         #     for s in self.M.getStates():
         #         for a in self.M.getActions(s, n):
         #             if self.M.regret_sums[0][s][a] < 0:
-        #                 self.M.regret_sums[0][s][a] = 0.1
+        #                 self.M.regret_sums[0][s][a] = 0.0
         #             else:
         #                 self.M.regret_sums[0][s][a] = 0.2
 
@@ -1319,8 +1345,8 @@ class LONR_TD(LONR):
             # if self.M.isTerminal(currentState) == False:
             if [currentState,randomAction] not in visitedList:
                 visitedList.append([currentState,randomAction])
-            #     else:
-            #         self.regretUpdate(n, currentState, t)
+            # else:
+            #     self.regretUpdate(n, currentState, t)#, randomAction)
 
 
             nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
@@ -1371,7 +1397,7 @@ class LONR_TD(LONR):
 
             # self.M.elig[n][currentState][randomAction] = 1.0
             if randomAct == False:
-                self.M.elig[n][currentState][randomAction] += 1.0
+                self.M.elig[n][currentState][randomAction] = 1.0
             else:
                 for s,a in visitedList:
                     self.M.elig[n][s][a] = 0.0
@@ -1380,7 +1406,7 @@ class LONR_TD(LONR):
                 currentState = nextState
                 continue
 
-            lamda = 0.50#1.0#0.90
+            lamda = 0.0#1.0#0.90
             alpha = 0.01
 
             # target = 0.0
@@ -1389,14 +1415,19 @@ class LONR_TD(LONR):
             #
             #
             # var = target - self.M.Q[n][currentState][randomAction]
+            # upD = 0.0
+            # upDD = 0.0
             for s,a in visitedList:
                     #self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]#-self.M.Q[n][s][a])
                     # self.M.Q[n][s][a] = (1.0 - alpha) * self.M.Q[n][s][a] + (alpha * (reward + self.gamma * Value - self.M.Q[n][s][a]) * self.M.elig[n][s][a])
+                    # upD = self.M.Q[n][s][a] + (alpha * (( ((reward + self.gamma * Value) / IS) - self.M.Q[n][s][a]) )) * self.M.elig[n][s][a]
+                    # upDD = self.M.Q[n][currentState][randomAction] + (alpha * ((((reward + self.gamma * Value) / IS) - self.M.Q[n][currentState][randomAction]))) * self.M.elig[n][s][a]
                     self.M.Q[n][s][a] = self.M.Q[n][s][a] + (alpha * (( ((reward + self.gamma * Value) / IS) - self.M.Q[n][s][a]) )) * self.M.elig[n][s][a]
                     self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda * self.M.pi[n][currentState][randomAction]
                     self.M.QSums[n][s][a] += self.M.Q[n][s][a]
                     self.M.QTouched[n][s][a] += 1.0
-                    self.regretUpdate(n, s, t)
+                    # self.regretUpdate2(n,s,t,a)
+                    # self.regretUpdate(n, s, t)
             # for s in self.M.getStates():
             #     for a in self.M.getActions(s, n):
             # for s, a in visitedList:
@@ -1407,7 +1438,9 @@ class LONR_TD(LONR):
                 # self.M.QTouched[n][currentState][randomAction] += 1.0
 
             # if randomAct == False:
-            # self.regretUpdate(n, currentState, t)
+            # if upDD > self.M.Q[n][currentState][randomAction]:
+            self.regretUpdate(n, currentState, t)
+            # self.regretUpdate2(n, currentState, t, randomAction)
 
             currentState = nextState
 
@@ -1436,8 +1469,8 @@ class LONR_TD(LONR):
 
 
 
-                done = True
-                continue
+                #done = True
+                #continue
 
             # Don't update terminal states
             # Check if these are ever even hit
@@ -1449,7 +1482,16 @@ class LONR_TD(LONR):
                 done = True
                 continue
             #done = True
-
+        # for s, a in visitedList:
+        # #     # self.M.Q[n][s][a] = self.M.Q[n][s][a] + alpha*tot*self.M.elig[n][s][a]#-self.M.Q[n][s][a])
+        # #     # self.M.Q[n][s][a] = (1.0 - alpha) * self.M.Q[n][s][a] + (alpha * (reward + self.gamma * Value - self.M.Q[n][s][a]) * self.M.elig[n][s][a])
+        # #     self.M.Q[n][s][a] = self.M.Q[n][s][a] + (
+        # #                 alpha * ((((reward + self.gamma * Value) / IS) - self.M.Q[n][s][a]))) * self.M.elig[n][s][a]
+        # #     self.M.elig[n][s][a] = self.M.elig[n][s][a] * self.gamma * lamda * self.M.pi[n][currentState][randomAction]
+        # #     self.M.QSums[n][s][a] += self.M.Q[n][s][a]
+        # #     self.M.QTouched[n][s][a] += 1.0
+        # #     self.regretUpdate2(n, s, t, a)
+        #     self.regretUpdate(n, s, t )
 
         # for n in range(self.M.N):
         #     self.QBackup(n)
