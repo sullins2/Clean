@@ -408,11 +408,15 @@ class LONR(object):
             #if action_regret < -298.0:
             # if action_regret > 1.0:
             #     print("Target: ", action_regret, " s: ", currentState)
-            if self.DCFR or self.RMPLUS:
+            if self.DCFR:
                 if action_regret > 0:
                     action_regret *= alphaWeight
                 else:
                     action_regret *= betaWeight
+
+            # if self.RMPLUS:
+            #     if action_regret < 0:
+            #         action_regret = 0
 
             # RMPLUS = False
             if self.RMPLUS:
@@ -441,7 +445,7 @@ class LONR(object):
                 #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
 
             # Add to policy sum
-            if self.DCFR or self.RMPLUS:
+            if self.DCFR:
                 self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
             else:
 
@@ -543,6 +547,82 @@ class LONR(object):
                 self.M.pi[n][self.M.getStateRep(currentState)][a]
 
 
+
+    def regretUpdateNEW(self, n, currentState, t, reach, cfr_reach):
+
+        # print("")
+        # print("reach: ", reach, " CFR_REACH: ", cfr_reach)
+        # print("")
+
+        iters = t + 1
+        alphaR = 3.0 / 2.0  # accum pos regrets
+        betaR = 0.0  # accum neg regrets
+        gammaR = 2.0  # contribution to avg strategy
+
+        alphaW = pow(iters, self.alphaDCFR)
+        alphaWeight = (alphaW / (alphaW + 1))
+
+        betaW = pow(iters, self.betaDCFR)
+        betaWeight = (betaW / (betaW + 1))
+
+        gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
+
+        # Calculate regret - this variable name needs a better name
+        target = 0.0
+
+        # Skip terminal states
+        if self.M.isTerminal(currentState) == True:
+            return
+
+        for a in self.M.getActions(currentState, n):
+            target += self.M.Q[n][currentState][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+        for a in self.M.getActions(currentState, n):
+            action_regret = self.M.Q[n][currentState][a] - target
+            action_regret *= cfr_reach
+
+            if self.DCFR:
+                if action_regret > 0:
+                    action_regret *= alphaWeight
+                else:
+                    action_regret *= betaWeight
+            # if self.RMPLUS or self.RM:
+            #     if action_regret < 0:
+            #         action_regret *= 0.0#alphaWeight
+            # RMPLUS = False
+            if self.RMPLUS:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            else:
+                # self.M.regret_sums[n][currentState][a] += action_regret
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+
+        # Skip terminal states
+        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+        #     continue
+
+        for a in self.M.getActions(currentState, n):
+
+            if self.M.isTerminal(currentState):
+                continue
+            # # Sum up total regret
+            rgrt_sum = 0.0
+            for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+                rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+            if rgrt_sum > 0:
+                self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+            else:
+                #print("REG SUMS: ", rgrt_sum)
+                self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
+                #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
+
+            # Add to policy sum
+            if self.DCFR:
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight * reach
+            elif self.RMPLUS:
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * reach
+            else:
+
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * reach
 
 ################################################################
 # LONR Value Iteration
@@ -802,15 +882,9 @@ class LONR_A(LONR):
 
         done = False
         n = 0  # One player
-        # if currentState == 1:
-        #     n = 0
-        # else:
-        #     n = 1
 
         # Episode loop - until terminal state is reached
         while done == False:
-
-
 
             # Check this - tiger game stuff
             if self.M.getStateRep(currentState) == None:
@@ -844,8 +918,8 @@ class LONR_A(LONR):
 
 
             # Q Backup
-            for n in range(self.M.N):
-                self.QBackup(n)
+            # for n in range(self.M.N):
+            self.QBackup(n)
 
             s = currentState
             for aa in a:
@@ -1248,6 +1322,8 @@ class LONR_TD(LONR):
             if self.M.version == 0:
                 self.M.version = 1
 
+            # print(self.M.version)
+
             # r = float(self.epsilon)
             # f = float(r) * 0.99999
             # rr = 1.0 - (2.0*t / self.totalIterations)
@@ -1381,7 +1457,7 @@ class LONR_TD(LONR):
                     Value += self.M.Q[n][nextState][a] * self.M.pi[n][nextState][a]
 
             if randomAct:
-                IS = 0.025
+                IS = 1.0#0.025
                 tot = (reward + self.gamma * Value) #/ 0.025
             else:
                 IS = 1.0
@@ -1779,6 +1855,7 @@ class LONR_B(LONR):
         randomAction = self.M.getActions(currentState, n)[randomAction]
         #Observe reward for action randomAction
         rew = self.M.getReward(currentState, randomAction, n, n)
+        print("CS: ", currentState)
         s_prime = self.M.getMove(currentState, randomAction)
         Value = 0.0
         # print("THIS: ", self.M.getActions(s_prime, n), " sprime: ", s_prime)
@@ -2384,3 +2461,572 @@ class LONR_RM(LONR):
 #             if self.M.getStateRep(currentState) == None:
 #                 done = True
 #                 continue
+
+
+################################################################
+# QLEARN
+################################################################
+class QLEARN(LONR):
+
+    def __init__(self, M=None, parameters=None, regret_minimizers=None, dcfr=None):
+        super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+        self.totalIterations = iterations
+
+        whoGoes = 0.0
+
+        if log != -1: print("Starting training..")
+        for t in range(1, iterations+1):
+
+            if self.M.version == 0:
+                self.M.version = 1
+
+            if (t+1) % log == 0:
+                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon, " pi: ", self.M.pi[0][self.M.startState])
+
+            self._lonr_train(t=t)
+
+            epp = max(10.0 - (10.0 * t / self.totalIterations), 2)
+            self.epsilon = int(epp)
+
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
+
+            if randomize:
+
+                if self.M.version == 1:
+                    self.M.version = 2
+                else:
+                    self.M.version = 1
+
+
+
+        if log != -1: print("Finished Training")
+
+    ################################################################
+    # QLEARN
+    ################################################################
+    def _lonr_train(self, t):
+
+        n = 0  # One player
+
+        currentState = self.M.startState
+        done = False
+
+        randomAction = None
+        # print("-----")
+        randomAct = False
+        while done == False:
+
+            # print("CS: ", currentState)
+            # Check this - tiger game stuff
+            if self.M.getStateRep(currentState) == None:
+                done = True
+                continue
+
+            # Epsilon Greedy action selection
+            if np.random.randint(0, 100) < int(self.epsilon):
+                totalActions = self.M.getActions(currentState, 0)
+                randomAction = np.random.randint(0, len(totalActions))
+                randomAction = totalActions[randomAction]
+                randomAct = True
+
+            else:
+
+                totalActions = []
+                totalActionsProbs = []
+                ta = self.M.getActions(currentState, 0)
+
+                maxValue = -10000.0
+                maxAction = None
+                for aa in ta:#self.M.Q[n][currentState].keys():
+                    if self.M.Q[n][currentState][aa] > maxValue:
+                        maxValue = self.M.Q[n][currentState][aa]
+                        maxAction = aa
+
+                randomAction = maxAction
+                randomAct = False
+
+            # print("action: ", randomAction)
+
+            nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
+            if nextPossStates == []:
+                done = True
+                continue
+
+            # If there is only one successor state, pick that
+            if len(nextPossStates) == 1:
+                # nextPossStates is list of lists
+                # nextPossStates = [[next_state, prob, reward]]
+                nextState = nextPossStates[0][0]
+            else:
+                nextStates = []
+                nextStateProbs = []
+                for ns, nsp, _ in nextPossStates:
+                    nextStates.append(ns)
+                    nextStateProbs.append(nsp)
+
+                nextState = np.random.choice(nextStates, p=nextStateProbs)
+
+
+            if nextState == None:
+                reward = self.M.getReward(currentState, randomAction, n, n)
+                Value = 0.0 #reward
+
+            else:
+                reward = self.M.getReward(currentState, randomAction, n, n)
+                Value = 0.0
+                # for a in self.M.getActions(nextState, n):
+                #     #print(n, nextState, a)
+                #     Value += self.M.Q[n][nextState][a] * self.M.pi[n][nextState][a]
+
+
+
+            # lamda = 0.0#1.0#0.90
+            alpha = 0.01#99
+
+
+            Value = -100000.0
+            if nextState != None:
+                for a_prime in self.M.Q[n][nextState].keys():
+                    if self.M.Q[n][nextState][a_prime] > Value:
+                        Value = self.M.Q[n][nextState][a_prime]
+                # print("Updating: ", currentState, randomAction)
+                self.M.Q[n][currentState][randomAction] = self.M.Q[n][currentState][randomAction] + (alpha * ((((reward + self.gamma * Value)) - self.M.Q[n][currentState][randomAction])))
+                self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]
+                self.M.QTouched[n][currentState][randomAction] += 1.0
+            else:
+                # print("Will be done")
+                # self.M.Q[n][currentState][randomAction] = self.M.getReward(currentState, randomAction, n, n)
+                Value = 0.0
+                self.M.Q[n][currentState][randomAction] = self.M.Q[n][currentState][randomAction] + (alpha * ((((reward + self.gamma * Value)) - self.M.Q[n][currentState][randomAction])))
+                self.M.QSums[n][currentState][randomAction] += self.M.Q[n][currentState][randomAction]
+                self.M.QTouched[n][currentState][randomAction] += 1.0
+                done = True
+                continue
+            # self.regretUpdate(n, currentState, t)
+
+            currentState = nextState
+
+            # Check this - catching terminals
+            if self.M.isTerminal(self.M.getStateRep(currentState)):
+                a = self.M.getActions(currentState, 0)
+                Value = 0.0
+                for aa in a:
+                    Value = self.M.getReward(currentState, aa, n, n)
+                    # s, a_current, n, a_notN):
+                    self.M.Q_bu[n][currentState][aa] = self.M.getReward(currentState, aa, n, n)
+                    self.M.Q[n][currentState][aa] = self.M.getReward(currentState, aa, n, n)
+                    self.M.QSums[n][currentState][aa] += self.M.Q[n][currentState][aa]
+                    self.M.QTouched[n][currentState][aa] += 1.0
+
+
+            # Don't update terminal states
+            # Check if these are ever even hit
+            if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+                done = True
+                continue
+
+            if self.M.getStateRep(currentState) == None:
+                done = True
+                continue
+
+
+
+################################################################
+# LONR Asynchronous Value Iteration
+################################################################
+class LONR_AA(LONR):
+
+    def __init__(self, M=None, parameters=None, regret_minimizers=None, dcfr=None):
+        super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+
+        if log != -1: print("Starting training..")
+        for t in range(1, iterations+1):
+
+            if self.M.version == 0:
+                self.M.version = 1
+
+            if (t+1) % log == 0:
+                print("Iteration: ", t+1, " alpha:", self.alpha, " epsilon: ", self.epsilon)
+
+            self._lonr_train(t=t)#, totalIterations=iterations, randomized=randomized)
+
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
+
+
+
+            if randomize:
+                # if self.M.version == 1:
+                #     self.M.version = 2
+                # else:
+                #     self.M.version = 1
+                # TigerOnLeftProb = self.M.TLProb
+                # v = np.random.choice([1,2], p=[TigerOnLeftProb, 1.0-TigerOnLeftProb])
+                # self.M.version = v
+                # TigerOnLeftProb = self.M.TLProb
+                # v = np.random.choice([1, 2], p=[TigerOnLeftProb, 1.0 - TigerOnLeftProb])
+                # # self.M.version = v
+                if self.M.version == 1:
+                    self.M.version = 2
+                else:
+                    self.M.version = 1
+
+
+        if log != -1: print("Finished Training")
+
+    ################################################################
+    # LONR Asynchronous Value Iteration
+    ################################################################
+    def _lonr_train(self, t):
+
+        # LONR V
+        # Q Update
+
+        # for n in range(self.M.N):
+        # n = np.random.randint(0,2)
+        #
+        # # Loop through all states
+        # # for s in self.M.getStates():
+        # ## s = np.random.randint(1,3)
+        #
+        # if n == 0:
+        #     s = 1
+        # else:
+        #     s = 2
+        #
+        # totalIters = 1000
+        # totIts = 0
+        #
+        # done = False
+        # while done == False:
+        #     # Loop through actions of current player n
+        #     # for a in self.M.getActions(s, n):
+        #     a = self.M.getActions(self.M.getStateRep(s), n)
+        #     # if self.randomize == False:
+        #
+        #     self.QUpdate(n, s, a, randomS=None)
+        #
+        #     for aa in a:
+        #         self.M.QSums[n][s][aa] += self.M.Q_bu[n][s][aa]
+        #         self.M.QTouched[n][s][aa] += 1.0
+        #
+        #     # Q Backup
+        #     # for n in range(self.M.N):
+        #     self.QBackup(n)
+        #
+        #     # for n in range(self.M.N):
+        #     #     for s in self.M.getStates():
+        #     self.regretUpdate(n, s, t)
+        #
+        #
+        #     totIts += 1
+        #     if totIts > totalIters:
+        #         done = True
+
+
+        #currentState = self.M.startState
+        # n = np.random.randint(0, 2)
+        # if n == 0:
+        #     currentState = 1
+        # else:
+        #     currentState = 2
+        currentState = np.random.randint(1,3)
+        #n = np.random.randint(0,2)
+        if currentState == 1:
+            n = 0
+        else:
+            n = 1
+
+        done = False
+        pi0 = 1.0
+        pi1 = 1.0
+
+        totalIts = 0
+        # Episode loop - until terminal state is reached
+        while done == False:
+
+            if currentState == 1:
+                n = 0
+            else:
+                n = 1
+
+            for NN in range(2):
+                #print("TOTAL ITERS: ", totalIts)
+                totalIts += 1
+
+                if totalIts % 4000 == 0:
+                    print("TOT: ", totalIts)
+
+                if totalIts > 20: # THIS IS NOW TOTAL ITERATIONS
+                    done = True
+                    continue
+
+                # Get possible actions
+                a = self.M.getActions(currentState, NN)
+                #print("NN: ", NN, " A: ", a)
+
+                # Update Q of actions
+                self.QUpdate(NN, currentState, a, currentState)
+
+                # Q Backup
+                # for n in range(self.M.N):
+                self.QBackup(NN)
+
+                #s = currentState
+                for aa in a:
+                    self.M.QSums[NN][currentState][aa] += self.M.Q_bu[NN][currentState][aa]
+                    self.M.QTouched[NN][currentState][aa] += 1.0
+
+                # Update regrets
+                # if n == 0:
+                #     self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, 1.0, pi1)
+                # elif n == 1:
+                #     self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, 1.0, pi0)
+
+                # self.regretUpdate(NN, self.M.getStateRep(currentState), t)
+
+                ###self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, 1.0, 1.0)# 1.0, 1.0)
+
+
+
+
+            #.666111
+            if n == 0:
+                if currentState == 1:
+                    pi1 *= self.M.pi[1][1]["NOOP"]
+                else:
+                    pi1 *= self.M.pi[1][2][randomAction]
+            elif n == 1:
+
+                if currentState == 1:
+                    pi0 *= self.M.pi[0][1][randomAction]
+                else:
+                    pi0 *= self.M.pi[0][2]["NOOP"]
+            (cfr_reach, reach) = (pi1, pi0) if n == 0 else (pi0, pi1)
+            self.regretUpdateNEW(n, self.M.getStateRep(currentState), t, cfr_reach, reach)
+
+
+            # Epsilon Greedy action selection
+            if np.random.randint(0, 100) < int(self.epsilon):
+                totalActions = self.M.getActions(currentState, n)
+                randomAction = np.random.randint(0, len(totalActions))
+                randomAction = totalActions[randomAction]
+
+            else:
+
+                totalActions = []
+                totalActionsProbs = []
+                ta = self.M.getActions(currentState, n)
+                for action in ta:
+                    totalActions.append(action)
+                    totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
+
+                randomAction = np.random.choice(totalActions, p=totalActionsProbs)
+
+
+
+            nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, n)
+            if nextPossStates == []:
+                done = True
+                continue
+
+            # If there is only one successor state, pick that
+            if len(nextPossStates) == 1:
+                # nextPossStates is list of lists
+                # nextPossStates = [[next_state, prob, reward]]
+                currentState = nextPossStates[0][0]
+            else:
+                nextStates = []
+                nextStateProbs = []
+                for ns, nsp, _ in nextPossStates:
+                    nextStates.append(ns)
+                    nextStateProbs.append(nsp)
+
+                currentState = np.random.choice(nextStates, p=nextStateProbs)
+
+            #print("CS: ", currentState, "  RAC: ", randomAction , " N: ", n)
+
+            # if n == 0:
+            #     pi0 *= self.M.pi[0][currentState][randomAction]
+            # else:
+            #     pi1 *= self.M.pi[1][currentState][randomAction]
+
+        # print("pi0: ", pi0)
+        # print("pi1: ", pi1)
+        # print("")
+
+
+################################################################
+# LONR Asynchronous Value Iteration
+################################################################
+class LONR_AAA(LONR):
+
+    def __init__(self, M=None, parameters=None, regret_minimizers=None, dcfr=None):
+        super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+
+    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+
+        if log != -1: print("Starting training..")
+        for t in range(1, iterations + 1):
+
+            if self.M.version == 0:
+                self.M.version = 1
+
+            if (t + 1) % log == 0:
+                print("Iteration: ", t + 1, " alpha:", self.alpha, " epsilon: ", self.epsilon)
+
+            self._lonr_train(t=t)  # , totalIterations=iterations, randomized=randomized)
+
+            self.alpha *= self.alphaDecay
+            self.alpha = max(0.0, self.alpha)
+
+            if randomize:
+                # if self.M.version == 1:
+                #     self.M.version = 2
+                # else:
+                #     self.M.version = 1
+                # TigerOnLeftProb = self.M.TLProb
+                # v = np.random.choice([1,2], p=[TigerOnLeftProb, 1.0-TigerOnLeftProb])
+                # self.M.version = v
+                # TigerOnLeftProb = self.M.TLProb
+                # v = np.random.choice([1, 2], p=[TigerOnLeftProb, 1.0 - TigerOnLeftProb])
+                # # self.M.version = v
+                if self.M.version == 1:
+                    self.M.version = 2
+                else:
+                    self.M.version = 1
+
+        if log != -1: print("Finished Training")
+
+    ################################################################
+    # LONR Asynchronous Value Iteration
+    ################################################################
+    def _lonr_train(self, t):
+
+
+        currentState = np.random.randint(1, 3)
+        # n = np.random.randint(0,2)
+        if currentState == 1:
+            n = 0
+        else:
+            n = 1
+
+        done = False
+        pi0 = 1.0
+        pi1 = 1.0
+
+        totalIts = 0
+        # Episode loop - until terminal state is reached
+        while done == False:
+
+            if currentState == 1:
+                n = 0
+            else:
+                n = 1
+
+            for NN in range(2):
+                # print("TOTAL ITERS: ", totalIts)
+                totalIts += 1
+
+                if totalIts % 4000 == 0:
+                    print("TOT: ", totalIts)
+
+                if totalIts > 16:  # THIS IS NOW TOTAL ITERATIONS
+                    done = True
+                    continue
+
+                # Get possible actions
+                a = self.M.getActions(currentState, NN)
+                # print("NN: ", NN, " A: ", a)
+
+                # Update Q of actions
+                self.QUpdate(NN, currentState, a, currentState)
+
+                # Q Backup
+                # for n in range(self.M.N):
+                self.QBackup(NN)
+
+                # s = currentState
+                for aa in a:
+                    self.M.QSums[NN][currentState][aa] += self.M.Q_bu[NN][currentState][aa]
+                    self.M.QTouched[NN][currentState][aa] += 1.0
+
+                # Update regrets
+                # if NN == 0:
+                #     self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, pi1, pi0)
+                # elif NN == 1:
+                #     self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, pi0, pi1)
+
+                # self.regretUpdate(NN, self.M.getStateRep(currentState), t)
+
+                # self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, 1.0, 1.0)# 1.0, 1.0)
+
+            # .666111
+
+            (cfr_reach, reach) = (pi1, pi0) if n == 0 else (pi0, pi1)
+            self.regretUpdateNEW(n, self.M.getStateRep(currentState), t, cfr_reach, reach)
+
+            # Epsilon Greedy action selection
+            if np.random.randint(0, 100) < int(self.epsilon):
+                totalActions = self.M.getActions(currentState, n)
+                randomAction = np.random.randint(0, len(totalActions))
+                randomAction = totalActions[randomAction]
+
+            else:
+
+                totalActions = []
+                totalActionsProbs = []
+                ta = self.M.getActions(currentState, n)
+                for action in ta:
+                    totalActions.append(action)
+                    totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
+
+                randomAction = np.random.choice(totalActions, p=totalActionsProbs)
+
+            nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, n)
+            if nextPossStates == []:
+                done = True
+                continue
+
+            # If there is only one successor state, pick that
+            if len(nextPossStates) == 1:
+                # nextPossStates is list of lists
+                # nextPossStates = [[next_state, prob, reward]]
+                currentState = nextPossStates[0][0]
+            else:
+                nextStates = []
+                nextStateProbs = []
+                for ns, nsp, _ in nextPossStates:
+                    nextStates.append(ns)
+                    nextStateProbs.append(nsp)
+
+                currentState = np.random.choice(nextStates, p=nextStateProbs)
+
+            if n == 0:
+                if currentState == 1:
+                    pi1 *= self.M.pi[1][1]["NOOP"]
+                else:
+                    pi1 *= self.M.pi[1][2][randomAction]
+            elif n == 1:
+                if currentState == 1:
+                    pi0 *= self.M.pi[0][1][randomAction]
+                else:
+                    pi0 *= self.M.pi[0][2]["NOOP"]
+
+            # print("CS: ", currentState, "  RAC: ", randomAction , " N: ", n)
+
+            # if n == 0:
+            #     pi0 *= self.M.pi[0][currentState][randomAction]
+            # else:
+            #     pi1 *= self.M.pi[1][currentState][randomAction]
+
+        # print("pi0: ", pi0)
+        # print("pi1: ", pi1)
+        # print("")

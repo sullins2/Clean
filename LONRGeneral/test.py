@@ -15,6 +15,31 @@ from LONRGeneral.Kuhn import *
 #   Check and see the best way to standardize
 #   Add LONR-V for Tiger Game
 
+
+####################################################
+# NOSDE LONR-A
+####################################################
+noSDE = NoSDE()
+
+parameters = {'alpha': 0.91, 'epsilon': 10, 'gamma': 0.75}
+
+# regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+lonrAgent = LONR_AAA(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+
+
+# rm+ 6633 3663
+# rm  3069 1288
+
+#with cfr
+#dcfr 6633 4158
+iters = 31000
+lonrAgent.lonr_train(iterations=iters, log=2000)
+
+lonrAgent.printOut()
+
 ####################################################
 # ABSENT MINDED DRIVER
 ####################################################
@@ -56,7 +81,7 @@ from LONRGeneral.Kuhn import *
 ####################################################
 # GridWorld MDP - V
 ####################################################
-# gridMDP = Grid(noise=0.0)
+# gridMDP = Grid(noise=0.0, startState=36)
 #
 # parameters = {'alpha': 0.99, 'epsilon': None, 'gamma': 1.0}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
@@ -184,6 +209,23 @@ from LONRGeneral.Kuhn import *
 
 
 #######################################################
+# Tiger Game A
+#######################################################
+
+# tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
+#
+# # Create LONR Agent and feed in the Tiger game
+# parameters = {'alpha': 0.199, 'epsilon': 10, 'gamma': 0.99}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+#
+# lonrAgent = LONR_A(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+#
+# iters = 150000
+# lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
+#
+# lonrAgent.printOut()
+
+#######################################################
 # Tiger Game AVI
 #######################################################
 
@@ -236,17 +278,35 @@ from LONRGeneral.Kuhn import *
 #######################################################
 # GridWorld LONR-TD
 #######################################################
-print("HERE")
-iters = 15000
-gridMDP = Grid(startState=36)#168 for big one
-parameters = {'alpha': 0.01, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
-regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
-lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-lonrAgent.lonr_train(iterations=iters, log=1511)
-lonrAgent.printOut()
+# print("HERE")
+# iters = 15000
+# gridMDP = Grid(startState=36)#168 for big one
+# parameters = {'alpha': 0.01, 'epsilon': 10, 'gamma': 0.99, 'alphaDecay': 1.0}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# lonrAgent = LONR_TD(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+# lonrAgent.lonr_train(iterations=iters, log=1511)
+# lonrAgent.printOut()
+
+# #######################################################
+# # Tiger Game LONR-TD
+# #######################################################
+#
+# tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
+#
+# # Create LONR Agent and feed in the Tiger game
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+#
+# lonrAgent = LONR_TD(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+#
+# iters = 160000
+# lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
+#
+# lonrAgent.printOut()
+
 
 #######################################################
-# Tiger Game LONR-TD
+# Tiger Game Q-LEARNING
 #######################################################
 
 # tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
@@ -255,28 +315,41 @@ lonrAgent.printOut()
 # parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 #
-# lonrAgent = LONR_B(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+# lonrAgent = QLEARN(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters = 600
+# iters = 422000
 # lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
 #
 # lonrAgent.printOut()
-
 
 ####################################################
 # ABSENT MINDED DRIVER - LONR-TD
 ####################################################
 # absDriver = AbsentDriver(startState=0)
 # gamma = 1.0
-# parameters = {'alpha': 0.99, 'epsilon': 31, 'gamma': gamma}
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
 # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True} # DCFR parameters alpha, beta, gamma?
 # lonrAgent = LONR_TD(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters= 500000
+# iters= 150000
 # lonrAgent.lonr_train(iterations=iters, log=12100, randomize=True)
 #
 # lonrAgent.printOut()
 
+
+####################################################
+# ABSENT MINDED DRIVER - LONR-B
+####################################################
+# absDriver = AbsentDriver(startState=0)
+# gamma = 1.0
+# parameters = {'alpha': 0.99, 'epsilon': 31, 'gamma': gamma}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True} # DCFR parameters alpha, beta, gamma?
+# lonrAgent = LONR_B(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+#
+# iters= 75000
+# lonrAgent.lonr_train(iterations=iters, log=2100, randomize=True)
+#
+# lonrAgent.printOut()
 
 ###########################################################
 # Kuhn Poker

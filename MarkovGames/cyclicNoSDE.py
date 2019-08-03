@@ -260,7 +260,7 @@ class Agent:
 
         for a in range(self.two_actions):
             self.pi11[0][a] = max(self.regret_sums11[0][a], 0.) / regretSum if regretSum > 0 else 1. / 2.0
-            self.pi_sums11[0][a] += self.pi11[0][a]# * gammaWeight
+            self.pi_sums11[0][a] += self.pi11[0][a] * gammaWeight
 
 
 
@@ -287,7 +287,7 @@ class Agent:
 
         for a in range(self.two_actions):
             self.pi22[0][a] = max(self.regret_sums22[0][a], 0.) / regretSum2 if regretSum2 > 0 else 1.0 / 2.0
-            self.pi_sums22[0][a] += self.pi22[0][a]# * gammaWeight
+            self.pi_sums22[0][a] += self.pi22[0][a] * gammaWeight
 
 
 

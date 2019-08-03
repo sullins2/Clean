@@ -18,7 +18,7 @@ def main():
 
     lonrAgent = Agent()
 
-    lonrAgent.train_lonr(iterations=5500, log=50)
+    lonrAgent.train_lonr(iterations=500, log=50)
 
     # lonrAgent.test_lonr(iterations=50000, log=5000)
     #

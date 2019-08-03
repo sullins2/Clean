@@ -496,12 +496,12 @@ class TigerGame(MDP):
 
         # No other states have actions
         else:
-            print("None: ", state, "  ", action)
+            print("None: ", state, "  ", action, " " , self.version)
             return []
 
     def getMove(self, s, a):
         if self.isTerminal(s): return None
-        # print("S: ", s , "  a: ", a )
+        print("S: ", s , "  a: ", a )
         nextPossStates = self.getNextStatesAndProbs(s, a, 0)
         if nextPossStates == None: return None
         # print("NPS: ", nextPossStates)
