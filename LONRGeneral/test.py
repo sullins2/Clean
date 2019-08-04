@@ -8,6 +8,7 @@ from LONRGeneral.AbsentDriver import *
 from cvxopt import *
 from LONRGeneral.misc import *
 from LONRGeneral.Kuhn import *
+from MarkovGames.soccer import *
 
 
 # TODO: CLEAN UP
@@ -17,26 +18,32 @@ from LONRGeneral.Kuhn import *
 
 
 ####################################################
+## Soccer LONR_AB
+###################################################
+# soccer = SoccerGame()
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_AB(M=soccer, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+#
+# iters = 1
+# lonrAgent.lonr_train(iterations=iters, log=1000)
+#
+# lonrAgent.printOut()
+####################################################
 # NOSDE LONR-A
 ####################################################
 noSDE = NoSDE()
 
-parameters = {'alpha': 0.91, 'epsilon': 10, 'gamma': 0.75}
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.75}
 
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
 dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-lonrAgent = LONR_AAA(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-
-
-# rm+ 6633 3663
-# rm  3069 1288
-
-#with cfr
-#dcfr 6633 4158
-iters = 31000
-lonrAgent.lonr_train(iterations=iters, log=2000)
+lonrAgent = LONR_AB(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+iters = 60000
+lonrAgent.lonr_train(iterations=iters, log=1000)
 
 lonrAgent.printOut()
 
@@ -46,10 +53,10 @@ lonrAgent.printOut()
 # absDriver = AbsentDriver(startState=0)
 # gamma = 0.99
 # parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
+# regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
 # lonrAgent = LONR_AV(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters= 150000
+# iters= 115000
 # lonrAgent.lonr_train(iterations=iters, log=10000, randomize=True)
 #
 # lonrAgent.printOut()

@@ -81,6 +81,19 @@ class NoSDE(MDP):
     def getStateRep(self, s):
         return s
 
+    def getNextStates(self, n, currentState,randomAction0, randomAction1):
+
+        if n == 0:
+            if currentState == 1:
+                if randomAction0 == "SEND":
+                    currentState = 2
+
+        if n == 1:
+            if currentState == 2:
+                if randomAction1 == "SEND":
+                    currentState = 1
+        return currentState
+
     # Need to fix this entire function here and in general.
     def getReward(self, s, a_current, n, a_notN):
 

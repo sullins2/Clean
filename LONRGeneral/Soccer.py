@@ -10,6 +10,8 @@ class SoccerGame(MDP):
 
         self.N = 2
 
+        self.version = 1
+
         self.rows = 2
         self.cols = 4
         self.num_states = self.rows * self.cols
