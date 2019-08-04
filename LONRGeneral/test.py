@@ -20,32 +20,45 @@ from MarkovGames.soccer import *
 ####################################################
 ## Soccer LONR_AB
 ###################################################
-# soccer = SoccerGame()
-# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
-# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
-# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-# lonrAgent = LONR_AB(M=soccer, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-#
-# iters = 1
-# lonrAgent.lonr_train(iterations=iters, log=1000)
-#
+soccer = SoccerGame()
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+lonrAgent = LONR_AB(M=soccer, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+
+
+
+iters = 120000
+lonrAgent.lonr_train(iterations=iters, log=1000)
+
 # lonrAgent.printOut()
+
+print("Print out of game states of interest")
+print("PiA25 A: ", lonrAgent.M.pi_sums[0]["A25"])  #B26
+print("PiA25 B: ", lonrAgent.M.pi_sums[1]["A25"])
+print("")
+print("PiA21 A: ", lonrAgent.M.pi_sums[0]["A21"])
+print("PiA21 B: ", lonrAgent.M.pi_sums[1]["A21"])
+print("")
+print("PiB61 A: ", lonrAgent.M.pi_sums[0]["B61"])  #B26
+print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
+
 ####################################################
 # NOSDE LONR-A
 ####################################################
-noSDE = NoSDE()
-
-parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.75}
-
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
-regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
-dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-lonrAgent = LONR_AB(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-iters = 60000
-lonrAgent.lonr_train(iterations=iters, log=1000)
-
-lonrAgent.printOut()
+# noSDE = NoSDE()
+#
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.75}
+#
+# # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_AB(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 60000
+# lonrAgent.lonr_train(iterations=iters, log=1000)
+#
+# lonrAgent.printOut()
 
 ####################################################
 # ABSENT MINDED DRIVER

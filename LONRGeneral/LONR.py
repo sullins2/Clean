@@ -290,7 +290,7 @@ class LONR(object):
             if self.M.isTerminal(s):
 
                 # Value iteration
-                reward = self.M.getReward(s, a_current, 0, 0)
+                reward = self.M.getReward(s, a_current, n, n)
                 # # if reward == None:
                 # #     reward = 0.0
                 # if s == 4:
@@ -585,9 +585,9 @@ class LONR(object):
                 else:
                     action_regret *= betaWeight
 
-            if self.RMPLUS or self.RM:
-                if action_regret < 0:
-                    action_regret *= 0.0#alphaWeight
+            # if self.RMPLUS or self.RM:
+            #     if action_regret < 0:
+            #         action_regret *= 0.0#alphaWeight
             # RMPLUS = False
             if self.RMPLUS:
                 self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
@@ -2992,28 +2992,37 @@ class LONR_AB(LONR):
     def _lonr_train(self, t):
 
 
-        currentState = np.random.randint(1, 3)
-        # n = np.random.randint(0,2)
-        if currentState == 1:
-            n = 0
-        else:
-            n = 1
+        # currentState = np.random.randint(1, 3)
 
+        #socc
+        currentState = self.M.getStartState()
+
+        # print("Current Start State: ", currentState)
+
+        # if currentState == 1:
+        #     n = 0
+        # else:
+        #     n = 1
+        #
         done = False
-        pi0 = 1.0
-        pi1 = 1.0
+        # pi0 = 1.0
+        # pi1 = 1.0
 
         totalIts = 0
         # Episode loop - until terminal state is reached
         while done == False:
 
-            if currentState == 1:
-                n = 0
-            else:
-                n = 1
+            # if currentState == 1:
+            #     n = 0
+            # else:
+            #     n = 1
 
             totalIts += 1
-            if totalIts > 2: #Can be 10, 20, etc
+            if totalIts > 2222: #Can be 10, 20, etc
+                done = True
+                continue
+
+            if self.M.isTerminal(currentState):
                 done = True
                 continue
 
@@ -3060,16 +3069,17 @@ class LONR_AB(LONR):
             self.regretUpdate2(1, self.M.getStateRep(currentState), t, randomAction1)
 
 
-            #self.M.getNextStates(n, currentState,randomAction0, randomAction1)
-            if n == 0:
-                if currentState == 1:
-                    if randomAction0 == "SEND":
-                        currentState = 2
-
-            if n == 1:
-                if currentState == 2:
-                    if randomAction1 == "SEND":
-                        currentState = 1
+            n = 0
+            currentState = self.M.getNextStates(n, currentState,randomAction0, randomAction1)
+            # if n == 0:
+            #     if currentState == 1:
+            #         if randomAction0 == "SEND":
+            #             currentState = 2
+            #
+            # if n == 1:
+            #     if currentState == 2:
+            #         if randomAction1 == "SEND":
+            #             currentState = 1
 
             # done = True
 

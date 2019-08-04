@@ -17,12 +17,17 @@ class SoccerGame(MDP):
         self.num_states = self.rows * self.cols
 
 
+        self.world = None
+        self.player_a = None
+        self.player_b = None
+
         self.total_states = self.create_state_comb(list(range(self.num_states)), list(range(self.num_states)))
         self.total_actions = [0, 1, 2, 3]
 
         self.Q = {}
         self.Q_bu = {}
         self.QSums = {}
+        self.QTouched = {}
         self.pi = {}
         self.pi_sums = {}
         self.regret_sums = {}
@@ -30,6 +35,7 @@ class SoccerGame(MDP):
             self.Q[n] = {}
             self.Q_bu[n] = {}
             self.QSums[n] = {}
+            self.QTouched[n] = {}
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
@@ -37,6 +43,7 @@ class SoccerGame(MDP):
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
                 self.QSums[n][s] = {}
+                self.QTouched[n][s] = {}
                 self.pi[n][s] = {}
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
@@ -44,6 +51,7 @@ class SoccerGame(MDP):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
                     self.QSums[n][s][a] = 0.0
+                    self.QTouched[n][s][a] = 0.0
                     self.pi[n][s][a] = 1.0 / 4.0 #len(list(total_actions.keys())
                     self.regret_sums[n][s][a] = 0.0
                     self.pi_sums[n][s][a] = 0.0
@@ -58,6 +66,136 @@ class SoccerGame(MDP):
     def getStateRep(self, s):
         return s
 
+
+
+    def getNextStates(self, n, currentState, randomAction0, randomAction1):
+
+        player_with_ball = currentState[0]
+
+        pAball = False
+        pBball = False
+        if player_with_ball == "A":
+            pAball = True
+        if player_with_ball == "B":
+            pBball = True
+
+        playerApos = int(currentState[1])
+        playerBpos = int(currentState[2])
+
+        pAx, pAy = self.stateToXY(playerApos)
+        pBx, pBy = self.stateToXY(playerBpos)
+
+        actions_A = randomAction0
+        actions_B = randomAction1
+
+        player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
+        player_b = Player(x=pBx, y=pBy, has_ball=pBball, p_id='B')
+
+        world = World()
+        world.set_world_size(x=self.cols, y=self.rows)
+        world.place_player(player_a, player_id='A')
+        world.place_player(player_b, player_id='B')
+        world.set_goals(100, 0, 'A')
+        world.set_goals(100, 3, 'B')
+
+        actions = {'A': actions_A, 'B': actions_B}
+        new_state, rewards, goal = world.move(actions)
+
+        return new_state
+
+        # successors = []
+        #
+        # # Player with ball
+        # player_with_ball = currentState[0]
+        #
+        # pAball = False
+        # pBball = False
+        # if player_with_ball == "A":
+        #     pAball = True
+        # if player_with_ball == "B":
+        #     pBball = True
+        #
+        # playerApos = int(currentState[1])
+        # playerBpos = int(currentState[2])
+        #
+        # pAx, pAy = self.stateToXY(playerApos)
+        # pBx, pBy = self.stateToXY(playerBpos)
+        #
+        # actions_A = a_current
+        #
+        # otherN = 1 if n_current == 0 else 0
+        #
+        # # Returns list of all s_primes, other player's pi[s][a], and r(s, aA, aB)
+        #
+        # for actions_B in self.getActions(s,
+        #                                  n_current):  # should be other player's actions but since they have the same set..
+        #     player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
+        #     player_b = Player(x=pBx, y=pBy, has_ball=pBball, p_id='B')
+        #
+        #     world = World()
+        #     world.set_world_size(x=self.cols, y=self.rows)
+        #     world.place_player(player_a, player_id='A')
+        #     world.place_player(player_b, player_id='B')
+        #     world.set_goals(100, 0, 'A')
+        #     world.set_goals(100, 3, 'B')
+        #
+        #     # if world.map_player_state() == "A25":
+        #     #     print("State: ", world.map_player_state())
+        #     #     world.plot_grid()
+        #
+        #     if n_current == 0:
+        #         actions = {'A': actions_A, 'B': actions_B}
+        #     else:
+        #         actions = {'A': actions_B, 'B': actions_A}
+        #     new_state, rewards, goal = world.move(actions)
+        #     reward = rewards['A'] if n_current == 0 else rewards['B']
+        #     successors.append([new_state, self.pi[otherN][s][actions_B], reward])
+        #
+        # return successors
+
+    def stateToXY(self, stateID):
+        """Convert state ID back into x,y coordinates
+
+            Soccer grid is indexed by:
+
+            0 1 2 3
+            4 5 6 7
+
+            x,y coordinates are:
+
+            00 10 20 30
+            01 11 21 31
+
+        """
+
+        x = 0
+        y = 0
+        if stateID == 0:
+            x = 0
+            y = 0
+        elif stateID == 1:
+            x = 1
+            y = 0
+        elif stateID == 2:
+            x = 2
+            y = 0
+        elif stateID == 3:
+            x = 3
+            y = 0
+        elif stateID == 4:
+            x = 0
+            y = 1
+        elif stateID == 5:
+            x = 1
+            y = 1
+        elif stateID == 6:
+            x = 2
+            y = 1
+        elif stateID == 7:
+            x = 3
+            y = 1
+        return x, y
+
     def getNextStatesAndProbs(self, s, a_current, n_current):
         """
 
@@ -69,6 +207,7 @@ class SoccerGame(MDP):
 
         # Player with ball
         player_with_ball = s[0]
+        #print("PWB: ", player_with_ball)
 
         pAball = False
         pBball = False
@@ -88,31 +227,6 @@ class SoccerGame(MDP):
         otherN = 1 if n_current == 0 else 0
 
         # Returns list of all s_primes, other player's pi[s][a], and r(s, aA, aB)
-
-        ################################
-        # This is original for updating player A:
-        #
-        # for actions_A in self.total_actions:
-        #     QV = 0.0
-        #     oppValue = 0.0
-        #     for actions_B in self.total_actions:
-        #
-        #         actions = {'A': actions_A, 'B': actions_B}
-        #         new_state, rewards, goal = world.move(actions)
-        #
-        #
-        #         rA = rewards['A']
-        #
-        #         Value = 0.0
-        #
-        #         for action_ in self.total_actions:
-        #             Value += self.QvaluesA[new_state][action_] * self.piA[new_state][action_]
-        #         QV += self.piB[s][actions_B] * (rA + self.gamma * Value)
-        #
-        #     self.QValue_backupA[s][actions_A] = (0.1 * self.QvaluesA[s][actions_A]) + (0.9 * QV)
-
-        # So instead of a loop, each next_state, reward, and piB is returned
-        ################################
 
         for actions_B in self.getActions(s, n_current): #should be other player's actions but since they have the same set..
             player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
@@ -145,8 +259,74 @@ class SoccerGame(MDP):
 
         """
         return None
-        #return 0.0
+        # # return None
+        # #return 10.0
+        #
+        # #successors = []
+        #
+        # # Player with ball
+        # player_with_ball = s[0]
+        # # print("PWB: ", player_with_ball)
+        #
+        # pAball = False
+        # pBball = False
+        # n_current = None
+        # if player_with_ball == "A":
+        #     pAball = True
+        #     n_current = 0
+        # if player_with_ball == "B":
+        #     pBball = True
+        #     n_current = 1
+        #
+        # playerApos = int(s[1])
+        # playerBpos = int(s[2])
+        #
+        # pAx, pAy = self.stateToXY(playerApos)
+        # pBx, pBy = self.stateToXY(playerBpos)
+        #
+        # actions_A = a_current
+        #
+        # #otherN = 1 if n_current == 0 else 0
+        #
+        # # Returns list of all s_primes, other player's pi[s][a], and r(s, aA, aB)
+        #
+        # #for actions_B in self.getActions(s,n_current):  # should be other player's actions but since they have the same set..
+        # player_a = Player(x=pAx, y=pAy, has_ball=pAball, p_id='A')
+        # player_b = Player(x=pBx, y=pBy, has_ball=pBball, p_id='B')
+        #
+        # world = World()
+        # world.set_world_size(x=self.cols, y=self.rows)
+        # world.place_player(player_a, player_id='A')
+        # world.place_player(player_b, player_id='B')
+        # world.set_goals(100, 0, 'A')
+        # world.set_goals(100, 3, 'B')
+        #
+        #     # if world.map_player_state() == "A25":
+        #     #     print("State: ", world.map_player_state())
+        #     #     world.plot_grid()
+        #
+        # if n_current == 0:
+        #     actions = {'A': actions_A, 'B': actions_B}
+        # else:
+        #     actions = {'A': actions_B, 'B': actions_A}
+        # new_state, rewards, goal = world.move(actions)
+        # reward = rewards['A'] if n_current == 0 else rewards['B']
+        # successors.append([new_state, self.pi[otherN][s][actions_B], reward])
 
+    def getStartState(self):
+        self.player_a = Player(x=2, y=0, has_ball=True, p_id='A')
+        self.player_b = Player(x=1, y=0, has_ball=False, p_id='B')
+
+        self.world = World()
+        self.world.set_world_size(x=self.cols, y=self.rows)
+        self.world.place_player(self.player_a, player_id='A')
+        self.world.place_player(self.player_b, player_id='B')
+        self.world.set_goals(100, 0, 'A')
+        self.world.set_goals(100, 3, 'B')
+
+        startState = self.world.map_player_state()
+        #self.world.plot_grid()
+        return startState
 
     def isTerminal(self, s):
         """Returns true is state is terminal
@@ -750,3 +930,27 @@ class World:
             return 7
 
 
+ ################################
+        # This is original for updating player A:
+        #
+        # for actions_A in self.total_actions:
+        #     QV = 0.0
+        #     oppValue = 0.0
+        #     for actions_B in self.total_actions:
+        #
+        #         actions = {'A': actions_A, 'B': actions_B}
+        #         new_state, rewards, goal = world.move(actions)
+        #
+        #
+        #         rA = rewards['A']
+        #
+        #         Value = 0.0
+        #
+        #         for action_ in self.total_actions:
+        #             Value += self.QvaluesA[new_state][action_] * self.piA[new_state][action_]
+        #         QV += self.piB[s][actions_B] * (rA + self.gamma * Value)
+        #
+        #     self.QValue_backupA[s][actions_A] = (0.1 * self.QvaluesA[s][actions_A]) + (0.9 * QV)
+
+        # So instead of a loop, each next_state, reward, and piB is returned
+        ################################

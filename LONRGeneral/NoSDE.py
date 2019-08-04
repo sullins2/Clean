@@ -81,6 +81,9 @@ class NoSDE(MDP):
     def getStateRep(self, s):
         return s
 
+    def getStartState(self):
+        return np.random.randint(1, 3)
+
     def getNextStates(self, n, currentState,randomAction0, randomAction1):
 
         if n == 0:
