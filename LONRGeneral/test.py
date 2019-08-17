@@ -9,6 +9,10 @@ from cvxopt import *
 from LONRGeneral.misc import *
 from LONRGeneral.Kuhn import *
 from MarkovGames.soccer import *
+from LONRGeneral.ShapleysGame import *
+from LONRGeneral.BiasedGame import *
+from LONRGeneral.TrickyGame import *
+from LONRGeneral.Prisoner import *
 
 
 # TODO: CLEAN UP
@@ -20,56 +24,134 @@ from MarkovGames.soccer import *
 ####################################################
 ## Soccer LONR_AB
 ###################################################
-soccer = SoccerGame()
-parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-lonrAgent = LONR_AB(M=soccer, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# soccer = SoccerGame()
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_V(M=soccer, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+#
+# iters = 5000
+# lonrAgent.lonr_train(iterations=iters, log=100)
+#
+# lonrAgent.printOut()
+#
+# soccer.normalize_pisums()
+# print("PiA21 A: ", lonrAgent.M.pi_sums[0]["A21"])
+# print("PiA21 B: ", lonrAgent.M.pi_sums[1]["A21"])
+# soccer.play(iterations=30000, log=23000)
+#
+# print("")
+# print("Random Games")
+# soccer.play_random(iterations=30000, log=23000)
+#
+# print("")
+# print("Random Games and randomMoves")
+# soccer.play_random_player(iterations=30000, log=23000)
 
 
-
-iters = 120000
-lonrAgent.lonr_train(iterations=iters, log=1000)
-
+######################################################
+# Prisoner LONR_V
+######################################################
+# sg = Prisoner()
+# print("Make sure to put > 2 in, no terminal")
+# parameters = {'alpha': 0.199, 'epsilon': 30, 'gamma': 0.99}
+#
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_AB(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 150111
+# lonrAgent.lonr_train(iterations=iters, log=7140)
+#
 # lonrAgent.printOut()
 
-print("Print out of game states of interest")
-print("PiA25 A: ", lonrAgent.M.pi_sums[0]["A25"])  #B26
-print("PiA25 B: ", lonrAgent.M.pi_sums[1]["A25"])
-print("")
-print("PiA21 A: ", lonrAgent.M.pi_sums[0]["A21"])
-print("PiA21 B: ", lonrAgent.M.pi_sums[1]["A21"])
-print("")
-print("PiB61 A: ", lonrAgent.M.pi_sums[0]["B61"])  #B26
-print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
+
+######################################################
+# Tricky Game LONR_V
+######################################################
+# sg = TrickyGame()
+# print("Make sure to put > 2 in, no terminal")
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+#
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_V(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 2500
+# lonrAgent.lonr_train(iterations=iters, log=31140)
+#
+# lonrAgent.printOut()
+
+
+
+######################################################
+# Shapley's Game LONR_V
+######################################################
+# sg = ShapleysGame()
+# print("Make sure to put > 2 in, no terminal")
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+#
+# # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_V(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 2500
+# lonrAgent.lonr_train(iterations=iters, log=31140)
+#
+# lonrAgent.printOut()
+
+
+
+######################################################
+# Biased Game LONR_V
+######################################################
+# sg = BiasedGame()
+# print("Make sure to put > 2 in, no terminal")
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+#
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_V(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 21251
+# lonrAgent.lonr_train(iterations=iters, log=31140)
+#
+# lonrAgent.printOut()
+
 
 ####################################################
-# NOSDE LONR-A
+# NOSDE LONR-AB
 ####################################################
 # noSDE = NoSDE()
-#
+# print("Make sure to put > 2 in, no terminal")
 # parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.75}
 #
 # # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 # # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
 # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
 # dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-# lonrAgent = LONR_AB(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-# iters = 60000
-# lonrAgent.lonr_train(iterations=iters, log=1000)
+# lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 10000
+# lonrAgent.lonr_train(iterations=iters, log=14000)
 #
 # lonrAgent.printOut()
+
+
 
 ####################################################
 # ABSENT MINDED DRIVER
 ####################################################
 # absDriver = AbsentDriver(startState=0)
 # gamma = 0.99
-# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': gamma}
-# regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
-# lonrAgent = LONR_AV(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+# parameters = {'alpha': 0.199, 'epsilon': 10, 'gamma': gamma}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
+# lonrAgent = LONR_V(M=absDriver, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters= 115000
+# iters= 55000
 # lonrAgent.lonr_train(iterations=iters, log=10000, randomize=True)
 #
 # lonrAgent.printOut()
@@ -83,7 +165,7 @@ print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
 # gamma = 0.99
 #
 # parameters = {'alpha': 1.0, 'epsilon': None, 'gamma': gamma}
-# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True} # DCFR parameters alpha, beta, gamma?
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
 #
 # lonrAgent = LONR_V(M=twoState, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
@@ -101,17 +183,17 @@ print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
 ####################################################
 # GridWorld MDP - V
 ####################################################
-# gridMDP = Grid(noise=0.0, startState=36)
-#
-# parameters = {'alpha': 0.99, 'epsilon': None, 'gamma': 1.0}
-# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
-#
-# lonrAgent = LONR_V(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
-#
-# iters=4111
-# lonrAgent.lonr_train(iterations=iters, log=250)
-#
-# lonrAgent.printOut()
+gridMDP = Grid(noise=0.0, startState=36)
+
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 1.0}
+regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False} # DCFR parameters alpha, beta, gamma?
+
+lonrAgent = LONR_V(M=gridMDP, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
+
+iters=100
+lonrAgent.lonr_train(iterations=iters, log=325)
+
+lonrAgent.printOut()
 
 
 ####################################################
@@ -142,11 +224,11 @@ print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
 # print("SET GAMMA TO 0.75")
 # noSDE = NoSDE()
 #
-# parameters = {'alpha': 1.0, 'epsilon': 20, 'gamma': 0.75}
+# parameters = {'alpha': 1.0, 'epsilon': 10, 'gamma': 0.75}
 #
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 # dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-# lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# lonrAgent = LONR_AAA(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
 #
 # iters = 236000
 # lonrAgent.lonr_train(iterations=iters, log=5000)
@@ -228,6 +310,8 @@ print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
 
 
 
+
+
 #######################################################
 # Tiger Game A
 #######################################################
@@ -235,12 +319,12 @@ print("PiB61 B: ", lonrAgent.M.pi_sums[1]["B61"])
 # tigerGame = TigerGame(startState="START", TLProb=0.5, version=1)
 #
 # # Create LONR Agent and feed in the Tiger game
-# parameters = {'alpha': 0.199, 'epsilon': 10, 'gamma': 0.99}
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 #
 # lonrAgent = LONR_A(M=tigerGame, parameters=parameters, regret_minimizers=regret_minimizers, dcfr={})
 #
-# iters = 150000
+# iters = 30000
 # lonrAgent.lonr_train(iterations=iters, log=2500, randomize=True)
 #
 # lonrAgent.printOut()

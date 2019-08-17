@@ -54,7 +54,9 @@ class NoSDE(MDP):
                     self.QSums[n][s][a] = 0.0
                     self.QTouched[n][s][a] = 0.0
                     self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
-                    self.regret_sums[n][s][a] = 0.0
+                    self.regret_sums[n][s][a] = 0#0.00001
+                    # for rrr in range(10):
+                    #     print("ERASE NOSDE")
                     self.pi_sums[n][s][a] = 0.0
                     self.weights[n][s][a] = 1.0
 
@@ -138,10 +140,7 @@ class NoSDE(MDP):
     def getNextStatesAndProbs(self, s, a_current, n_current):
 
         successors = []
-
-        #print("NextSP: ", " s: ", s, " a_current:", a_current, " n_current: ", n_current)
         otherN = 1 if n_current == 0 else 0
-
 
         # NoSDE is hand-crafted and all in here for now.
         for actions_notCurrentN in self.getActions(s, otherN):

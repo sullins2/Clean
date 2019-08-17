@@ -232,23 +232,23 @@ class LONR(object):
                     print(kk, ": ", self.M.regret_sums[n][k][kk], " ", end='')
                 print("")
 
-        print("Weights")
-        if self.M.weights is not None:
-            for n in range(self.M.N):
-                for k in sorted(self.M.weights[n].keys()):
-                    print(k, ": ", end='')
-                    for kk in self.M.weights[n][k].keys():
-                        print(kk, ": ", self.M.weights[n][k][kk], " ", end='')
-                    print("")
-
-        print("Touched")
-        if self.M.QTouched is not None:
-            for n in range(self.M.N):
-                for k in sorted(self.M.QTouched[n].keys()):
-                    print(k, ": ", end='')
-                    for kk in self.M.QTouched[n][k].keys():
-                        print(kk, ": ", self.M.QTouched[n][k][kk], " ", end='')
-                    print("")
+        # print("Weights")
+        # if self.M.weights is not None:
+        #     for n in range(self.M.N):
+        #         for k in sorted(self.M.weights[n].keys()):
+        #             print(k, ": ", end='')
+        #             for kk in self.M.weights[n][k].keys():
+        #                 print(kk, ": ", self.M.weights[n][k][kk], " ", end='')
+        #             print("")
+        #
+        # print("Touched")
+        # if self.M.QTouched is not None:
+        #     for n in range(self.M.N):
+        #         for k in sorted(self.M.QTouched[n].keys()):
+        #             print(k, ": ", end='')
+        #             for kk in self.M.QTouched[n][k].keys():
+        #                 print(kk, ": ", self.M.QTouched[n][k][kk], " ", end='')
+        #             print("")
 
 
     def normalize_pi_sums(self, takeMax=False):
@@ -291,8 +291,9 @@ class LONR(object):
 
                 # Value iteration
                 reward = self.M.getReward(s, a_current, n, n)
-                # # if reward == None:
-                # #     reward = 0.0
+                # print("Reward: ", reward)
+                if reward == None:
+                    reward = 0.0
                 # if s == 4:
                 #     print("VALUUUUUUUUUUUUUUUUUUUUUUUUE: ", reward)
                 self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*reward + self.alpha*self.M.Q[n][s][a_current]
@@ -381,9 +382,6 @@ class LONR(object):
     def regretUpdate(self, n, currentState, t):
 
         iters = t + 1
-        alphaR = 3.0 / 2.0  # accum pos regrets
-        betaR = 0.0  # accum neg regrets
-        gammaR = 2.0  # contribution to avg strategy
 
         alphaW = pow(iters, self.alphaDCFR)
         alphaWeight = (alphaW / (alphaW + 1))
@@ -391,7 +389,9 @@ class LONR(object):
         betaW = pow(iters, self.betaDCFR)
         betaWeight = (betaW / (betaW + 1))
 
+
         gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
+        #print("BETAWEIGHT: ", alphaWeight, betaWeight, gammaWeight)
 
         # Calculate regret - this variable name needs a better name
         target = 0.0
@@ -405,29 +405,30 @@ class LONR(object):
 
         for a in self.M.getActions(currentState, n):
             action_regret = self.M.Q[n][currentState][a] - target
-            #if action_regret < -298.0:
-            # if action_regret > 1.0:
-            #     print("Target: ", action_regret, " s: ", currentState)
-            if self.DCFR:
-                if action_regret > 0:
-                    action_regret *= alphaWeight
-                else:
-                    action_regret *= betaWeight
+            #print("ACTION_REGRET: ", action_regret, self.M.Q[n][currentState][a], target)
 
-            # if self.RMPLUS:
-            #     if action_regret < 0:
-            #         action_regret = 0
+            # if self.DCFR:
+            #     if action_regret > 0:
+            #         action_regret *= alphaWeight
+            #     else:
+            #         action_regret *= betaWeight
+
+            if action_regret < 0:
+                action_regret = 0
 
             # RMPLUS = False
-            if self.RMPLUS:
-                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            else:
-                # self.M.regret_sums[n][currentState][a] += action_regret
-                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+            # if self.RMPLUS:
+            #     self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            # else:
+            self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
 
-        # Skip terminal states
-        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-        #     continue
+            # if self.DCFR:
+            #     if self.M.regret_sums[n][self.M.getStateRep(currentState)][a] > 0:
+            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= alphaWeight
+            #     else:
+            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= betaWeight
+
+
 
         for a in self.M.getActions(currentState, n):
 
@@ -440,9 +441,7 @@ class LONR(object):
             if rgrt_sum > 0:
                 self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
             else:
-                #print("REG SUMS: ", rgrt_sum)
                 self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
-                #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
 
             # Add to policy sum
             if self.DCFR:
@@ -450,25 +449,8 @@ class LONR(object):
             else:
 
                 self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
-                # Sum up total regret
-            # rgrt_sum = 0.0
-            # for k in self.M.regret_sums[n][currentState].keys():
-            #     rgrt_sum += self.M.regret_sums[n][currentState][k] if self.M.regret_sums[n][currentState][k] > 0 else 0.0
-            # if rgrt_sum > 0:
-            #     self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][currentState][a], 0.)) / rgrt_sum
-            # else:
-            #     # print("REG SUMS: ", rgrt_sum)
-            #     self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
-            #     # print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
-            #
-            # # Add to policy sum
-            # if self.DCFR or self.RMPLUS:
-            #     self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += \
-            #     self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
-            # else:
-            #
-            #     self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += \
-            #     self.M.pi[n][self.M.getStateRep(currentState)][a]
+
+
 
 
     def regretUpdate2(self, n, currentState, t, action):
@@ -488,7 +470,7 @@ class LONR(object):
 
         # Calculate regret - this variable name needs a better name
         target = 0.0
-
+        action_regret = 0.0
         # Skip terminal states
         if self.M.isTerminal(currentState) == True:
             return
@@ -508,13 +490,18 @@ class LONR(object):
                 else:
                     action_regret *= betaWeight
 
+            if action_regret < 0:
+                action_regret = 0.0
+
             # RMPLUS = False
             if self.RMPLUS:
                 self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
             else:
-                # self.M.regret_sums[n][currentState][a] += action_regret
-                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+                self.M.regret_sums[n][currentState][a] += action_regret
 
+
+        # if t % 100 != 0:
+        #     return
         # Skip terminal states
         # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
         #     continue
@@ -539,14 +526,12 @@ class LONR(object):
 
             # Add to policy sum
             if self.DCFR or self.RMPLUS:
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += \
-                self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
             else:
 
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += \
-                self.M.pi[n][self.M.getStateRep(currentState)][a]
+                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
 
-
+        return action_regret
 
     def regretUpdateNEW(self, n, currentState, t, reach, cfr_reach):
 
@@ -585,9 +570,9 @@ class LONR(object):
                 else:
                     action_regret *= betaWeight
 
-            # if self.RMPLUS or self.RM:
-            #     if action_regret < 0:
-            #         action_regret *= 0.0#alphaWeight
+            if self.RMPLUS or self.RM:
+                if action_regret < 0:
+                    action_regret *= 0.0#alphaWeight
             # RMPLUS = False
             if self.RMPLUS:
                 self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
@@ -681,14 +666,14 @@ class LONR_V(LONR):
         """
 
         # Q Update
-
         for n in range(self.M.N):
+
 
             # Loop through all states
             for s in self.M.getStates():
 
                 if self.M.isTerminal(s):
-                    a = self.M.getActions(s, 0)
+                    a = self.M.getActions(s, n)
                     self.QUpdate(n, s, a, randomS=s)
 
                     continue
@@ -699,7 +684,7 @@ class LONR_V(LONR):
                 #if self.randomize == False:
 
 
-                self.QUpdate(n, s, a, randomS=None)
+                self.QUpdate(n, self.M.getStateRep(s), a, randomS=None)
 
                 for aa in a:
                     self.M.QSums[n][s][aa] += self.M.Q_bu[n][s][aa]
@@ -715,114 +700,6 @@ class LONR_V(LONR):
             for s in self.M.getStates():
                 self.regretUpdate(n, s, t)
 
-    # def _lonr_train(self, t):
-    #
-    #     currentState = self.M.startState
-    #
-    #     done = False
-    #     n = 0  # One player
-    #
-    #     totalStates = self.M.getStates().copy()
-    #
-    #     #currentState = totalStates.pop(random.randrange(len(totalStates)))
-    #
-    #     # Episode loop - until terminal state is reached
-    #
-    #     # while done == False:
-    #     while len(totalStates) > 0:
-    #         # if len(totalStates) == 0:
-    #         #     done = True
-    #         #     continue
-    #         # currentState = totalStates.pop(random.randrange(len(totalStates)))
-    #         currentState = totalStates.pop()
-    #
-    #         # Check this - tiger game stuff
-    #         if self.M.getStateRep(currentState) == None:
-    #             done = True
-    #             continue
-    #
-    #         # Check this - catching terminals
-    #         if self.M.isTerminal(self.M.getStateRep(currentState)):
-    #             a = self.M.getActions(currentState, 0)
-    #             self.QUpdate(n, self.M.getStateRep(currentState), a, self.M.getStateRep(currentState))
-    #             # for aa in a:
-    #
-    #             for n in range(self.M.N):
-    #                 self.QBackup(n)
-    #             done = True
-    #             continue
-    #
-    #         # if self.M.isTerminal(self.M.getStateRep(currentState)):
-    #         #     a = self.M.getActions(self.M.getStateRep(currentState), 0)
-    #         #     self.QUpdate(n, self.M.getStateRep(currentState), a, self.M.getStateRep(currentState))
-    #         #     done = True
-    #         #     continue
-    #
-    #         # Get possible actions
-    #         a = self.M.getActions(currentState, 0)
-    #
-    #         # Update Q of actions
-    #         self.QUpdate(n, currentState, a, currentState)
-    #
-    #         # Q Backup
-    #         # for n in range(self.M.N):
-    #         #     self.QBackup(n)
-    #
-    #         # Don't update terminal states
-    #         # Check if these are ever even hit
-    #         if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-    #             done = True
-    #             continue
-    #
-    #         if self.M.getStateRep(currentState) == None:
-    #             done = True
-    #             continue
-    #
-    #         # Update regrets
-    #         # self.regretUpdate(n, self.M.getStateRep(currentState), t)
-    #
-    #         # Epsilon Greedy action selection
-    #         if np.random.randint(0, 100) < int(self.epsilon):
-    #             totalActions = self.M.getActions(currentState, 0)
-    #             randomAction = np.random.randint(0, len(totalActions))
-    #             randomAction = totalActions[randomAction]
-    #
-    #         else:
-    #
-    #             totalActions = []
-    #             totalActionsProbs = []
-    #             ta = self.M.getActions(currentState, 0)
-    #             for action in ta:
-    #                 totalActions.append(action)
-    #                 totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
-    #
-    #             randomAction = np.random.choice(totalActions, p=totalActionsProbs)
-    #
-    #         nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, 0)
-    #         if nextPossStates == []:
-    #             done = True
-    #             continue
-    #
-    #         # If there is only one successor state, pick that
-    #         if len(nextPossStates) == 1:
-    #             # nextPossStates is list of lists
-    #             # nextPossStates = [[next_state, prob, reward]]
-    #             currentState = nextPossStates[0][0]
-    #         else:
-    #             nextStates = []
-    #             nextStateProbs = []
-    #             for ns, nsp, _ in nextPossStates:
-    #                 nextStates.append(ns)
-    #                 nextStateProbs.append(nsp)
-    #
-    #             currentState = np.random.choice(nextStates, p=nextStateProbs)
-    #         done = True
-    #
-    #     for n in range(self.M.N):
-    #         self.QBackup(n)
-    #
-    #     for s in self.M.getStates():
-    #         self.regretUpdate(n, s, t)
 
 ################################################################
 # LONR Asynchronous Value Iteration
@@ -1033,10 +910,11 @@ class LONR_AV(LONR):
 
 
         # currentState = self.M.startState
-        if self.M.version == 1:
-            currentState = 0
-        else:
-            currentState = 1
+        # if self.M.version == 1:
+        #     currentState = 0
+        # else:
+        #     currentState = 1
+        currentState = np.random.randint(0,48)
 
         done = False
         n = 0  # One player
@@ -1106,7 +984,7 @@ class LONR_AV(LONR):
                 continue
 
             # Update regrets
-            # self.regretUpdate(n, self.M.getStateRep(currentState), t)
+            self.regretUpdate(n, self.M.getStateRep(currentState), t)
 
             # print(" Q: ", self.M.Q_bu[n][currentState]["CONT"])
             # print(" Q: ", self.M.Q_bu[n][currentState]["EXIT"])
@@ -1154,18 +1032,18 @@ class LONR_AV(LONR):
             # currentState = np.random.choice(stateList, p=stateProbs)
             # if movesAllowed <= 0:
             #     done = True
-            #done = False
+            done = True
 
 
         # for s in visitedList:
         #     for a in self.M.getActions(s, n):
         #         self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
-        if t % 101 == 0:
-            for n in range(self.M.N):
-                self.QBackup(n)
-            for s in [0,1]:
-                # print("REGUPD: ", s)
-                self.regretUpdate(n, s, t)
+        # if t % 101 == 0:
+        #     for n in range(self.M.N):
+        #         self.QBackup(n)
+        #     for s in [0,1]:
+        #         # print("REGUPD: ", s)
+        #         self.regretUpdate(n, s, t)
 
 
 ################################################################
@@ -1880,7 +1758,7 @@ class LONR_RM(LONR):
         super().__init__(M=M, parameters=parameters, regret_minimizers=regret_minimizers)
 
     ################################################################
-    # LONR Bandit
+    # LONR RM
     ################################################################
     def lonr_train(self, iterations=-1, log=-1, randomize=False):
 
@@ -2653,25 +2531,24 @@ class LONR_AA(LONR):
         #     currentState = 1
         # else:
         #     currentState = 2
-        currentState = np.random.randint(1,3)
+        # currentState = np.random.randint(1,3)
+        currentState = 0
         #n = np.random.randint(0,2)
-        if currentState == 1:
-            n = 0
-        else:
-            n = 1
+        # if currentState == 1:
+        #     n = 0
+        # else:
+        #     n = 1
 
         done = False
-        pi0 = 1.0
-        pi1 = 1.0
 
         totalIts = 0
         # Episode loop - until terminal state is reached
         while done == False:
 
-            if currentState == 1:
-                n = 0
-            else:
-                n = 1
+            # if currentState == 1:
+            #     n = 0
+            # else:
+            #     n = 1
 
             for NN in range(2):
                 #print("TOTAL ITERS: ", totalIts)
@@ -2710,7 +2587,7 @@ class LONR_AA(LONR):
 
                 ###self.regretUpdateNEW(NN, self.M.getStateRep(currentState), t, 1.0, 1.0)# 1.0, 1.0)
 
-
+            #done = True
 
 
             #.666111
@@ -2730,42 +2607,42 @@ class LONR_AA(LONR):
 
 
             # Epsilon Greedy action selection
-            if np.random.randint(0, 100) < int(self.epsilon):
-                totalActions = self.M.getActions(currentState, n)
-                randomAction = np.random.randint(0, len(totalActions))
-                randomAction = totalActions[randomAction]
-
-            else:
-
-                totalActions = []
-                totalActionsProbs = []
-                ta = self.M.getActions(currentState, n)
-                for action in ta:
-                    totalActions.append(action)
-                    totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
-
-                randomAction = np.random.choice(totalActions, p=totalActionsProbs)
-
-
-
-            nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, n)
-            if nextPossStates == []:
-                done = True
-                continue
-
-            # If there is only one successor state, pick that
-            if len(nextPossStates) == 1:
-                # nextPossStates is list of lists
-                # nextPossStates = [[next_state, prob, reward]]
-                currentState = nextPossStates[0][0]
-            else:
-                nextStates = []
-                nextStateProbs = []
-                for ns, nsp, _ in nextPossStates:
-                    nextStates.append(ns)
-                    nextStateProbs.append(nsp)
-
-                currentState = np.random.choice(nextStates, p=nextStateProbs)
+            # if np.random.randint(0, 100) < int(self.epsilon):
+            #     totalActions = self.M.getActions(currentState, n)
+            #     randomAction = np.random.randint(0, len(totalActions))
+            #     randomAction = totalActions[randomAction]
+            #
+            # else:
+            #
+            #     totalActions = []
+            #     totalActionsProbs = []
+            #     ta = self.M.getActions(currentState, n)
+            #     for action in ta:
+            #         totalActions.append(action)
+            #         totalActionsProbs.append(self.M.pi[n][self.M.getStateRep(currentState)][action])
+            #
+            #     randomAction = np.random.choice(totalActions, p=totalActionsProbs)
+            #
+            #
+            #
+            # nextPossStates = self.M.getNextStatesAndProbs(currentState, randomAction, n)
+            # if nextPossStates == []:
+            #     done = True
+            #     continue
+            #
+            # # If there is only one successor state, pick that
+            # if len(nextPossStates) == 1:
+            #     # nextPossStates is list of lists
+            #     # nextPossStates = [[next_state, prob, reward]]
+            #     currentState = nextPossStates[0][0]
+            # else:
+            #     nextStates = []
+            #     nextStateProbs = []
+            #     for ns, nsp, _ in nextPossStates:
+            #         nextStates.append(ns)
+            #         nextStateProbs.append(nsp)
+            #
+            #     currentState = np.random.choice(nextStates, p=nextStateProbs)
 
             #print("CS: ", currentState, "  RAC: ", randomAction , " N: ", n)
 
@@ -2994,7 +2871,13 @@ class LONR_AB(LONR):
 
         # currentState = np.random.randint(1, 3)
 
-        #socc
+
+        # if t % 1000 == 0:
+        #     print("Resetting player B's regretsums: t=", t)
+        #     for s in self.M.regret_sums[1].keys():
+        #         for a in self.M.regret_sums[1][s].keys():
+        #             self.M.regret_sums[1][s][a] = 0.0
+
         currentState = self.M.getStartState()
 
         # print("Current Start State: ", currentState)
@@ -3018,7 +2901,7 @@ class LONR_AB(LONR):
             #     n = 1
 
             totalIts += 1
-            if totalIts > 2222: #Can be 10, 20, etc
+            if totalIts > 2: #Can be 10, 20, etc
                 done = True
                 continue
 
@@ -3027,7 +2910,7 @@ class LONR_AB(LONR):
                 continue
 
             # Epsilon Greedy action selection for n=0
-            if np.random.randint(0, 100) < int(self.epsilon):
+            if np.random.randint(0, 100) < int(self.epsilon): #< -100: #
                 totalActions = self.M.getActions(currentState, 0)
                 randomAction = np.random.randint(0, len(totalActions))
                 randomAction0 = totalActions[randomAction]
@@ -3041,7 +2924,7 @@ class LONR_AB(LONR):
                 randomAction0 = np.random.choice(totalActions, p=totalActionsProbs)
 
             # Epsilon Greedy action selection for n=1
-            if np.random.randint(0, 100) < int(self.epsilon):
+            if np.random.randint(0, 100) < int(self.epsilon): #-100:#
                 totalActions = self.M.getActions(currentState, 1)
                 randomAction = np.random.randint(0, len(totalActions))
                 randomAction1 = totalActions[randomAction]
@@ -3065,12 +2948,19 @@ class LONR_AB(LONR):
             for nn in range(self.M.N):
                 self.QBackup(nn)
 
-            self.regretUpdate2(0, self.M.getStateRep(currentState), t, randomAction0)
-            self.regretUpdate2(1, self.M.getStateRep(currentState), t, randomAction1)
+            # self.regretUpdate2(0, self.M.getStateRep(currentState), t, randomAction0)
+            # self.regretUpdate2(1, self.M.getStateRep(currentState), t, randomAction1)
+            reg1 = self.regretUpdate2(0, self.M.getStateRep(currentState), t, randomAction0)
+            reg2 = self.regretUpdate2(1, self.M.getStateRep(currentState), t, randomAction1)
 
+            # if reg1 > 0 and reg2 > 0:
+            #     print("POS: ", reg1, reg2, "ACT: ", randomAction0, randomAction1)
+            #     self.M.regret_sums[0][self.M.getStateRep(currentState)][randomAction0] += 1.0
+            #     self.M.regret_sums[1][self.M.getStateRep(currentState)][randomAction1] += 1.0
 
             n = 0
             currentState = self.M.getNextStates(n, currentState,randomAction0, randomAction1)
+            done = True
             # if n == 0:
             #     if currentState == 1:
             #         if randomAction0 == "SEND":
@@ -3178,3 +3068,4 @@ class LONR_AB(LONR):
             #         pi0 *= self.M.pi[0][1][randomAction]
             #     else:
             #         pi0 *= self.M.pi[0][2]["NOOP"]
+

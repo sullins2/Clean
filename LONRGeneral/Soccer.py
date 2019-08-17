@@ -314,18 +314,42 @@ class SoccerGame(MDP):
         # successors.append([new_state, self.pi[otherN][s][actions_B], reward])
 
     def getStartState(self):
-        self.player_a = Player(x=2, y=0, has_ball=True, p_id='A')
-        self.player_b = Player(x=1, y=0, has_ball=False, p_id='B')
+        # Regular start state
+        # self.player_a = Player(x=2, y=0, has_ball=True, p_id='A')
+        # self.player_b = Player(x=1, y=0, has_ball=False, p_id='B')
+        #
+        # self.world = World()
+        # self.world.set_world_size(x=self.cols, y=self.rows)
+        # self.world.place_player(self.player_a, player_id='A')
+        # self.world.place_player(self.player_b, player_id='B')
+        # self.world.set_goals(100, 0, 'A')
+        # self.world.set_goals(100, 3, 'B')
+        #
+        # startState = self.world.map_player_state()
+        # #self.world.plot_grid()
+        # return startState
 
-        self.world = World()
-        self.world.set_world_size(x=self.cols, y=self.rows)
-        self.world.place_player(self.player_a, player_id='A')
-        self.world.place_player(self.player_b, player_id='B')
-        self.world.set_goals(100, 0, 'A')
-        self.world.set_goals(100, 3, 'B')
+        validPos = [1, 2, 5, 6]
+        ballStart = np.random.uniform(0, 1)
+        AhasBall = True if ballStart < 0.5 else False
+        BhasBall = False if ballStart < 0.5 else True
+        playerAStart = validPos.pop(np.random.randint(0, 4))
+        playerBStart = validPos.pop(np.random.randint(0, 3))
 
-        startState = self.world.map_player_state()
-        #self.world.plot_grid()
+        pAx, pAy = self.stateToXY(playerAStart)
+        pBx, pBy = self.stateToXY(playerBStart)
+
+        player_a = Player(x=pAx, y=pAy, has_ball=AhasBall, p_id='A')
+        player_b = Player(x=pBx, y=pBy, has_ball=BhasBall, p_id='B')
+
+        world = World()
+        world.set_world_size(x=self.cols, y=self.rows)
+        world.place_player(player_a, player_id='A')
+        world.place_player(player_b, player_id='B')
+        world.set_goals(100, 0, 'A')
+        world.set_goals(100, 3, 'B')
+
+        startState = world.map_player_state()
         return startState
 
     def isTerminal(self, s):
@@ -445,6 +469,9 @@ class SoccerGame(MDP):
                 piBB = [self.pi_sums[1][curState][0], self.pi_sums[1][curState][1], self.pi_sums[1][curState][2],
                         self.pi_sums[1][curState][3]]
 
+                # piAA = [i / sum(piAA) for i in piAA]
+                # piBB = [i / sum(piBB) for i in piBB]
+
                 # Pick action according to learn policy
                 pAa = np.random.choice([0, 1, 2, 3], p=piAA)
                 pBa = np.random.choice([0, 1, 2, 3], p=piBB)
@@ -466,8 +493,10 @@ class SoccerGame(MDP):
               "%)")
         
         
-        
+
+    # Play in a random starting state
     def play_random(self, iterations=0, log=-1):
+
         playerARewards = 0.0
         playerBRewards = 0.0
         playerAWins = 0
@@ -514,9 +543,9 @@ class SoccerGame(MDP):
 
                 gms += 1
                 piAA = [self.pi_sums[0][curState][0], self.pi_sums[0][curState][1], self.pi_sums[0][curState][2],
-                        self.pi_sums[0][curState][3]]  # ,pi_sumsA[curState][4]]
+                        self.pi_sums[0][curState][3]]
                 piBB = [self.pi_sums[1][curState][0], self.pi_sums[1][curState][1], self.pi_sums[1][curState][2],
-                        self.pi_sums[1][curState][3]]  # ,pi_sumsB[curState][4]]
+                        self.pi_sums[1][curState][3]]
                 # pAa = np.random.choice([0,1,2,3,4], p=piAA)
                 # pBa = np.random.choice([0,1,2,3,4], p=piBB)
                 pAa = np.random.choice([0, 1, 2, 3], p=piAA)
@@ -542,9 +571,88 @@ class SoccerGame(MDP):
               "%)")
         print("Player B Wins: ", playerBWins, "(", (float(playerBWins) / float(playerAWins + playerBWins)) * 100.0,
               "%)")
-        
-        
-        
+
+    # Play in a random starting state
+    def play_random_player(self, iterations=0, log=-1):
+
+        playerARewards = 0.0
+        playerBRewards = 0.0
+        playerAWins = 0
+        playerBWins = 0
+        RANDOM_GAMES = 500
+        GameMoves = []
+        for iters in range(iterations):
+            # print("")
+            # print("Game Number: ", iters)
+            if (iters + 1) % log == 0:
+                print("Random game iteration: ", iters + 1)
+
+            validPos = [1, 2, 5, 6]
+            ballStart = np.random.uniform(0, 1)
+            AhasBall = True if ballStart < 0.5 else False
+            BhasBall = False if ballStart < 0.5 else True
+            playerAStart = validPos.pop(np.random.randint(0, 4))
+            playerBStart = validPos.pop(np.random.randint(0, 3))
+
+            pAx, pAy = self.stateToXY(playerAStart)
+            pBx, pBy = self.stateToXY(playerBStart)
+
+            player_a = Player(x=pAx, y=pAy, has_ball=AhasBall, p_id='A')
+            player_b = Player(x=pBx, y=pBy, has_ball=BhasBall, p_id='B')
+
+            world = World()
+            world.set_world_size(x=self.cols, y=self.rows)
+            world.place_player(player_a, player_id='A')
+            world.place_player(player_b, player_id='B')
+            world.set_goals(100, 0, 'A')
+            world.set_goals(100, 3, 'B')
+
+            curState = world.map_player_state()
+
+            gms = 0
+
+            goal = False
+            while not goal:
+
+                # 0 1 2 3
+                # 4 5 6 7
+
+                gms += 1
+                piAA = [self.pi_sums[0][curState][0], self.pi_sums[0][curState][1], self.pi_sums[0][curState][2],
+                        self.pi_sums[0][curState][3]]
+                piBB = [self.pi_sums[1][curState][0], self.pi_sums[1][curState][1], self.pi_sums[1][curState][2],
+                        self.pi_sums[1][curState][3]]
+
+                if curState[0] == "B":
+                    piBB = [0.0, 0.0, 1.0, 0.0]
+                else:
+                    piBB = [0.5, 0.5, 0.0,0.0]
+                # pAa = np.random.choice([0,1,2,3,4], p=piAA)
+                # pBa = np.random.choice([0,1,2,3,4], p=piBB)
+                pAa = np.random.choice([0, 1, 2, 3], p=piAA)
+                pBa = np.random.choice([0, 1, 2, 3], p=piBB)
+                actions = {'A': pAa, 'B': pBa}
+                new_state, rewards, goal = world.move(actions)
+                playerARewards += rewards["A"]
+                playerBRewards += rewards["B"]
+                curState = new_state
+                if int(rewards["A"]) == 100:
+                    playerAWins += 1
+                if int(rewards["B"]) == 100:
+                    playerBWins += 1
+                # world.plot_grid()
+                # print_status(goal, new_state, rewards, total_states)
+
+            # GameMoves.append(gms)
+        # print("Final A: ", playerARewards)
+        # print("Final B: ", playerBRewards)
+        # print("Player A WINS: ", playerAWins)
+        # print("Player B WINS: ", playerBWins)
+        print("Player A Wins: ", playerAWins, "(", (float(playerAWins) / float(playerAWins + playerBWins)) * 100.0,
+              "%)")
+        print("Player B Wins: ", playerBWins, "(", (float(playerBWins) / float(playerAWins + playerBWins)) * 100.0,
+              "%)")
+
         
         
         
