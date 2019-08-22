@@ -441,11 +441,14 @@ class SoccerGame(MDP):
                     self.pi_sums[n][k][kk] = self.pi_sums[n][k][kk] / float(tot)
         
     def play(self, iterations=1, log=-1):
+
         playerARewards = 0.0
         playerBRewards = 0.0
         playerAWins = 0
         playerBWins = 0
         for t in range(iterations):
+            print("")
+            print("Starting random game number ", t, " from A21")
 
             if (t + 1) % log == 0:
                 print("Test iteration: ", t + 1)
@@ -469,12 +472,19 @@ class SoccerGame(MDP):
                 piBB = [self.pi_sums[1][curState][0], self.pi_sums[1][curState][1], self.pi_sums[1][curState][2],
                         self.pi_sums[1][curState][3]]
 
-                # piAA = [i / sum(piAA) for i in piAA]
+                if sum(piAA) <= 0:
+                    piAA = [1.0 / len(piAA) for i in piAA]
+                if sum(piBB) <= 0:
+                    piBB= [1.0 / len(piAA) for i in piAA]
                 # piBB = [i / sum(piBB) for i in piBB]
 
                 # Pick action according to learn policy
+                #print(piAA)
+
                 pAa = np.random.choice([0, 1, 2, 3], p=piAA)
                 pBa = np.random.choice([0, 1, 2, 3], p=piBB)
+                print("Player A Move: ", pAa, "  ", end='')
+                print("Player B Move: ", pBa)
                 actions = {'A': pAa, 'B': pBa}
                 new_state, rewards, goal = world.move(actions)
                 playerARewards += rewards["A"]
@@ -546,6 +556,11 @@ class SoccerGame(MDP):
                         self.pi_sums[0][curState][3]]
                 piBB = [self.pi_sums[1][curState][0], self.pi_sums[1][curState][1], self.pi_sums[1][curState][2],
                         self.pi_sums[1][curState][3]]
+
+                if sum(piAA) <= 0:
+                    piAA = [1.0 / len(piAA) for i in piAA]
+                if sum(piBB) <= 0:
+                    piBB= [1.0 / len(piAA) for i in piAA]
                 # pAa = np.random.choice([0,1,2,3,4], p=piAA)
                 # pBa = np.random.choice([0,1,2,3,4], p=piBB)
                 pAa = np.random.choice([0, 1, 2, 3], p=piAA)
@@ -623,10 +638,10 @@ class SoccerGame(MDP):
                 piBB = [self.pi_sums[1][curState][0], self.pi_sums[1][curState][1], self.pi_sums[1][curState][2],
                         self.pi_sums[1][curState][3]]
 
-                if curState[0] == "B":
-                    piBB = [0.0, 0.0, 1.0, 0.0]
-                else:
-                    piBB = [0.5, 0.5, 0.0,0.0]
+                # if curState[0] == "B":
+                #     piBB = [0.0, 0.0, 1.0, 0.0]
+                # else:
+                #     piBB = [0.5, 0.5, 0.0,0.0]
                 # pAa = np.random.choice([0,1,2,3,4], p=piAA)
                 # pBa = np.random.choice([0,1,2,3,4], p=piBB)
                 pAa = np.random.choice([0, 1, 2, 3], p=piAA)

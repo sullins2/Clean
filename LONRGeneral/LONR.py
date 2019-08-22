@@ -413,8 +413,10 @@ class LONR(object):
             #     else:
             #         action_regret *= betaWeight
 
-            if action_regret < 0:
-                action_regret = 0
+            # if action_regret > 3:
+            #     print("AR: ", action_regret, " CS: ", currentState, "  CA: ", a)
+            # if action_regret < 0:
+            #     action_regret = 0
 
             # RMPLUS = False
             # if self.RMPLUS:
@@ -490,8 +492,8 @@ class LONR(object):
                 else:
                     action_regret *= betaWeight
 
-            if action_regret < 0:
-                action_regret = 0.0
+            # if action_regret < 0:
+            #     action_regret = 0.0
 
             # RMPLUS = False
             if self.RMPLUS:
@@ -2960,7 +2962,8 @@ class LONR_AB(LONR):
 
             n = 0
             currentState = self.M.getNextStates(n, currentState,randomAction0, randomAction1)
-            done = True
+            if self.M.isTerminal(currentState):
+                done = True
             # if n == 0:
             #     if currentState == 1:
             #         if randomAction0 == "SEND":
