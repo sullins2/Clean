@@ -447,8 +447,8 @@ class SoccerGame(MDP):
         playerAWins = 0
         playerBWins = 0
         for t in range(iterations):
-            print("")
-            print("Starting random game number ", t, " from A21")
+            # print("")
+            # print("Starting random game number ", t, " from A21")
 
             if (t + 1) % log == 0:
                 print("Test iteration: ", t + 1)
@@ -483,8 +483,8 @@ class SoccerGame(MDP):
 
                 pAa = np.random.choice([0, 1, 2, 3], p=piAA)
                 pBa = np.random.choice([0, 1, 2, 3], p=piBB)
-                print("Player A Move: ", pAa, "  ", end='')
-                print("Player B Move: ", pBa)
+                # print("Player A Move: ", pAa, "  ", end='')
+                # print("Player B Move: ", pBa)
                 actions = {'A': pAa, 'B': pBa}
                 new_state, rewards, goal = world.move(actions)
                 playerARewards += rewards["A"]

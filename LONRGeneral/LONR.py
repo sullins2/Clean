@@ -415,20 +415,21 @@ class LONR(object):
 
             # if action_regret > 3:
             #     print("AR: ", action_regret, " CS: ", currentState, "  CA: ", a)
-            # if action_regret < 0:
-            #     action_regret = 0
+            # print("DDDD")
+            if action_regret < 0:
+                action_regret = 0
 
             # RMPLUS = False
-            # if self.RMPLUS:
-            #     self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            # else:
-            self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+            if self.RMPLUS:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+            else:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
 
-            # if self.DCFR:
-            #     if self.M.regret_sums[n][self.M.getStateRep(currentState)][a] > 0:
-            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= alphaWeight
-            #     else:
-            #         self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= betaWeight
+            if self.DCFR:
+                if self.M.regret_sums[n][self.M.getStateRep(currentState)][a] > 0:
+                    self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= alphaWeight
+                else:
+                    self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= betaWeight
 
 
 
@@ -492,8 +493,9 @@ class LONR(object):
                 else:
                     action_regret *= betaWeight
 
-            # if action_regret < 0:
-            #     action_regret = 0.0
+            if action_regret < 0:
+                action_regret = 0.0
+
 
             # RMPLUS = False
             if self.RMPLUS:
@@ -501,6 +503,8 @@ class LONR(object):
             else:
                 self.M.regret_sums[n][currentState][a] += action_regret
 
+            # if currentState == "A21" and t % 2 == 0 and t % 3 == 0:
+            #     print(self.M.regret_sums[n][self.M.getStateRep(currentState)])
 
         # if t % 100 != 0:
         #     return
@@ -636,6 +640,40 @@ class LONR_V(LONR):
             # self.M.version = 2
             if (t + 0) % log == 0:
                 print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma)
+
+            if t % 50 == -100:
+                self.total_actions = [0, 1, 2, 3]
+                self.Q = {}
+                self.Q_bu = {}
+                self.QSums = {}
+                self.QTouched = {}
+                self.pi = {}
+                self.pi_sums = {}
+                self.regret_sums = {}
+                for n in [1]:
+                    self.Q[n] = {}
+                    self.Q_bu[n] = {}
+                    self.QSums[n] = {}
+                    self.QTouched[n] = {}
+                    self.pi[n] = {}
+                    self.pi_sums[n] = {}
+                    self.regret_sums[n] = {}
+                    for s in self.M.getStates():
+                        self.Q[n][s] = {}
+                        self.Q_bu[n][s] = {}
+                        self.QSums[n][s] = {}
+                        self.QTouched[n][s] = {}
+                        self.pi[n][s] = {}
+                        self.regret_sums[n][s] = {}
+                        self.pi_sums[n][s] = {}
+                        for a in self.total_actions:
+                            self.Q[n][s][a] = 0.0
+                            self.Q_bu[n][s][a] = 0.0
+                            self.QSums[n][s][a] = 0.0
+                            self.QTouched[n][s][a] = 0.0
+                            self.pi[n][s][a] = 1.0 / 4.0  # len(list(total_actions.keys())
+                            self.regret_sums[n][s][a] = 0.0
+                            self.pi_sums[n][s][a] = 0.0
 
             # Call one full update via LONR-V
             self._lonr_train(t=t)
@@ -2852,6 +2890,41 @@ class LONR_AB(LONR):
             if (t + 1) % log == 0:
                 print("Iteration: ", t + 1, " alpha:", self.alpha, " epsilon: ", self.epsilon)
 
+            # if t % 50 == 0:
+            #     # This is to set the second player as a random player
+            #     self.total_actions = [0, 1, 2, 3]
+            #     self.Q = {}
+            #     self.Q_bu = {}
+            #     self.QSums = {}
+            #     self.QTouched = {}
+            #     self.pi = {}
+            #     self.pi_sums = {}
+            #     self.regret_sums = {}
+            #     for n in [1]:
+            #         self.Q[n] = {}
+            #         self.Q_bu[n] = {}
+            #         self.QSums[n] = {}
+            #         self.QTouched[n] = {}
+            #         self.pi[n] = {}
+            #         self.pi_sums[n] = {}
+            #         self.regret_sums[n] = {}
+            #         for s in self.M.getStates():
+            #             self.Q[n][s] = {}
+            #             self.Q_bu[n][s] = {}
+            #             self.QSums[n][s] = {}
+            #             self.QTouched[n][s] = {}
+            #             self.pi[n][s] = {}
+            #             self.regret_sums[n][s] = {}
+            #             self.pi_sums[n][s] = {}
+            #             for a in self.total_actions:
+            #                 self.Q[n][s][a] = 0.0
+            #                 self.Q_bu[n][s][a] = 0.0
+            #                 self.QSums[n][s][a] = 0.0
+            #                 self.QTouched[n][s][a] = 0.0
+            #                 self.pi[n][s][a] = 1.0 / 4.0  # len(list(total_actions.keys())
+            #                 self.regret_sums[n][s][a] = 0.0
+            #                 self.pi_sums[n][s][a] = 0.0
+
             self._lonr_train(t=t)  # , totalIterations=iterations, randomized=randomized)
 
             self.alpha *= self.alphaDecay
@@ -2964,6 +3037,7 @@ class LONR_AB(LONR):
             currentState = self.M.getNextStates(n, currentState,randomAction0, randomAction1)
             if self.M.isTerminal(currentState):
                 done = True
+            done = True
             # if n == 0:
             #     if currentState == 1:
             #         if randomAction0 == "SEND":

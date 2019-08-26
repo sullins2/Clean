@@ -14,6 +14,8 @@ class NoSDE(MDP):
 
         self.version = 1
 
+        self.x = -1.0 / 2.0 #3.0 / 4.0
+
         for i in range(10):
             print("SET GAMMA=0.75")
 
@@ -102,6 +104,7 @@ class NoSDE(MDP):
     # Need to fix this entire function here and in general.
     def getReward(self, s, a_current, n, a_notN):
 
+        x = 1.0 / 4.0
         #return 0.0
         #Left state
         if s == 1:
@@ -110,7 +113,7 @@ class NoSDE(MDP):
                 if a_current == "KEEP":
                     return 1.0
                 elif a_current == "SEND":
-                    return 0.0
+                    return 0.0 + self.x
 
             if n == 1:
                 if a_current == "KEEP":
@@ -122,7 +125,7 @@ class NoSDE(MDP):
             # Player0
             if n == 0:
                 if a_current == "KEEP":
-                    return 3.0
+                    return 3.0 + self.x
                 elif a_current == "SEND":
                     return 0.0
             # Player1
@@ -139,19 +142,25 @@ class NoSDE(MDP):
 
     def getNextStatesAndProbs(self, s, a_current, n_current):
 
+        # Tweaked rewards
+        # -1 < x < 7/4
+        x = 1.0 / 4.0
+        y = 0.5
+
         successors = []
         otherN = 1 if n_current == 0 else 0
 
         # NoSDE is hand-crafted and all in here for now.
         for actions_notCurrentN in self.getActions(s, otherN):
-
+            if s == 1 and a_current == "NOOP":
+                print(actions_notCurrentN)
             if s == 1 and a_current == "KEEP" and n_current == 0:
                 successors.append([1, self.pi[otherN][s][actions_notCurrentN], 1.0])
             elif s == 1 and a_current == "SEND" and n_current == 0:
-                successors.append([2, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                successors.append([2, self.pi[otherN][s][actions_notCurrentN], 0.0 + self.x])
             elif s == 2 and a_current == "NOOP" and n_current == 0:
                 if actions_notCurrentN == "KEEP":
-                    rew = 3.0
+                    rew = 3.0 + self.x
                     ns = 2
                 else:
                     rew = 0.0
