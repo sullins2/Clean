@@ -18,6 +18,9 @@ class MDP(object):
         self.pi_sums = None
         self.regret_sums = None
 
+        self.Q_other = None
+
+
         self.weights = None
         self.runningRewards = None
 
@@ -93,22 +96,32 @@ class LONR(object):
         # Problem input
         self.M = M
 
+        #List of the working pis for plotting
+        self.piTRAJ = []
+
         # Get parameters
         self.alpha = parameters['alpha'] if 'alpha' in parameters else 1.0
         self.epsilon = parameters['epsilon'] if 'epsilon' in parameters else 15
         self.gamma = parameters['gamma'] if 'gamma' in parameters else 1.0
         self.alphaDecay = parameters['alphaDecay'] if 'alphaDecay' in parameters else 1.0
+        self.LastValueCount = parameters['lvc'] if 'lvc' in parameters else 1.0
+        self.HighestValue = parameters['hv'] if 'hv' in parameters else 1.0
+        self.eta = parameters['eta'] if 'eta' in parameters else 1.0 / 12.0
+        self.maxGap = parameters['maxGap'] if 'maxGap' in parameters else 10.0
 
         # Get regret minimizers used - note, no check if more than one is true
         #   - Left because there is no "conflict" between all being true
         self.RM = regret_minimizers['RM'] if 'RM' in regret_minimizers else True
         self.RMPLUS = regret_minimizers['RMPlus'] if 'RMPlus' in regret_minimizers else False
+        self.RMPLUSPLUS = regret_minimizers['RMPlusPlus'] if 'RMPlusPlus' in regret_minimizers else False
         self.DCFR = regret_minimizers['DCFR'] if 'DCFR' in regret_minimizers else False
+        self.MWU = regret_minimizers['MWU'] if 'MWU' in regret_minimizers else False
+        self.OMWU = regret_minimizers['OMWU'] if 'OMWU' in regret_minimizers else False
 
-        if sum([self.RM,self.RMPLUS,self.DCFR]) >= 2:
+        if sum([self.RM,self.RMPLUS,self.DCFR, self.MWU, self.OMWU]) >= 2:
             print("More than one regret minimizer is true. Select only one.")
             exit()
-        elif sum([self.RM,self.RMPLUS,self.DCFR]) == 0:
+        elif sum([self.RM,self.RMPLUS,self.RMPLUSPLUS, self.DCFR, self.MWU, self.OMWU]) == 0:
             print("No regret minimizer is true. Select only one.")
             exit()
 
@@ -118,7 +131,7 @@ class LONR(object):
         self.gammaDCFR = None
 
         # If Regret Matching (check this)
-        if self.RM:
+        if self.RM or self.RMPLUSPLUS:
             self.alphaDCFR = 1.0
             self.betaDCFR = 1.0
             self.gammaDCFR = 1.0
@@ -172,6 +185,9 @@ class LONR(object):
                 print(" gammaDCFR: ", self.gammaDCFR)
             print("    EXP3: ", self.EXP3)
             print("exp3gama: ", self.exp3gamma)
+            print("eta     : ", self.eta)
+            print("HighestV: ", self.HighestValue)
+            print("LastValCnt: ", self.LastValueCount)
 
 
     def lonr_train(self, iterations, log):
@@ -232,6 +248,16 @@ class LONR(object):
                     print(kk, ": ", self.M.regret_sums[n][k][kk], " ", end='')
                 print("")
 
+        # print("OTHER")
+        # print(self.M.Q_other[0][2]["SEND"])
+        # print(self.M.Q_other[0][2]["KEEP"])
+        # print(self.M.Q_other[1][1]["KEEP"])
+        # print(self.M.Q_other[1][1]["SEND"])
+        #
+        # num = self.M.Q[1][1]["NOOP"] - self.M.Q_other[1][1]["KEEP"]
+        # den = self.M.Q_other[1][1]["SEND"] - self.M.Q_other[1][1]["KEEP"]
+        # print("FINAL FOR PI1send: ", float(num) / float(den))
+
         # print("Weights")
         # if self.M.weights is not None:
         #     for n in range(self.M.N):
@@ -284,30 +310,62 @@ class LONR(object):
 
     def QUpdate(self, n, s, a_current2, randomS=None):
 
-        # print("IN:  s: ", s, " RANDOMS: ", randomS)
+        exp_sums = []
+
+        # for a_current in a_current2:
+        #
+        #     if self.M.isTerminal(s):
+        #
+        #         reward = self.M.getReward(s, a_current, n, n)
+        #         if reward == None:
+        #             reward = 0.0
+        #         self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*reward + self.alpha*self.M.Q[n][s][a_current]
+        #         continue
+        #
+        #
+        #     # Get next states and transition probs for MDP
+        #     # Get next states and other players policy for MG
+        #     succs = self.M.getNextStatesAndProbs(s, a_current, n)
+        #
+        #     Value = 0.0
+        #
+        #     # Loop thru each next state and prob
+        #     for s_prime, prob, reward, otherAction in succs:
+        #
+        #         # Terminal reached
+        #         if s_prime == None:
+        #             Value += prob * reward
+        #             continue
+        #
+        #         tempValue = 0.0
+        #
+        #         # Loop thru actions in s_prime for player n
+        #         for a_current_prime in self.M.getActions(s_prime, n):
+        #             tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
+        #
+        #         reww = self.M.getReward(s, a_current, n, otherAction)
+        #
+        #         if reww is None:
+        #             Value += prob * (reward + self.gamma * tempValue)
+        #         else:
+        #             Value += prob * (reww + self.gamma * tempValue)
         for a_current in a_current2:
 
             if self.M.isTerminal(s):
 
                 # Value iteration
                 reward = self.M.getReward(s, a_current, n, n)
-                # print("Reward: ", reward)
                 if reward == None:
                     reward = 0.0
-                # if s == 4:
-                #     print("VALUUUUUUUUUUUUUUUUUUUUUUUUE: ", reward)
-                self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha)*reward + self.alpha*self.M.Q[n][s][a_current]
-                # self.M.QSums[n][s][a_current] += self.M.Q_bu[n][s][a_current]
-                # self.M.QTouched[n][s][a_current] += 1.0
+                self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * reward + self.alpha * self.M.Q[n][s][a_current]
                 continue
-
 
             # Get next states and transition probs for MDP
             # Get next states and other players policy for MG
             succs = self.M.getNextStatesAndProbs(s, a_current, n)
             # print("s: ", s, " a:", a_current, "   succs: ", succs)
 
-            #print("  SUCCS: ", succs)
+            # print("  SUCCS: ", succs)
             Value = 0.0
 
             # Loop thru each next state and prob
@@ -316,82 +374,91 @@ class LONR(object):
 
                 # Terminal reached
                 if s_prime == None:
-                    #print("HERE: ", reward)
-                    # self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + self.alpha*reward
                     Value += prob * reward
-                    #Value += reward
+
                     continue
 
                 tempValue = 0.0
 
-                # print("sprime: ", s_prime)
                 # Loop thru actions in s_prime for player n
                 for a_current_prime in self.M.getActions(s_prime, n):
-
                     tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
 
-                reww = self.M.getReward(s, a_current, n, 0)
+                reww = self.M.getReward(s, a_current, n,0)
 
                 if reww is None:
                     Value += prob * (reward + self.gamma * tempValue)
+
                 else:
                     Value += prob * (reww + self.gamma * tempValue)
 
-
-                ###################################################
-                # for a_current_prime in self.M.getActions(s_prime, n):
-                #
-                #     tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
-                ###################################################
-
             self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + (self.alpha) * Value
-            # print("Q: ", self.M.Q_bu[n][s][a_current], " VALUE: ", Value)
-            # self.M.QSums[n][s][a_current] += self.M.Q[n][s][a_current]
-            # self.M.QBSums[n][self.M.getStateRep(s)][a_current] += self.M.QB[n][self.M.getStateRep(s)][a_current]
-            # self.M.QTouched[n][s][a_current] += 1.0
-            #self.M.QBTouched[n][self.M.getStateRep(s)][a_current] += 1.0
+
+            Value = Value / float(self.HighestValue)
+
+            if self.MWU or self.OMWU:
+
+                self.M.regret_sums[n][s][a_current] += Value
+
+                # Working: ata 1/12, min(10), count 3-10 times
+
+                # Min value
+                minValue = 10000000  # self.M.regret_sums[n][s][0]
+                for ii in self.M.regret_sums[n][s]:
+                    if self.M.regret_sums[n][s][ii] < minValue:
+                        minValue = self.M.regret_sums[n][s][ii]
+
+                # FOR RPS, LOWER 1/32 is better
+                # ata = 1.0 / 2.0  # max(0.1, 1.0 / float(self.counter))#111.0 / 12.0
+                ata = self.eta
+                exp_sums.append(math.exp(min(self.M.regret_sums[n][s][a_current] - minValue, self.maxGap) * -ata))
+
+                # Count LastValueTimes
+                exp_sums[-1] *= math.exp(-ata * float(self.LastValueCount) * Value)
+
+        if self.MWU or self.OMWU:
+            denom = sum(exp_sums)
+            # print(denom)
+            xx = 0
+            strategy = []
+            for i in sorted(self.M.pi[n][s]):
+                if xx == 0 and n == 0:
+                    strategy.append(self.M.pi[n][s][i])
+                self.M.pi[n][s][i] = exp_sums[xx] / denom
+                xx += 1
+
+                self.M.pi_sums[n][s][i] += self.M.pi[n][s][i]
+
+                # Add to trajectory
+
+
+
+            self.piTRAJ.append(strategy)
 
 
 
     def QBackup(self, n, WW=None):
 
-        # def QBackup(self, n, WW=None):
-        #
         for s in self.M.getStates():
-        # totalStates = [0,1,2,3,4]
-        # for s in totalStates:
             for a in self.M.getActions(s, n):
-                #print("QQ: ",  self.M.Q[n][s][a], " QQBU: ", self.M.Q_bu[n][s][a])
                 self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
-                # self.M.QSums[n][s][a] += self.M.Q_bu[n][s][a]
-                #self.M.QTouched[n][s][a] += 1.0
-                # self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
 
-        # if WW is None:
-        #     for s in self.M.getStates():
-        #         for a in self.M.getActions(s, n):
-        #             self.M.Q[n][s][a] = self.M.Q_bu[n][s][a]
-        #             self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
-        #
-        # else:
-        #     for s in WW:
-        #         for a in self.M.getActions(s, n):
-        #             self.M.Q[n][self.M.getStateRep(s)][a] = self.M.Q_bu[n][self.M.getStateRep(s)][a]
-        #             self.M.QSums[n][self.M.getStateRep(s)][a] += self.M.Q[n][self.M.getStateRep(s)][a]
+
 
     def regretUpdate(self, n, currentState, t):
+
+        # Get out if not doing regret matching
+        if self.MWU or self.OMWU:
+            return
 
         iters = t + 1
 
         alphaW = pow(iters, self.alphaDCFR)
         alphaWeight = (alphaW / (alphaW + 1))
-
         betaW = pow(iters, self.betaDCFR)
         betaWeight = (betaW / (betaW + 1))
-
-
         gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
-        #print("BETAWEIGHT: ", alphaWeight, betaWeight, gammaWeight)
+
 
         # Calculate regret - this variable name needs a better name
         target = 0.0
@@ -407,17 +474,9 @@ class LONR(object):
             action_regret = self.M.Q[n][currentState][a] - target
             #print("ACTION_REGRET: ", action_regret, self.M.Q[n][currentState][a], target)
 
-            # if self.DCFR:
-            #     if action_regret > 0:
-            #         action_regret *= alphaWeight
-            #     else:
-            #         action_regret *= betaWeight
-
-            # if action_regret > 3:
-            #     print("AR: ", action_regret, " CS: ", currentState, "  CA: ", a)
-            # print("DDDD")
-            if action_regret < 0:
-                action_regret = 0
+            if self.RMPLUSPLUS:
+                if action_regret < 0:
+                    action_regret = 0
 
             # RMPLUS = False
             if self.RMPLUS:
@@ -432,11 +491,17 @@ class LONR(object):
                     self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= betaWeight
 
 
-
+        strategy = []
+        xx = 0
         for a in self.M.getActions(currentState, n):
 
             if self.M.isTerminal(currentState):
                 continue
+            if xx == 0 and n == 0:
+                print(self.M.pi[n][self.M.getStateRep(currentState)][a], "   SSSS ", xx, "  ", n)
+                #strategy.append(self.M.pi[n][self.M.getStateRep(currentState)][a])
+                strategy = self.M.pi[n][self.M.getStateRep(currentState)][a]
+                self.piTRAJ.append(strategy)
             # # Sum up total regret
             rgrt_sum = 0.0
             for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
@@ -452,167 +517,167 @@ class LONR(object):
             else:
 
                 self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
+            xx += 1
 
 
-
-
-    def regretUpdate2(self, n, currentState, t, action):
-
-        iters = t + 1
-        alphaR = 3.0 / 2.0  # accum pos regrets
-        betaR = 0.0  # accum neg regrets
-        gammaR = 2.0  # contribution to avg strategy
-
-        alphaW = pow(iters, self.alphaDCFR)
-        alphaWeight = (alphaW / (alphaW + 1))
-
-        betaW = pow(iters, self.betaDCFR)
-        betaWeight = (betaW / (betaW + 1))
-
-        gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
-
-        # Calculate regret - this variable name needs a better name
-        target = 0.0
-        action_regret = 0.0
-        # Skip terminal states
-        if self.M.isTerminal(currentState) == True:
-            return
-
-        for a in self.M.getActions(currentState, n):
-            target += self.M.Q[n][currentState][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
-
-        for a in self.M.getActions(currentState, n):
-
-            if a != action:
-                continue
-
-            action_regret = self.M.Q[n][currentState][a] - target
-            if self.DCFR or self.RMPLUS:
-                if action_regret > 0:
-                    action_regret *= alphaWeight
-                else:
-                    action_regret *= betaWeight
-
-            if action_regret < 0:
-                action_regret = 0.0
-
-
-            # RMPLUS = False
-            if self.RMPLUS:
-                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            else:
-                self.M.regret_sums[n][currentState][a] += action_regret
-
-            # if currentState == "A21" and t % 2 == 0 and t % 3 == 0:
-            #     print(self.M.regret_sums[n][self.M.getStateRep(currentState)])
-
-        # if t % 100 != 0:
-        #     return
-        # Skip terminal states
-        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-        #     continue
-
-        for a in self.M.getActions(currentState, n):
-
-            # if a != action:
-            #     continue
-
-            if self.M.isTerminal(currentState):
-                continue
-            # # Sum up total regret
-            rgrt_sum = 0.0
-            for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
-                rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
-            if rgrt_sum > 0:
-                self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
-            else:
-                # print("REG SUMS: ", rgrt_sum)
-                self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
-                # print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
-
-            # Add to policy sum
-            if self.DCFR or self.RMPLUS:
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
-            else:
-
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
-
-        return action_regret
-
-    def regretUpdateNEW(self, n, currentState, t, reach, cfr_reach):
-
-        # print("")
-        # print("reach: ", reach, " CFR_REACH: ", cfr_reach)
-        # print("")
-
-        iters = t + 1
-
-        alphaW = pow(iters, self.alphaDCFR)
-        alphaWeight = (alphaW / (alphaW + 1))
-
-        betaW = pow(iters, self.betaDCFR)
-        betaWeight = (betaW / (betaW + 1))
-
-        gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
-
-
-        # Calculate regret - this variable name needs a better name
-        target = 0.0
-
-        # Skip terminal states
-        if self.M.isTerminal(currentState) == True:
-            return
-
-        for a in self.M.getActions(currentState, n):
-            target += self.M.Q[n][currentState][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
-
-        for a in self.M.getActions(currentState, n):
-            action_regret = self.M.Q[n][currentState][a] - target
-            ### action_regret *= cfr_reach
-
-            if self.DCFR:
-                if action_regret > 0:
-                    action_regret *= alphaWeight
-                else:
-                    action_regret *= betaWeight
-
-            if self.RMPLUS or self.RM:
-                if action_regret < 0:
-                    action_regret *= 0.0#alphaWeight
-            # RMPLUS = False
-            if self.RMPLUS:
-                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            else:
-                # self.M.regret_sums[n][currentState][a] += action_regret
-                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
-
-        # Skip terminal states
-        # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
-        #     continue
-
-        for a in self.M.getActions(currentState, n):
-
-            if self.M.isTerminal(currentState):
-                continue
-            # # Sum up total regret
-            rgrt_sum = 0.0
-            for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
-                rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
-            if rgrt_sum > 0:
-                self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
-            else:
-                #print("REG SUMS: ", rgrt_sum)
-                self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
-                #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
-
-            # Add to policy sum
-            if self.DCFR:
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight### * reach
-            elif self.RMPLUS:
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] ###* reach   # * gammaWeight==1
-            else:
-
-                self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] # * gammaWeight ###* reach
+    # def regretUpdate2(self, n, currentState, t, action):
+    #
+    #     iters = t + 1
+    #     alphaR = 3.0 / 2.0  # accum pos regrets
+    #     betaR = 0.0  # accum neg regrets
+    #     gammaR = 2.0  # contribution to avg strategy
+    #
+    #     alphaW = pow(iters, self.alphaDCFR)
+    #     alphaWeight = (alphaW / (alphaW + 1))
+    #
+    #     betaW = pow(iters, self.betaDCFR)
+    #     betaWeight = (betaW / (betaW + 1))
+    #
+    #     gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
+    #
+    #     # Calculate regret - this variable name needs a better name
+    #     target = 0.0
+    #     action_regret = 0.0
+    #     # Skip terminal states
+    #     if self.M.isTerminal(currentState) == True:
+    #         return
+    #
+    #     for a in self.M.getActions(currentState, n):
+    #         target += self.M.Q[n][currentState][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+    #
+    #     for a in self.M.getActions(currentState, n):
+    #
+    #         if a != action:
+    #             continue
+    #
+    #         action_regret = self.M.Q[n][currentState][a] - target
+    #         if self.DCFR or self.RMPLUS:
+    #             if action_regret > 0:
+    #                 action_regret *= alphaWeight
+    #             else:
+    #                 action_regret *= betaWeight
+    #
+    #         # print(action_regret)
+    #         if action_regret < 0:
+    #             action_regret = 0.0
+    #
+    #
+    #         # RMPLUS = False
+    #         if self.RMPLUS:
+    #             self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+    #         else:
+    #             self.M.regret_sums[n][currentState][a] += action_regret
+    #
+    #         # if currentState == "A21" and t % 2 == 0 and t % 3 == 0:
+    #         #     print(self.M.regret_sums[n][self.M.getStateRep(currentState)])
+    #
+    #     # if t % 100 != 0:
+    #     #     return
+    #     # Skip terminal states
+    #     # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+    #     #     continue
+    #
+    #     for a in self.M.getActions(currentState, n):
+    #
+    #         # if a != action:
+    #         #     continue
+    #
+    #         if self.M.isTerminal(currentState):
+    #             continue
+    #         # # Sum up total regret
+    #         rgrt_sum = 0.0
+    #         for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+    #             rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+    #         if rgrt_sum > 0:
+    #             self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+    #         else:
+    #             # print("REG SUMS: ", rgrt_sum)
+    #             self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
+    #             # print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
+    #
+    #         # Add to policy sum
+    #         if self.DCFR or self.RMPLUS:
+    #             self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight
+    #         else:
+    #
+    #             self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a]
+    #
+    #     return action_regret
+    #
+    # def regretUpdateNEW(self, n, currentState, t, reach, cfr_reach):
+    #
+    #     # print("")
+    #     # print("reach: ", reach, " CFR_REACH: ", cfr_reach)
+    #     # print("")
+    #
+    #     iters = t + 1
+    #
+    #     alphaW = pow(iters, self.alphaDCFR)
+    #     alphaWeight = (alphaW / (alphaW + 1))
+    #
+    #     betaW = pow(iters, self.betaDCFR)
+    #     betaWeight = (betaW / (betaW + 1))
+    #
+    #     gammaWeight = pow((iters / (iters + 1)), self.gammaDCFR)
+    #
+    #
+    #     # Calculate regret - this variable name needs a better name
+    #     target = 0.0
+    #
+    #     # Skip terminal states
+    #     if self.M.isTerminal(currentState) == True:
+    #         return
+    #
+    #     for a in self.M.getActions(currentState, n):
+    #         target += self.M.Q[n][currentState][a] * self.M.pi[n][self.M.getStateRep(currentState)][a]
+    #
+    #     for a in self.M.getActions(currentState, n):
+    #         action_regret = self.M.Q[n][currentState][a] - target
+    #         ### action_regret *= cfr_reach
+    #
+    #         if self.DCFR:
+    #             if action_regret > 0:
+    #                 action_regret *= alphaWeight
+    #             else:
+    #                 action_regret *= betaWeight
+    #
+    #         if self.RMPLUS or self.RM:
+    #             if action_regret < 0:
+    #                 action_regret *= 0.0#alphaWeight
+    #         # RMPLUS = False
+    #         if self.RMPLUS:
+    #             self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
+    #         else:
+    #             # self.M.regret_sums[n][currentState][a] += action_regret
+    #             self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
+    #
+    #     # Skip terminal states
+    #     # if self.M.isTerminal(self.M.getStateRep(currentState)) == True:
+    #     #     continue
+    #
+    #     for a in self.M.getActions(currentState, n):
+    #
+    #         if self.M.isTerminal(currentState):
+    #             continue
+    #         # # Sum up total regret
+    #         rgrt_sum = 0.0
+    #         for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
+    #             rgrt_sum += self.M.regret_sums[n][self.M.getStateRep(currentState)][k] if self.M.regret_sums[n][self.M.getStateRep(currentState)][k] > 0 else 0.0
+    #         if rgrt_sum > 0:
+    #             self.M.pi[n][self.M.getStateRep(currentState)][a] = (max(self.M.regret_sums[n][self.M.getStateRep(currentState)][a], 0.)) / rgrt_sum
+    #         else:
+    #             #print("REG SUMS: ", rgrt_sum)
+    #             self.M.pi[n][self.M.getStateRep(currentState)][a] = 1.0 / len(self.M.getActions(currentState, n))
+    #             #print("  PI: ", self.M.pi[n][self.M.getStateRep(currentState)][a])
+    #
+    #         # Add to policy sum
+    #         if self.DCFR:
+    #             self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] * gammaWeight### * reach
+    #         elif self.RMPLUS:
+    #             self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] ###* reach   # * gammaWeight==1
+    #         else:
+    #
+    #             self.M.pi_sums[n][self.M.getStateRep(currentState)][a] += self.M.pi[n][self.M.getStateRep(currentState)][a] # * gammaWeight ###* reach
 
 ################################################################
 # LONR Value Iteration
@@ -641,40 +706,6 @@ class LONR_V(LONR):
             if (t + 0) % log == 0:
                 print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma)
 
-            if t % 50 == -100:
-                self.total_actions = [0, 1, 2, 3]
-                self.Q = {}
-                self.Q_bu = {}
-                self.QSums = {}
-                self.QTouched = {}
-                self.pi = {}
-                self.pi_sums = {}
-                self.regret_sums = {}
-                for n in [1]:
-                    self.Q[n] = {}
-                    self.Q_bu[n] = {}
-                    self.QSums[n] = {}
-                    self.QTouched[n] = {}
-                    self.pi[n] = {}
-                    self.pi_sums[n] = {}
-                    self.regret_sums[n] = {}
-                    for s in self.M.getStates():
-                        self.Q[n][s] = {}
-                        self.Q_bu[n][s] = {}
-                        self.QSums[n][s] = {}
-                        self.QTouched[n][s] = {}
-                        self.pi[n][s] = {}
-                        self.regret_sums[n][s] = {}
-                        self.pi_sums[n][s] = {}
-                        for a in self.total_actions:
-                            self.Q[n][s][a] = 0.0
-                            self.Q_bu[n][s][a] = 0.0
-                            self.QSums[n][s][a] = 0.0
-                            self.QTouched[n][s][a] = 0.0
-                            self.pi[n][s][a] = 1.0 / 4.0  # len(list(total_actions.keys())
-                            self.regret_sums[n][s][a] = 0.0
-                            self.pi_sums[n][s][a] = 0.0
-
             # Call one full update via LONR-V
             self._lonr_train(t=t)
 
@@ -696,6 +727,7 @@ class LONR_V(LONR):
 
 
         if log != -1: print("Finish Training")
+        return self.piTRAJ
 
 
     ######################################
@@ -740,6 +772,21 @@ class LONR_V(LONR):
             for s in self.M.getStates():
                 self.regretUpdate(n, s, t)
 
+        # Q1(2,SEND)
+        # self.M.Q_other[0][2]["SEND"] = 0.0 + (0.75 * (self.M.Q[0][1]["SEND"] * self.M.pi[0][1]["SEND"] + self.M.Q[0][1]["KEEP"] * self.M.pi[0][1]["KEEP"]))
+        #
+        # # Q1(2,KEEP)
+        # self.M.Q_other[0][2]["KEEP"] = 3.0 + (0.75 * self.M.Q[0][2]["NOOP"])#(self.M.Q[0][1]["SEND"] * self.M.pi[0][1]["SEND"] + self.M.Q[0][1]["KEEP"] * self.M.pi[0][1]["KEEP"]))
+        #
+        # #Q2(1,KEEP)
+        # self.M.Q_other[1][1]["KEEP"] = 0.0 + (0.75 * self.M.Q[1][1]["NOOP"])  # (self.M.Q[0][1]["SEND"] * self.M.pi[0][1]["SEND"] + self.M.Q[0][1]["KEEP"] * self.M.pi[0][1]["KEEP"]))
+        #
+        # #Q2(1,SEND()
+        # self.M.Q_other[1][1]["SEND"] = 3.0 + (0.75 *  (self.M.Q[1][2]["SEND"] * self.M.pi[1][2]["SEND"] + self.M.Q[1][2]["KEEP"] * self.M.pi[1][2]["KEEP"]))
+
+        # num = self.M.Q[1][1]["NOOP"] - self.M.Q_other[1][1]["KEEP"]
+        # den = self.M.Q_other[1][1]["SEND"] - self.M.Q_other[1][1]["KEEP"]
+        # print("FINAL FOR PI1send: ", float(num) / float(den))
 
 ################################################################
 # LONR Asynchronous Value Iteration
@@ -2597,7 +2644,7 @@ class LONR_AA(LONR):
                 if totalIts % 4000 == 0:
                     print("TOT: ", totalIts)
 
-                if totalIts > 20: # THIS IS NOW TOTAL ITERATIONS
+                if totalIts > 2: # THIS IS NOW TOTAL ITERATIONS
                     done = True
                     continue
 
@@ -2957,11 +3004,11 @@ class LONR_AB(LONR):
 
         # print("Current Start State: ", currentState)
 
-        # if currentState == 1:
-        #     n = 0
-        # else:
-        #     n = 1
-        #
+        if currentState == 1:
+            n = 0
+        else:
+            n = 1
+
         done = False
         # pi0 = 1.0
         # pi1 = 1.0
@@ -2970,16 +3017,15 @@ class LONR_AB(LONR):
         # Episode loop - until terminal state is reached
         while done == False:
 
-            # if currentState == 1:
-            #     n = 0
-            # else:
-            #     n = 1
+            if currentState == 1:
+                n = 0
+            else:
+                n = 1
 
             totalIts += 1
             if totalIts > 2: #Can be 10, 20, etc
                 done = True
                 continue
-
             if self.M.isTerminal(currentState):
                 done = True
                 continue
@@ -3033,20 +3079,20 @@ class LONR_AB(LONR):
             #     self.M.regret_sums[0][self.M.getStateRep(currentState)][randomAction0] += 1.0
             #     self.M.regret_sums[1][self.M.getStateRep(currentState)][randomAction1] += 1.0
 
-            n = 0
-            currentState = self.M.getNextStates(n, currentState,randomAction0, randomAction1)
-            if self.M.isTerminal(currentState):
-                done = True
+            #n = 0
+            # currentState = self.M.getNextStates(n, currentState,randomAction0, randomAction1)
+            # if self.M.isTerminal(currentState):
+            #     done = True
             done = True
-            # if n == 0:
-            #     if currentState == 1:
-            #         if randomAction0 == "SEND":
-            #             currentState = 2
-            #
-            # if n == 1:
-            #     if currentState == 2:
-            #         if randomAction1 == "SEND":
-            #             currentState = 1
+            if n == 0:
+                if currentState == 1:
+                    if randomAction0 == "SEND":
+                        currentState = 2
+
+            if n == 1:
+                if currentState == 2:
+                    if randomAction1 == "SEND":
+                        currentState = 1
 
             # done = True
 

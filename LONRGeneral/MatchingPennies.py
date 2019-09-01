@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-class Prisoner(MDP):
+class MatchingPennies(MDP):
 
     def __init__(self, startState=1):
         super().__init__(startState=startState)
@@ -59,7 +59,7 @@ class Prisoner(MDP):
                     else:
                         self.pi[n][s][a] = 0.5
                     totA += 1
-                    self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
+                    # self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
                     self.regret_sums[n][s][a] = 0.0#np.random.randint(1,3)
                     self.pi_sums[n][s][a] = 0.0
                     self.weights[n][s][a] = 1.0

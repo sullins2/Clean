@@ -55,11 +55,11 @@ class RPSGame(MDP):
                     self.QSums[n][s][a] = 0.0
                     self.QTouched[n][s][a] = 0.0
                     if totA == 0:
-                        self.pi[n][s][a] = 0.24
+                        self.pi[n][s][a] = 0.01
                     elif totA == 1:
-                        self.pi[n][s][a] = 0.26
+                        self.pi[n][s][a] = 0.14
                     else:
-                        self.pi[n][s][a] = 0.5
+                        self.pi[n][s][a] = 0.85
                     totA += 1
                     # self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
                     self.regret_sums[n][s][a] = 0#np.random.randint(0,12)
@@ -153,6 +153,7 @@ class RPSGame(MDP):
         successors = []
         otherN = 1 if n_current == 0 else 0
 
+        # print("THIS: ", s,a_current,n_current)
         ROCK = 0
         PAPER = 1
         SCISSORS = 2
@@ -161,47 +162,48 @@ class RPSGame(MDP):
             if n_current == 0:
                 if a_current == 0 and actions_notCurrentN == 0: #R R
                     #print(otherN, s, actions_notCurrentN)
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                    # print(self.pi[otherN])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.5])
                 if a_current == 0 and actions_notCurrentN == 1: #R P
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], -1.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
                 if a_current == 0 and actions_notCurrentN == 2: # R S
                     successors.append([None, self.pi[otherN][s][actions_notCurrentN], 1.0])
 
                 if a_current == 1 and actions_notCurrentN == 0: # P R
                     successors.append([None, self.pi[otherN][s][actions_notCurrentN], 1.0])
                 if a_current == 1 and actions_notCurrentN == 1: # PP
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.5])
                 if a_current == 1 and actions_notCurrentN == 2: # P S
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], -1.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
 
                 if a_current == 2 and actions_notCurrentN == 0: #S R
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], -1.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
                 if a_current == 2 and actions_notCurrentN == 1:
                     successors.append([None, self.pi[otherN][s][actions_notCurrentN], 1.0])
                 if a_current == 2 and actions_notCurrentN == 2:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.5])
 
             if n_current == 1:
                 if a_current == 0 and actions_notCurrentN == 0:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.5])
                 if a_current == 0 and actions_notCurrentN == 1:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], -1.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
                 if a_current == 0 and actions_notCurrentN == 2:
                     successors.append([None, self.pi[otherN][s][actions_notCurrentN], 1.0])
 
                 if a_current == 1 and actions_notCurrentN == 0:
                     successors.append([None, self.pi[otherN][s][actions_notCurrentN], 1.0])
                 if a_current == 1 and actions_notCurrentN == 1:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.5])
                 if a_current == 1 and actions_notCurrentN == 2:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], -1.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
 
                 if a_current == 2 and actions_notCurrentN == 0:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], -1.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
                 if a_current == 2 and actions_notCurrentN == 1:
                     successors.append([None, self.pi[otherN][s][actions_notCurrentN], 1.0])
                 if a_current == 2 and actions_notCurrentN == 2:
-                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                    successors.append([None, self.pi[otherN][s][actions_notCurrentN], 0.5])
 
 
 

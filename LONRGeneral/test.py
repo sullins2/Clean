@@ -81,37 +81,36 @@ from LONRGeneral.MatchingPennies import *
 ######################################################
 # Matching Pennies LONR_V
 ######################################################
-sg = RPSGame()
-d
-print("Make sure to put > 2 in, no terminal")
-parameters = {'alpha': 0.99, 'epsilon': 30, 'gamma': 0.99}
-
-regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
-# regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
-# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-dcfr = {'alphaDCFR' : math.inf, 'betaDCFR' : -math.inf, 'gammaDCFR' : 2.0}
-lonrAgent = LONR_V(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-iters = 1000000
-lonrAgent.lonr_train(iterations=iters, log=7140)
-
-lonrAgent.printOut()
-
-
-######################################################
-# RPS LONR_V
-######################################################
-# sg = RPSGame()
+# sg = MatchingPennies()
 # print("Make sure to put > 2 in, no terminal")
 # parameters = {'alpha': 0.99, 'epsilon': 30, 'gamma': 0.99}
 #
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 # # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
 # # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
-# # dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-# dcfr = {'alphaDCFR' : math.inf, 'betaDCFR' : -math.inf, 'gammaDCFR' : 2.0}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# # dcfr = {'alphaDCFR' : math.inf, 'betaDCFR' : -math.inf, 'gammaDCFR' : 2.0}
 # lonrAgent = LONR_V(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-# iters = 1000000
+# iters = 100000
+# lonrAgent.lonr_train(iterations=iters, log=7140)
+#
+# lonrAgent.printOut()
+
+
+#####################################################
+# RPS LONR_V
+#####################################################
+# sg = RPSGame()
+# print("Make sure to put > 2 in, no terminal")
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99}
+#
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': False, 'DCFR': True}
+# # dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_AB(M=sg, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 30000
 # lonrAgent.lonr_train(iterations=iters, log=7140)
 #
 # lonrAgent.printOut()
@@ -192,19 +191,62 @@ lonrAgent.printOut()
 
 
 ####################################################
-# NOSDE LONR-AB
+# RPS LONR-V
+####################################################
+noSDE = RPSGame()
+print("Make sure to put > 2 in, no terminal")
+# lvc=LastValueCount, hv=HighestValue
+parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.99, 'lvc': 3.0, 'hv': 1.0, 'eta': 1.0/32.0, 'maxGap': 0.5}
+
+regret_minimizers = {'RM': True, 'RMPlus': False, 'RMPlusPlus': False, 'DCFR': False, 'MWU': False, 'OMWU': False}
+# regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+
+dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+iters = 5
+lonrAgent.lonr_train(iterations=iters, log=14000)
+
+lonrAgent.printOut()
+
+print(lonrAgent.piTRAJ)
+
+####################################################
+# NOSDE LONR-V
+####################################################
+# noSDE = NoSDE()
+# print("Make sure to put > 2 in, no terminal")
+# # lvc=LastValueCount, hv=HighestValue
+# parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.75, 'lvc': 9.0, 'hv': 12.0, "eta": 1.0/2.0}
+#
+# regret_minimizers = {'RM': False, 'RMPlus': False, 'RNPlusPlus': False, 'DCFR': False, 'MWU': True, 'OMWU': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+#
+# dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
+# lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 50000
+# lonrAgent.lonr_train(iterations=iters, log=4000)
+#
+# lonrAgent.printOut()
+
+
+
+
+####################################################
+# NOSDE LONR-AA
 ####################################################
 # noSDE = NoSDE()
 # print("Make sure to put > 2 in, no terminal")
 # parameters = {'alpha': 0.99, 'epsilon': 10, 'gamma': 0.75}
 #
-# # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
-# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
 # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
+# # regret_minimizers = {'RM': False, 'RMPlus': True, 'DCFR': False}
+# # regret_minimizers = {'RM': True, 'RMPlus': False, 'DCFR': False}
 # dcfr = {'alphaDCFR' : 3.0 / 2.0, 'betaDCFR' : 0.0, 'gammaDCFR' : 2.0}
-# lonrAgent = LONR_V(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
-# iters = 500
-# lonrAgent.lonr_train(iterations=iters, log=14000)
+# lonrAgent = LONR_AB(M=noSDE, parameters=parameters, regret_minimizers=regret_minimizers, dcfr=dcfr)
+# iters = 20000
+# lonrAgent.lonr_train(iterations=iters, log=4000)
 #
 # lonrAgent.printOut()
 

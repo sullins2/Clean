@@ -14,7 +14,7 @@ class NoSDE(MDP):
 
         self.version = 1
 
-        self.x = -1.0 / 2.0 #3.0 / 4.0
+        self.x = 0.0# -1.0 / 2.0 #3.0 / 4.0
 
         for i in range(10):
             print("SET GAMMA=0.75")
@@ -31,6 +31,9 @@ class NoSDE(MDP):
 
         self.weights = {}
 
+        self.Q_other = {}
+        self.QQQQ = {}
+
         for n in range(self.N):
             self.Q[n] = {}
             self.Q_bu[n] = {}
@@ -41,6 +44,7 @@ class NoSDE(MDP):
             self.pi[n] = {}
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
+
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -61,6 +65,13 @@ class NoSDE(MDP):
                     #     print("ERASE NOSDE")
                     self.pi_sums[n][s][a] = 0.0
                     self.weights[n][s][a] = 1.0
+        for n in range(self.N):
+            self.Q_other[n] = {}
+            for s in [1,2]:
+                self.Q_other[n][s] = {}
+                for a in ["SEND", "KEEP"]:
+                    self.Q_other[n][s][a] = 0.0
+
 
     def getActions(self, s, n):
         # Left state
@@ -70,11 +81,11 @@ class NoSDE(MDP):
                 return ["KEEP", "SEND"]
             # Player1
             elif n == 1:
-                return ["NOOP"]
+                return ["NOOP"]#, "SEND", "KEEP"] # ADDING SEND AND KEEP
         elif s == 2:
             # Player0
             if n == 0:
-                return ["NOOP"]
+                return ["NOOP"]#, "SEND", "KEEP"] # ADDIND SEND AND KEEP
             elif n == 1:
                 return ["KEEP", "SEND"]
         print("Missed: ", s, " ", n)
@@ -104,7 +115,7 @@ class NoSDE(MDP):
     # Need to fix this entire function here and in general.
     def getReward(self, s, a_current, n, a_notN):
 
-        x = 1.0 / 4.0
+        # x = 1.0 / 4.0
         #return 0.0
         #Left state
         if s == 1:
@@ -114,12 +125,18 @@ class NoSDE(MDP):
                     return 1.0
                 elif a_current == "SEND":
                     return 0.0 + self.x
+                # print("NO1")
 
             if n == 1:
                 if a_current == "KEEP":
                     return 0.0
                 elif a_current == "SEND":
                     return 3.0
+                # elif a_current == "NOOP":
+                #     if a_notN == "SEND":
+                #         return 3.0
+                #     else:
+                #         return 0.0
         # Right state
         elif s == 2:
             # Player0
@@ -128,14 +145,39 @@ class NoSDE(MDP):
                     return 3.0 + self.x
                 elif a_current == "SEND":
                     return 0.0
+                # elif a_current == "NOOP":
+                #     if a_notN == "SEND":
+                #         return 0.0
+                #     else:
+                #         return 3.0
+
             # Player1
             elif n == 1:
                 if a_current == "KEEP":
                     return 1.0
                 elif a_current == "SEND":
                     return 0.0
+                # print("NO4")
+
+            # elif s == 2 and actions_notCurrentN == "KEEP" and n_current == 0:
+            #     rew = 3.0
+            #     ns = 2
+            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+            # elif s == 2 and actions_notCurrentN == "SEND" and n_current == 0:
+            #     rew = 0.0
+            #     ns = 1
+            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+            # elif s == 1 and actions_notCurrentN == "KEEP" and n_current == 1:
+            #     rew = 0.0
+            #     ns = 1
+            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+            # elif s == 1 and actions_notCurrentN == "SEND" and n_current == 1:
+            #     rew = 3.0
+            #     ns = 2
+            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
 
         else:
+            print("MISISNG")
             return 0.0
 
 
@@ -150,10 +192,12 @@ class NoSDE(MDP):
         successors = []
         otherN = 1 if n_current == 0 else 0
 
+        # if s == 2 and a_current == "NOOP" and n == 0:
+        #     print("SUCCS: ", succs)
         # NoSDE is hand-crafted and all in here for now.
         for actions_notCurrentN in self.getActions(s, otherN):
-            if s == 1 and a_current == "NOOP":
-                print(actions_notCurrentN)
+            # if s == 1 and a_current == "NOOP":
+            #     #print(actions_notCurrentN)
             if s == 1 and a_current == "KEEP" and n_current == 0:
                 successors.append([1, self.pi[otherN][s][actions_notCurrentN], 1.0])
             elif s == 1 and a_current == "SEND" and n_current == 0:
@@ -178,25 +222,42 @@ class NoSDE(MDP):
                     rew = 3.0
                     ns = 2
                 successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+            ####NOT SURE
+            # elif s == 2 and actions_notCurrentN == "KEEP" and n_current == 0:
+            #     rew = 3.0
+            #     ns = 2
+            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+            # elif s == 2 and actions_notCurrentN == "SEND" and n_current == 0:
+            #     rew = 0.0
+            #     ns = 1
+            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+            # elif s == 1 and actions_notCurrentN == "KEEP" and n_current == 1:
+            #     rew = 0.0
+            #     ns = 1
+            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+            # elif s == 1 and actions_notCurrentN == "SEND" and n_current == 1:
+            #     rew = 3.0
+            #     ns = 2
+            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
             else:
-                print(actions_notCurrentN, " with: s:", s, " a_current: ", a_current, "n_current: ", n_current)
+                print("MISSING: ", actions_notCurrentN, " with: s:", s, " a_current: ", a_current, "n_current: ", n_current)
 
         return successors
 
     def isTerminal(self, s):
         return False
 
-    def getMove(self, s, action):
-        if s == 1 and action == "KEEP":
-            return 1
-        elif s == 1 and action == "SEND":
-            return 2
-        elif s == 2 and action == "NOOP":
-           return 2
-        elif s == 2 and action == "KEEP":
-            return 2
-        elif s == 2 and action == "SEND":
-            return 1
-        elif s == 1 and action == "NOOP":
-           return 1
-        print("GETMOVE() missed:  s: ", s, "  action: ",action)
+    # def getMove(self, s, action):
+    #     if s == 1 and action == "KEEP":
+    #         return 1
+    #     elif s == 1 and action == "SEND":
+    #         return 2
+    #     elif s == 2 and action == "NOOP":
+    #        return 2
+    #     elif s == 2 and action == "KEEP":
+    #         return 2
+    #     elif s == 2 and action == "SEND":
+    #         return 1
+    #     elif s == 1 and action == "NOOP":
+    #        return 1
+    #     print("GETMOVE() missed:  s: ", s, "  action: ",action)

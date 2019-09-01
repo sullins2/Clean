@@ -3111,3 +3111,223 @@ class LONR_B2(LONR):
     #
 
 ############################################################################
+
+
+class RPS:
+    actions = ['ROCK', 'PAPER', 'SCISSORS']
+    n_actions = 3
+    utilities = pd.DataFrame([
+        # ROCK  PAPER  SCISSORS
+        [ 0,    -1,    1], # ROCK
+        [ 1,     0,   -1], # PAPER
+        [-1,     1,    0]  # SCISSORS
+    ], columns=actions, index=actions)
+
+
+class Player:
+    def __init__(self, name):
+        self.strategy, self.avg_strategy,\
+        self.strategy_sum, self.regret_sum = np.zeros((4, RPS.n_actions))
+        self.regret_sum[0] = 1.0
+        print(self.strategy)
+        self.name = name
+        self.LASTKL = 0.0
+        self.KLtotal = 0.0
+
+    def __repr__(self):
+        return self.name
+
+    def KL(self, a, b):
+        a = np.asarray(a, dtype=np.float)
+        b = np.asarray(b, dtype=np.float)
+
+        return np.sum(np.where(a != 0, a * np.log(a / b), 0))
+
+    def update_strategy(self, iters):
+        """
+        set the preference (strategy) of choosing an action to be proportional to positive regrets
+        e.g, a strategy that prefers PAPER can be [0.2, 0.6, 0.2]
+        """
+
+        stratT1 = self.strategy
+
+        # CFR +
+        # self.regret_sum[self.regret_sum < 0] = 0
+        self.strategy = np.copy(self.regret_sum)
+        self.strategy[self.strategy < 0] = 0  # reset negative regrets to zero
+
+        summation = sum(self.strategy)
+        if summation > 0:
+            # normalise
+            self.strategy /= summation
+        else:
+            # uniform distribution to reduce exploitability
+            self.strategy = np.repeat(1 / RPS.n_actions, RPS.n_actions)
+
+
+        gammaWeight = pow((iters / (iters + 1)), 2.0)
+        self.strategy_sum += self.strategy# * gammaWeight
+
+        stratT2 = self.strategy
+
+        if iters > 0:
+
+
+            uni = np.zeros((1, RPS.n_actions))
+            uni[0] = 1.0 / 3.0
+
+            a = np.asarray(uni, dtype=np.float)
+            b = np.asarray(stratT2, dtype=np.float)
+
+#             kl2 = np.sum(np.where(a != 0, a * np.log(a / b), 0))
+            kl2 = 0.0
+            for x in range(len(b)):
+#                 print(a[0][x], x, len(a[x]))
+                if a[0][x] == 0: continue
+                if b[x] == 0: continue
+                kl2 += a[0][x] * np.log(a[0][x]/b[x])
+
+
+            a = np.asarray(uni, dtype=np.float)
+            b = np.asarray(stratT1, dtype=np.float)
+
+#             kl1 = np.sum(np.where(a != 0, a * np.log(a / b), 0))
+            kl1 = 0.0
+            for x in range(len(b)):
+                if a[0][x] == 0: continue
+                if b[x] == 0: continue
+                kl1 += a[0][x] * np.log(a[0][x]/[x])
+            if kl2 == math.inf: return
+            if kl1 == math.inf: return
+            if self.KLtotal < 0.00000001: return
+            self.KLtotal += (kl2 - kl1)
+
+            print("KLdif: ", kl2 - kl1)
+
+    def regret(self, my_action, opp_action, iters):
+        """
+        we here define the regret of not having chosen an action as the difference between the utility of that action
+        and the utility of the action we actually chose, with respect to the fixed choices of the other player.
+
+        compute the regret and add it to regret sum.
+        """
+        result = RPS.utilities.loc[my_action, opp_action]
+        facts = RPS.utilities.loc[:, opp_action].values
+
+        # Regret Matching
+        # regret = facts - result
+
+        # Regret Matching++
+        regret = facts - result
+
+        RMPP = True
+        if RMPP:
+            for i in range(len(regret)):
+                if regret[i] < 0:
+                    regret[i] = 0
+
+        DCFR = False
+        if DCFR:
+            alphaW = pow(iters, 1.5)
+            alphaWeight = (alphaW / (alphaW + 1.0))
+
+            betaW = pow(iters, 0.0)
+            betaWeight = (betaW / (betaW + 1))
+        else:
+            alphaWeight = 1.0
+            betaWeight = 1.0
+
+        self.regret_sum += regret
+
+        if DCFR:
+            self.regret_sum[self.regret_sum > 0] *= alphaWeight
+            self.regret_sum[self.regret_sum < 0] *= betaWeight
+
+    def action(self, use_avg=False):
+        """
+        select an action according to strategy probabilities
+        """
+        strategy = self.avg_strategy if use_avg else self.strategy
+        return np.random.choice(RPS.actions, p=strategy)
+
+    def learn_avg_strategy(self):
+        # averaged strategy converges to Nash Equilibrium
+
+        summation = sum(self.strategy_sum)
+        if summation > 0:
+            self.avg_strategy = self.strategy_sum / summation
+        else:
+            self.avg_strategy = np.repeat(1/RPS.n_actions, RPS.n_actions)
+
+
+class Game:
+    def __init__(self, max_game=500):
+        self.p1 = Player('Alasdair')
+        self.p2 = Player('Calum')
+        self.max_game = max_game
+        self.p1strats = []
+
+    def winner(self, a1, a2):
+        result = RPS.utilities.loc[a1, a2]
+        if result == 1:     return self.p1
+        elif result == -1:  return self.p2
+        else:               return 'Draw'
+
+    def play(self, avg_regret_matching=False):
+        def play_regret_matching():
+            for i in range(0, self.max_game):
+                self.p1.update_strategy(i)
+                self.p2.update_strategy(i)
+                a1 = self.p1.action()
+                a2 = self.p2.action()
+                self.p1.regret(a1, a2, i)
+                self.p2.regret(a2, a1, i)
+
+                winner = self.winner(a1, a2)
+                num_wins[winner] += 1
+                self.p1.learn_avg_strategy()
+#                 ff = [self.p1.strategy[0] + self.p2.strategy[0], self.p1.strategy[1] + self.p2.strategy[1],self.p1.strategy[2] + self.p2.strategy[2]]
+#                 self.p1strats.append(ff)
+                self.p1strats.append(self.p1.strategy)
+
+        def play_avg_regret_matching():
+            for i in range(0, self.max_game):
+                a1 = self.p1.action(use_avg=True)
+                a2 = self.p2.action(use_avg=True)
+                winner = self.winner(a1, a2)
+                num_wins[winner] += 1
+
+        num_wins = {
+            self.p1: 0,
+            self.p2: 0,
+            'Draw': 0
+        }
+
+        play_regret_matching() if not avg_regret_matching else play_avg_regret_matching()
+        print(num_wins)
+
+    def conclude(self):
+        """
+        let two players conclude the average strategy from the previous strategy stats
+        """
+        self.p1.learn_avg_strategy()
+        self.p2.learn_avg_strategy()
+
+
+###########################################
+
+ # if self.counter % 900 == 0:
+            #     for nn in range(self.M.N):
+            #         # print(n, ": ", end='')
+            #         for k in sorted(self.M.pi[nn].keys()):
+            #             # print(k, ": ", end='')
+            #             c = "("
+            #             f = 0
+            #             for kk in self.M.pi[nn][k].keys():
+            #                 c = c + str(self.M.pi[nn][k][kk])
+            #                 if f == 0:
+            #                     c += ","
+            #                 f += 1
+            #                 # print(kk, ": ", self.M.pi[n][k][kk], " ", end='')
+            #             c += ")"
+            #             print(c)
