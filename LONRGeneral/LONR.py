@@ -18,6 +18,9 @@ class MDP(object):
         self.pi_sums = None
         self.regret_sums = None
 
+        self.last_imm_regret = None
+
+
         self.Q_other = None
 
 
@@ -117,11 +120,12 @@ class LONR(object):
         self.DCFR = regret_minimizers['DCFR'] if 'DCFR' in regret_minimizers else False
         self.MWU = regret_minimizers['MWU'] if 'MWU' in regret_minimizers else False
         self.OMWU = regret_minimizers['OMWU'] if 'OMWU' in regret_minimizers else False
+        self.OPTRM = regret_minimizers['OPTRM'] if 'OPTRM' in regret_minimizers else False
 
-        if sum([self.RM,self.RMPLUS,self.DCFR, self.MWU, self.OMWU]) >= 2:
+        if sum([self.RM,self.RMPLUS,self.DCFR, self.MWU, self.OMWU, self.OPTRM]) >= 2:
             print("More than one regret minimizer is true. Select only one.")
             exit()
-        elif sum([self.RM,self.RMPLUS,self.RMPLUSPLUS, self.DCFR, self.MWU, self.OMWU]) == 0:
+        elif sum([self.RM,self.RMPLUS,self.RMPLUSPLUS, self.DCFR, self.MWU, self.OMWU, self.OPTRM]) == 0:
             print("No regret minimizer is true. Select only one.")
             exit()
 
@@ -131,7 +135,7 @@ class LONR(object):
         self.gammaDCFR = None
 
         # If Regret Matching (check this)
-        if self.RM or self.RMPLUSPLUS:
+        if self.RM or self.RMPLUSPLUS or self.OPTRM:
             self.alphaDCFR = 1.0
             self.betaDCFR = 1.0
             self.gammaDCFR = 1.0
@@ -352,7 +356,6 @@ class LONR(object):
         for a_current in a_current2:
 
             if self.M.isTerminal(s):
-
                 # Value iteration
                 reward = self.M.getReward(s, a_current, n, n)
                 if reward == None:
@@ -384,15 +387,18 @@ class LONR(object):
                 for a_current_prime in self.M.getActions(s_prime, n):
                     tempValue += self.M.Q[n][s_prime][a_current_prime] * self.M.pi[n][self.M.getStateRep(s_prime)][a_current_prime]
 
-                reww = self.M.getReward(s, a_current, n,0)
+                reww = None#self.M.getReward(s, a_current, n,0)
 
                 if reww is None:
                     Value += prob * (reward + self.gamma * tempValue)
 
-                else:
-                    Value += prob * (reww + self.gamma * tempValue)
+                #else:
+                #    Value += prob * (reww + self.gamma * tempValue)
 
             self.M.Q_bu[n][s][a_current] = (1.0 - self.alpha) * self.M.Q[n][s][a_current] + (self.alpha) * Value
+
+            if self.M.isTerminal(s):
+                continue
 
             Value = Value / float(self.HighestValue)
 
@@ -417,13 +423,23 @@ class LONR(object):
                 exp_sums[-1] *= math.exp(-ata * float(self.LastValueCount) * Value)
 
         if self.MWU or self.OMWU:
+            if self.M.isTerminal(s):
+                return
             denom = sum(exp_sums)
             # print(denom)
             xx = 0
             strategy = []
             for i in sorted(self.M.pi[n][s]):
-                if xx == 0 and n == 0:
-                    strategy.append(self.M.pi[n][s][i])
+                # if xx == 0 and n == 0:
+                #     strategy.append(self.M.pi[n][s][i])
+
+                # For RPS:
+                # if n == 0:
+                #     strategy.append(self.M.pi[n][self.M.getStateRep(s)][i])
+                # For NoSDE
+                if n == 0 and s == 1 and i == "SEND":
+                    strategy.append(self.M.pi[n][self.M.getStateRep(s)][i])
+                # print(xx, n, s, i)
                 self.M.pi[n][s][i] = exp_sums[xx] / denom
                 xx += 1
 
@@ -481,7 +497,7 @@ class LONR(object):
             # RMPLUS = False
             if self.RMPLUS:
                 self.M.regret_sums[n][self.M.getStateRep(currentState)][a] = max(0.0, self.M.regret_sums[n][self.M.getStateRep(currentState)][a] + action_regret)
-            else:
+            elif self.RM:
                 self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += action_regret
 
             if self.DCFR:
@@ -490,6 +506,13 @@ class LONR(object):
                 else:
                     self.M.regret_sums[n][self.M.getStateRep(currentState)][a] *= betaWeight
 
+            if self.OPTRM:
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] -= self.M.last_imm_regret[n][currentState][a]
+                self.M.last_imm_regret[n][currentState][a] = max(0, 2.0*action_regret)
+                self.M.regret_sums[n][self.M.getStateRep(currentState)][a] += max(0, (3.0*action_regret))
+
+
+
 
         strategy = []
         xx = 0
@@ -497,11 +520,18 @@ class LONR(object):
 
             if self.M.isTerminal(currentState):
                 continue
-            if xx == 0 and n == 0:
-                print(self.M.pi[n][self.M.getStateRep(currentState)][a], "   SSSS ", xx, "  ", n)
-                #strategy.append(self.M.pi[n][self.M.getStateRep(currentState)][a])
-                strategy = self.M.pi[n][self.M.getStateRep(currentState)][a]
-                self.piTRAJ.append(strategy)
+
+            # For RPS:
+            # if n == 0:
+            #     strategy.append(self.M.pi[n][self.M.getStateRep(s)][i])
+            # For NoSDE
+            if n == 0 and currentState == 1 and a == "SEND":
+                strategy.append(self.M.pi[n][self.M.getStateRep(currentState)][a])
+            # if xx == 0 and n == 0:
+            #     print(self.M.pi[n][self.M.getStateRep(currentState)][a], "   SSSS ", xx, "  ", n)
+            #     #strategy.append(self.M.pi[n][self.M.getStateRep(currentState)][a])
+            #     strategy = self.M.pi[n][self.M.getStateRep(currentState)][a]
+            #     self.piTRAJ.append(strategy)
             # # Sum up total regret
             rgrt_sum = 0.0
             for k in self.M.regret_sums[n][self.M.getStateRep(currentState)].keys():
@@ -691,7 +721,7 @@ class LONR_V(LONR):
     ################################################################
     # LONR Value Iteration
     ################################################################
-    def lonr_train(self, iterations=-1, log=-1, randomize=False):
+    def lonr_train(self, iterations=-1, log=-1, randomize=False, fixPlayer=None):
 
         if log != -1: print("Starting training..")
 
@@ -704,10 +734,11 @@ class LONR_V(LONR):
             # print("Version: ", self.M.version)
             # self.M.version = 2
             if (t + 0) % log == 0:
+
                 print("Iteration: ", t + 0, " alpha: ", self.alpha, " gamma: ", self.gamma)
 
             # Call one full update via LONR-V
-            self._lonr_train(t=t)
+            self._lonr_train(t=t, fixPlayer=fixPlayer)
 
             # No-op unless alphaDecay is not 1.0
             self.alpha *= self.alphaDecay
@@ -733,15 +764,25 @@ class LONR_V(LONR):
     ######################################
     ## LONR VALUE ITERATION
     ######################################
-    def _lonr_train(self, t):
+    def _lonr_train(self, t, fixPlayer=None):
         """ One full update via LONR-V
         """
 
         # Q Update
         for n in range(self.M.N):
 
+            # if n == 1:
+            #     self.MWU = True
+            #     self.RMPLUSPLUS = False
+            # else:
+            #     self.MWU = False
+            #     self.RMPLUSPLUS = True
 
             # Loop through all states
+
+            if n == fixPlayer:
+                continue
+
             for s in self.M.getStates():
 
                 if self.M.isTerminal(s):
@@ -769,6 +810,13 @@ class LONR_V(LONR):
 
 
         for n in range(self.M.N):
+            # if n == 1:
+            #     self.MWU = True
+            #     self.RMPLUSPLUS = False
+            # else:
+            #     self.MWU = False
+            #     self.RMPLUSPLUS = True
+
             for s in self.M.getStates():
                 self.regretUpdate(n, s, t)
 
@@ -873,7 +921,7 @@ class LONR_A(LONR):
 
 
             # Get possible actions
-            a = self.M.getActions(currentState, 0)
+            a = self.M.getActions(currentState, n)
 
 
             # Update Q of actions
@@ -2618,8 +2666,8 @@ class LONR_AA(LONR):
         #     currentState = 1
         # else:
         #     currentState = 2
-        # currentState = np.random.randint(1,3)
-        currentState = 0
+        currentState = np.random.randint(1,3)
+        # currentState = 0
         #n = np.random.randint(0,2)
         # if currentState == 1:
         #     n = 0
@@ -2632,12 +2680,18 @@ class LONR_AA(LONR):
         # Episode loop - until terminal state is reached
         while done == False:
 
-            # if currentState == 1:
-            #     n = 0
-            # else:
-            #     n = 1
+            if currentState == 1:
+                n = 0
+            else:
+                n = 1
 
             for NN in range(2):
+
+                # if NN == 0:
+                #     self.M.MWU = True
+                # else:
+                #     self.M.MWU = False
+
                 #print("TOTAL ITERS: ", totalIts)
                 totalIts += 1
 

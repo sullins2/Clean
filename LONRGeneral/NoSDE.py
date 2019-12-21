@@ -14,10 +14,24 @@ class NoSDE(MDP):
 
         self.version = 1
 
+
+        # -1 to 7/4
         self.x = 0.0# -1.0 / 2.0 #3.0 / 4.0
 
         for i in range(10):
             print("SET GAMMA=0.75")
+
+        seed = np.random.randint(100000)
+        seed = 31  # 37331#53945#75574
+        np.random.seed(seed)
+        print("SEED: ", seed)
+
+        #Randomize rewards
+        self.extraRewards = []
+        for er in range(8):
+            newReward = np.random.randint(4)
+            print("Rewards: ", newReward)
+            self.extraRewards.append(newReward)
 
         self.total_states = [1, 2]
 
@@ -28,6 +42,7 @@ class NoSDE(MDP):
         self.pi_sums = {}
         self.regret_sums = {}
         self.QTouched = {}
+        self.last_imm_regret = {}
 
         self.weights = {}
 
@@ -45,6 +60,8 @@ class NoSDE(MDP):
             self.pi_sums[n] = {}
             self.regret_sums[n] = {}
 
+            self.last_imm_regret[n] = {}
+
             for s in self.getStates():
                 self.Q[n][s] = {}
                 self.Q_bu[n][s] = {}
@@ -54,17 +71,23 @@ class NoSDE(MDP):
                 self.regret_sums[n][s] = {}
                 self.pi_sums[n][s] = {}
                 self.weights[n][s] = {}
+
+                self.last_imm_regret[n][s] = {}
+
                 for a in self.getActions(s, n):
                     self.Q[n][s][a] = 0.0
                     self.Q_bu[n][s][a] = 0.0
                     self.QSums[n][s][a] = 0.0
                     self.QTouched[n][s][a] = 0.0
                     self.pi[n][s][a] = 1.0 / len(self.getActions(s, n))
-                    self.regret_sums[n][s][a] = 0#0.00001
+                    self.regret_sums[n][s][a] = 0.0#0.00001
                     # for rrr in range(10):
                     #     print("ERASE NOSDE")
                     self.pi_sums[n][s][a] = 0.0
                     self.weights[n][s][a] = 1.0
+
+                    self.last_imm_regret[n][s][a] = 0.0
+
         for n in range(self.N):
             self.Q_other[n] = {}
             for s in [1,2]:
@@ -118,127 +141,108 @@ class NoSDE(MDP):
         # x = 1.0 / 4.0
         #return 0.0
         #Left state
-        if s == 1:
-            # Player0
-            if n == 0:
-                if a_current == "KEEP":
-                    return 1.0
-                elif a_current == "SEND":
-                    return 0.0 + self.x
-                # print("NO1")
-
-            if n == 1:
-                if a_current == "KEEP":
-                    return 0.0
-                elif a_current == "SEND":
-                    return 3.0
-                # elif a_current == "NOOP":
-                #     if a_notN == "SEND":
-                #         return 3.0
-                #     else:
-                #         return 0.0
-        # Right state
-        elif s == 2:
-            # Player0
-            if n == 0:
-                if a_current == "KEEP":
-                    return 3.0 + self.x
-                elif a_current == "SEND":
-                    return 0.0
-                # elif a_current == "NOOP":
-                #     if a_notN == "SEND":
-                #         return 0.0
-                #     else:
-                #         return 3.0
-
-            # Player1
-            elif n == 1:
-                if a_current == "KEEP":
-                    return 1.0
-                elif a_current == "SEND":
-                    return 0.0
-                # print("NO4")
-
-            # elif s == 2 and actions_notCurrentN == "KEEP" and n_current == 0:
-            #     rew = 3.0
-            #     ns = 2
-            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
-            # elif s == 2 and actions_notCurrentN == "SEND" and n_current == 0:
-            #     rew = 0.0
-            #     ns = 1
-            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
-            # elif s == 1 and actions_notCurrentN == "KEEP" and n_current == 1:
-            #     rew = 0.0
-            #     ns = 1
-            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
-            # elif s == 1 and actions_notCurrentN == "SEND" and n_current == 1:
-            #     rew = 3.0
-            #     ns = 2
-            #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
-
-        else:
-            print("MISISNG")
-            return 0.0
+        #print("CALLED")
+        return None
+        # if s == 1:
+        #     # Player0
+        #     if n == 0:
+        #         if a_current == "KEEP":
+        #             return 1.0
+        #         elif a_current == "SEND":
+        #             return 0.0 + self.x
+        #         # print("NO1")
+        #
+        #     if n == 1:
+        #         if a_current == "KEEP":
+        #             return 0.0
+        #         elif a_current == "SEND":
+        #             return 3.0
+        #         # elif a_current == "NOOP":
+        #         #     if a_notN == "SEND":
+        #         #         return 3.0
+        #         #     else:
+        #         #         return 0.0
+        # # Right state
+        # elif s == 2:
+        #     # Player0
+        #     if n == 0:
+        #         if a_current == "KEEP":
+        #             return 3.0 + self.x
+        #         elif a_current == "SEND":
+        #             return 0.0
+        #         # elif a_current == "NOOP":
+        #         #     if a_notN == "SEND":
+        #         #         return 0.0
+        #         #     else:
+        #         #         return 3.0
+        #
+        #     # Player1
+        #     elif n == 1:
+        #         if a_current == "KEEP":
+        #             return 1.0
+        #         elif a_current == "SEND":
+        #             return 0.0
+        #         # print("NO4")
+        #
+        #     # elif s == 2 and actions_notCurrentN == "KEEP" and n_current == 0:
+        #     #     rew = 3.0
+        #     #     ns = 2
+        #     #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+        #     # elif s == 2 and actions_notCurrentN == "SEND" and n_current == 0:
+        #     #     rew = 0.0
+        #     #     ns = 1
+        #     #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+        #     # elif s == 1 and actions_notCurrentN == "KEEP" and n_current == 1:
+        #     #     rew = 0.0
+        #     #     ns = 1
+        #     #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+        #     # elif s == 1 and actions_notCurrentN == "SEND" and n_current == 1:
+        #     #     rew = 3.0
+        #     #     ns = 2
+        #     #     successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
+        #
+        # else:
+        #     print("MISISNG")
+        #     return 0.0
 
 
 
     def getNextStatesAndProbs(self, s, a_current, n_current):
 
-        # Tweaked rewards
-        # -1 < x < 7/4
-        x = 1.0 / 4.0
-        y = 0.5
 
         successors = []
         otherN = 1 if n_current == 0 else 0
 
-        # if s == 2 and a_current == "NOOP" and n == 0:
-        #     print("SUCCS: ", succs)
+
+        # TODO: Generate a map from current[n_current][s][a_current] -> [ns, pi[otherN][s][actions_notCurrentN], reward])
+
         # NoSDE is hand-crafted and all in here for now.
         for actions_notCurrentN in self.getActions(s, otherN):
-            # if s == 1 and a_current == "NOOP":
-            #     #print(actions_notCurrentN)
             if s == 1 and a_current == "KEEP" and n_current == 0:
-                successors.append([1, self.pi[otherN][s][actions_notCurrentN], 1.0])
+                successors.append([1, self.pi[otherN][s][actions_notCurrentN], 1.0 - 1.0 + self.extraRewards[0]])
             elif s == 1 and a_current == "SEND" and n_current == 0:
-                successors.append([2, self.pi[otherN][s][actions_notCurrentN], 0.0 + self.x])
+                successors.append([2, self.pi[otherN][s][actions_notCurrentN], 0.0 + self.extraRewards[1]])
             elif s == 2 and a_current == "NOOP" and n_current == 0:
                 if actions_notCurrentN == "KEEP":
-                    rew = 3.0 + self.x
+                    rew = 3.0 - 3.0 + self.extraRewards[2]
                     ns = 2
                 else:
-                    rew = 0.0
+                    rew = 0.0 + self.extraRewards[3]
                     ns = 1
                 successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
             elif s == 2 and a_current == "KEEP" and n_current == 1:
-                successors.append([2, self.pi[otherN][s][actions_notCurrentN], 1.0])
+                successors.append([2, self.pi[otherN][s][actions_notCurrentN], 1.0 - 1.0 + self.extraRewards[4]])
             elif s == 2 and a_current == "SEND" and n_current == 1:
-                successors.append([1, self.pi[otherN][s][actions_notCurrentN], 0.0])
+                successors.append([1, self.pi[otherN][s][actions_notCurrentN], 0.0 + self.extraRewards[5]])
             elif s == 1 and a_current == "NOOP" and n_current == 1:
                 if actions_notCurrentN == "KEEP":
-                    rew = 0.0
+                    rew = 0.0 + self.extraRewards[6]
                     ns = 1
                 else:
-                    rew = 3.0
+                    rew = 3.0 - 3.0 + self.extraRewards[7]
                     ns = 2
                 successors.append([ns, self.pi[otherN][s][actions_notCurrentN], rew])
-            ####NOT SURE
-            # elif s == 2 and actions_notCurrentN == "KEEP" and n_current == 0:
-            #     rew = 3.0
-            #     ns = 2
-            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
-            # elif s == 2 and actions_notCurrentN == "SEND" and n_current == 0:
-            #     rew = 0.0
-            #     ns = 1
-            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
-            # elif s == 1 and actions_notCurrentN == "KEEP" and n_current == 1:
-            #     rew = 0.0
-            #     ns = 1
-            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
-            # elif s == 1 and actions_notCurrentN == "SEND" and n_current == 1:
-            #     rew = 3.0
-            #     ns = 2
-            #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+
             else:
                 print("MISSING: ", actions_notCurrentN, " with: s:", s, " a_current: ", a_current, "n_current: ", n_current)
 
@@ -246,6 +250,21 @@ class NoSDE(MDP):
 
     def isTerminal(self, s):
         return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # def getMove(self, s, action):
     #     if s == 1 and action == "KEEP":
@@ -261,3 +280,21 @@ class NoSDE(MDP):
     #     elif s == 1 and action == "NOOP":
     #        return 1
     #     print("GETMOVE() missed:  s: ", s, "  action: ",action)
+
+    ####NOT SURE
+    # elif s == 2 and actions_notCurrentN == "KEEP" and n_current == 0:
+    #     rew = 3.0
+    #     ns = 2
+    #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+    # elif s == 2 and actions_notCurrentN == "SEND" and n_current == 0:
+    #     rew = 0.0
+    #     ns = 1
+    #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+    # elif s == 1 and actions_notCurrentN == "KEEP" and n_current == 1:
+    #     rew = 0.0
+    #     ns = 1
+    #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])
+    # elif s == 1 and actions_notCurrentN == "SEND" and n_current == 1:
+    #     rew = 3.0
+    #     ns = 2
+    #     successors.append([ns, self.pi[n_current][s][actions_notCurrentN], rew, actions_notCurrentN])

@@ -15,6 +15,8 @@ class TwoState(MDP):
         self.U1 = 0
         self.U2 = 1
 
+        self.version = 1
+
         self.numberOfActions = 2
 
         # Non-determinism - this value is split between sideways moves
@@ -126,7 +128,7 @@ class TwoState(MDP):
         return [self.U1, self.U2]
 
     def getStates(self):
-        return list(range(2))
+        return sorted(list(range(2)))
 
     def getStateRep(self, s):
         return s
